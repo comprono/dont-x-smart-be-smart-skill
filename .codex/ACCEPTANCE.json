@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-07-16T21:01:02Z",
+  "updated_utc": "2026-07-16T21:30:51Z",
   "project_state": "complete",
   "current_slice_requirement_id": null,
   "requirements": [
@@ -124,6 +124,27 @@
           "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/29534222570",
           "summary": "Ten package tests, the Codex skill validator, public GitHub Actions, exact local installation hashes, and a single managed global rule block passed for commit 143d005.",
           "verified_utc": "2026-07-16T21:01:02Z"
+        }
+      ],
+      "blocker": null
+    },
+    {
+      "id": "REQ-AUTONOMY",
+      "description": "Recurring or autonomous work is admitted only with bounded side effects, resource and retention limits, progress-aware retries, persistent restart behavior, and a fail-closed no-progress transition.",
+      "required": true,
+      "status": "passing",
+      "minimum_evidence_level": "integration",
+      "acceptance_steps": [
+        "Assert a concise bounded-autonomy gate in the skill and global rules without adding an orchestration runtime.",
+        "Assert the project template captures progress identity, resource limits, retention, restart, cancellation, and no-progress recovery.",
+        "Run package tests, Codex skill validation, public CI, exact installation hash verification, and the completion gate."
+      ],
+      "evidence": [
+        {
+          "level": "integration",
+          "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/29536198974",
+          "summary": "Eleven package tests, official skill validation, Python compilation, privacy scanning, public CI, exact five-file installation hashes, and one managed global rule block passed for commit c0c46d2.",
+          "verified_utc": "2026-07-16T21:30:51Z"
         }
       ],
       "blocker": null
