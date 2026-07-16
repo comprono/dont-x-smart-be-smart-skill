@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "updated_utc": "REPLACE_ME_UTC",
+  "project_state": "active",
+  "current_slice_requirement_id": "REQ-001",
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "description": "REPLACE_ME_WITH_ONE_OBSERVABLE_REQUIREMENT",
+      "required": true,
+      "status": "failing",
+      "minimum_evidence_level": "end-to-end",
+      "acceptance_steps": [
+        "REPLACE_ME_WITH_A_REPRODUCIBLE_ACCEPTANCE_STEP"
+      ],
+      "evidence": [],
+      "blocker": null
+    }
+  ]
+}

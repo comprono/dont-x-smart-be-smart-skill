@@ -1,135 +1,172 @@
 ---
 name: outcome-integrity
-description: Preserve project intent and prevent objective drift, context-compaction loss, proxy progress, repeated symptom patches, and wasteful orchestration. Use for nontrivial project implementation or diagnosis, resumed or compacted work, user corrections, long-running or multi-agent work, repeated failures, unexpected scope growth, disproportionate token use, or work the user says is irrelevant. Maintain a bounded .codex/PROJECT_OUTCOME.md ledger, reconcile it with current evidence and the latest user instruction, advance one material end-to-end slice, and stop repeated failure through a root-cause circuit breaker.
+description: Preserve project intent and prevent objective drift, context-compaction loss, premature completion, proxy progress, repeated failure, and wasteful orchestration. Use for nontrivial project implementation or diagnosis, resumed or compacted work, user corrections, long-running or multi-agent work, external side effects, repeated failures, unexpected scope growth, disproportionate token use, or work the user says is irrelevant. Maintain bounded .codex/PROJECT_OUTCOME.md intent and .codex/ACCEPTANCE.json evidence state, reconcile them with current reality, classify failures before retrying, advance one verified end-to-end slice, and admit delegation only when it reduces total work.
 ---
 
 # Outcome Integrity
 
-Keep the user's actual outcome authoritative across long work, context compaction, corrections, and changing project state. Use one short project ledger as working memory; do not turn the workflow into another management system.
+Keep the user's actual outcome authoritative across long work, corrections, compaction, failures, and delegation. This is a lightweight execution discipline, not a manager loop or workflow engine.
 
-## Establish Authority
+## Use The Correct Authority
 
-Use this order when sources conflict:
+Resolve conflicts in this order:
 
-1. The latest explicit user instruction or correction.
-2. Current authoritative project or runtime evidence.
-3. Reconciled `.codex/PROJECT_OUTCOME.md` content.
-4. Existing plans, documentation, chat summaries, memories, and worker reports.
+1. Latest explicit user instruction or correction.
+2. Current authoritative project, runtime, or external evidence.
+3. Reconciled `.codex/PROJECT_OUTCOME.md` and `.codex/ACCEPTANCE.json`.
+4. Existing plans, documentation, summaries, memories, and worker reports.
 
-Never let an old plan, add-on, safety mechanism, worker result, or inferred preference silently replace the north-star outcome. Preserve compatible verified work, but invalidate conclusions that depended on a corrected or disproven assumption.
+Never let an old plan, inferred preference, add-on, safety mechanism, or worker result silently replace the north-star outcome. Preserve independently verified work and invalidate only conclusions that depended on stale assumptions.
 
-## Maintain Durable Project State
+## Keep Three Kinds Of State Separate
 
-For nontrivial project work, use `<project-root>/.codex/PROJECT_OUTCOME.md`. Do not create it for a trivial question, one-off command, or work outside a project.
+For nontrivial project work, use:
 
-At the start of work:
+- `.codex/PROJECT_OUTCOME.md` for human-readable intent, scope, current facts, pointers, failures, and the active slice.
+- `.codex/ACCEPTANCE.json` for stable requirement IDs, reproducible acceptance steps, statuses, minimum evidence levels, evidence references, and recoverable blockers.
+- Git history for chronology and recovery. Do not grow an append-only activity transcript.
 
-1. Read the latest user instruction.
-2. Read the ledger if it exists.
-3. Inspect the current diff and the smallest authoritative surface needed to check ledger accuracy.
-4. Reconcile stale or conflicting entries before substantial planning or editing.
+Do not create these files for a trivial question, one-off command, or work outside a project.
 
-If the ledger is missing, first observe enough current state to avoid recording guesses as facts. Then run:
+Initialize missing files after minimal observation:
 
 ```powershell
 python <skill-dir>/scripts/project_outcome.py init --root <project-root>
 ```
 
-Fill the generated ledger with evidence-backed content. Validate it after material updates:
+Fill all placeholders. Keep project state current rather than chronological and keep historical detail in Git.
+
+## Start Or Resume Reliably
+
+At the start of nontrivial work, after compaction, or after interruption:
+
+1. Read the latest user instruction.
+2. Read both project-state files.
+3. Run the resume gate:
+
+```powershell
+python <skill-dir>/scripts/project_outcome.py resume --root <project-root>
+```
+
+4. Inspect the current diff and the smallest authoritative source needed to check the state files.
+5. Reconcile stale intent, acceptance, current-slice, or timestamp data before substantial planning or editing.
+6. Load only the relevant sources named under `Context Pointers`; do not rescan the full history or project by default.
+
+The latest user correction must update intent immediately. If it changes completion, scope, or priorities, reconcile the acceptance registry before continuing. Conversation summaries never override these checks.
+
+## Maintain Intent Without Bloat
+
+Keep `PROJECT_OUTCOME.md` bounded and current. Replace stale entries. Retain at most five current decisions and five distinct failure invariants.
+
+Update it only when one of these changes materially:
+
+- north-star outcome, scope, non-goal, user correction, or authorization;
+- verified project state or context pointer;
+- assumption, root cause, failure invariant, or recovery transition;
+- active acceptance ID or end-to-end slice.
+
+Do not record routine tool calls, unchanged status, worker chatter, token counts, or repeated plans.
+
+## Make Acceptance Mechanical
+
+`ACCEPTANCE.json` is authoritative for completion. Each requirement must have:
+
+- a stable ID and observable description;
+- `required: true` or `false`;
+- `failing`, `blocked`, or `passing` status;
+- reproducible acceptance steps;
+- a minimum evidence level;
+- evidence references with timestamps when passing;
+- owner, reason, recovery trigger, and recovery action when blocked.
+
+Never delete or weaken a required item merely to make completion possible. Change acceptance only when the latest user instruction changes the outcome or current evidence disproves the requirement. A previously passing item must return to failing when its evidence is invalidated.
+
+Evidence levels, strongest first:
+
+1. `user-visible`
+2. `end-to-end`
+3. `integration`
+4. `focused-test`
+5. `process-health`
+6. `activity`
+
+A requirement cannot pass unless its recorded evidence meets or exceeds its minimum level. Plans, edits, workers, healthy processes, and elapsed time are never substitutes for higher-level evidence.
+
+Validate after material state changes:
 
 ```powershell
 python <skill-dir>/scripts/project_outcome.py validate --root <project-root>
 ```
 
-Keep the ledger current rather than chronological. Replace stale entries; do not append routine activity, tool calls, unchanged status, or chat transcripts. Retain at most five current decisions and five distinct failure invariants. Keep it under the validator's size limit.
-
-Update the ledger only when one of these changes materially:
-
-- the north-star outcome or definition of done;
-- an explicit user preference, correction, non-goal, or authorization;
-- a verified milestone or current project state;
-- an assumption is proved or disproved;
-- a root cause or failed invariant is established;
-- the active end-to-end slice, blocker owner, or recovery transition changes.
-
-## Recover After Compaction Or Resume
-
-After compaction, interruption, handoff, or a long pause, do not continue from the conversation summary alone.
-
-1. Re-read the latest user message and project ledger.
-2. Inspect the current diff and one authoritative state surface.
-3. Mark stale ledger claims as stale or replace them.
-4. Reconstruct the current slice from the remaining verified gap.
-5. Continue only after the proposed action agrees with the north star and current evidence.
-
-This recovery is a bounded read, not a broad rescan of the project or its entire history.
-
-## Detect Divergence Before Spending
-
-Before a large edit, delegation, new subsystem, or expensive investigation, answer internally:
-
-1. Which `Done Means` item does this action advance?
-2. Is it critical-path work, an add-on, or a non-goal?
-3. What current evidence makes it necessary now?
-4. What result would disprove the approach?
-5. Has the same symptom or acceptance failure already occurred twice?
-6. What existing behavior must remain intact?
-
-Stop and reconcile the ledger when any of these conditions appears:
-
-- the proposed action advances no definition-of-done item;
-- an add-on has become the de facto objective;
-- the plan relies on a stale assumption or summary;
-- activity, health, tests, or worker completion is being treated as user-visible progress;
-- coordination or evaluation costs more than the contribution it can add;
-- a user correction conflicts with the current plan;
-- the same failed outcome is being attempted a third time without new root-cause evidence.
-
 ## Advance One Material Slice
 
-Choose the smallest end-to-end change or diagnostic that materially reduces the verified gap to the north star. Record it under `Current Slice` with:
+Select one non-passing required acceptance ID and record it as the current slice in both files. Choose the smallest end-to-end change or diagnostic that materially reduces that requirement's verified gap.
 
-- one objective;
-- observable acceptance evidence;
-- behavior that must be protected;
-- current status.
+Before expanding scope, answer internally:
 
-Keep at most one unverified architectural layer in flight. Scaffolding, planning, process health, and generated artifacts are not material slices unless they are the requested deliverable.
+1. Which acceptance ID does this action advance?
+2. Is it critical-path work, an add-on, or a non-goal?
+3. What evidence makes it necessary now?
+4. What result would disprove the approach?
+5. What existing behavior must remain intact?
 
-Work directly by default. Delegate only after observation establishes an independent lane with a bounded output and one integration point, and only when expected contribution exceeds coordination and review cost. Keep current Codex advancing the critical path. Verify and integrate a worker result once; do not create review chains or polling loops.
+Keep at most one unverified architectural layer in flight. A plan, scaffold, monitoring surface, or generated artifact is not a material slice unless it is itself the accepted outcome.
 
-## Match Claims To Evidence
+After a coherent verified slice, update both state files and use a focused Git commit when repository policy and the user's working tree permit it. Never stage unrelated user changes.
 
-Use this evidence hierarchy:
+## Classify Failure Before Retrying
 
-1. User-visible or externally authoritative outcome.
-2. End-to-end acceptance through the real path.
-3. Integration verification across affected boundaries.
-4. Focused regression or unit checks.
-5. Process, service, or runtime health.
-6. Activity such as plans, edits, tool calls, workers, artifacts, elapsed time, or token use.
+Classify the failure from evidence, then apply the matching policy:
 
-Never use a lower level to claim a higher one. Report material progress only when accepted evidence reduces the remaining outcome gap.
+| Class | Examples | Policy |
+| --- | --- | --- |
+| Transient | Timeout, connection reset, 429, temporary 5xx | Retry at most twice with backoff, only when the action is read-only or idempotent. |
+| Reasoning-recoverable | Invalid tool arguments, parse error, disproven assumption | Retry once only after changing the input or approach using the observed error. |
+| User-fixable | Missing credential, authorization, fact, or irreversible decision | Mark the acceptance item blocked with owner and recovery transition; continue other dependency-ready work. |
+| Unexpected or semantic | Wrong behavior, invariant violation, unknown exception | Do not retry blindly. Reproduce, trace authoritative state, and diagnose first. |
+| Ambiguous external write | Timeout after submit, payment, publish, send, or application | Query authoritative external state or use the idempotency key before any retry. |
 
-## Break Repeated Failure
+When the same acceptance outcome fails twice, stop repeated status checks and symptom patches. Record the evidence and violated invariant in `Failure Memory`. A third attempt requires new root-cause evidence, a changed state, or a materially changed approach.
 
-When the same symptom, blocker, or failed acceptance condition occurs twice:
+For resumable external workflows, persist checkpoints at coherent boundaries and make side effects idempotent. Conversation state is not execution state.
 
-1. Stop retries, repeated status checks, and further symptom patches.
-2. Identify the single authoritative state for the failed outcome.
-3. Trace the complete transition from input to that state.
-4. Reproduce the failure at the narrowest reliable boundary.
-5. State the violated invariant in `Failure Memory`.
-6. Make the next change address that invariant and verify the full transition.
+## Admit Delegation Only When It Helps
 
-A third attempt without new root-cause evidence is prohibited.
+Current Codex owns the critical path. Delegate only when every condition is true:
 
-Every blocking or parked state introduced by the work must record why it exists, who or what owns resolution, the recovery trigger, the transition back to executable work, and evidence that recovery works. A gate without recovery is an accumulating dead end.
+1. The lane is genuinely parallel and does not block the current next action.
+2. Its files, state, or external effects are disjoint and explicitly owned.
+3. It has one bounded deliverable tied to an acceptance ID.
+4. It has independent verification and one defined integration action.
+5. Expected contribution exceeds prompt, waiting, review, and integration cost.
+6. Failure cannot corrupt authoritative state; uncertain lanes are read-only.
 
-## Finish Honestly
+If any condition is false, work directly. Keep sequential reasoning in one agent. Use centralized integration, verify each worker result once, and never create worker review chains, heartbeat loops, or duplicate lanes.
 
-Completion requires the ledger's definition-of-done evidence, adjusted only by explicit user correction or newly observed reality. Never redefine success downward to match what was built.
+## Detect And Correct Drift
 
-If blocked, identify the external or user-only condition, its owner, the required action, and why no dependency-ready local work can still improve the outcome. Difficulty, uncertainty, exhausted workers, or a failed tool is not automatically a genuine blocker.
+Stop and reconcile before spending more when:
 
-Communicate concisely as `Done / Active / Blocked / Next` when structure helps. Omit routine narration, repeated plans, unchanged status, and token-expensive self-review.
+- an action advances no required acceptance ID;
+- an add-on becomes the practical objective;
+- the plan relies on stale summaries or assumptions;
+- lower-level evidence is being reported as completion;
+- coordination costs more than its likely contribution;
+- a user correction conflicts with the active slice;
+- the same failure is approaching an unchanged third attempt.
+
+Correct the state files first, then choose the next slice from the remaining verified gap. Do not preserve a bad plan by adding more rules, and do not swing to a full rebuild unless evidence requires it.
+
+## Complete Or Block Honestly
+
+Before claiming completion, run:
+
+```powershell
+python <skill-dir>/scripts/project_outcome.py completion --root <project-root>
+```
+
+Completion requires both project states to be `complete`, no current slice, and every required acceptance item passing with sufficient evidence. Do not redefine success downward to match what was built.
+
+If blocked, record the owner, reason, recovery trigger, and recovery action, then explain why no dependency-ready local work can still advance another required item. Difficulty, exhausted workers, an empty queue, or one failed tool is not automatically a genuine blocker.
+
+Communicate only material transitions using `Done / Active / Blocked / Next` when structure helps. Keep the user's outcome and evidence visible; omit routine narration and unchanged status.

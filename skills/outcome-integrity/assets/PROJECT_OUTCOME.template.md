@@ -11,7 +11,8 @@ State: active
 
 ## Done Means
 
-- [ ] REPLACE_ME_WITH_OBSERVABLE_EVIDENCE
+- Authority: .codex/ACCEPTANCE.json
+- Summary: REPLACE_ME_WITH_HUMAN_READABLE_COMPLETION_BOUNDARY
 
 ## User Intent
 
@@ -38,6 +39,13 @@ State: active
 
 - REPLACE_ME_FACT | Evidence: REPLACE_ME | Verified: REPLACE_ME_UTC
 
+## Context Pointers
+
+- Architecture or project map: REPLACE_ME_OR_NONE
+- Active specification: REPLACE_ME_OR_NONE
+- Verification commands: REPLACE_ME
+- Evidence roots: REPLACE_ME
+
 ## Assumptions To Test
 
 - REPLACE_ME_ASSUMPTION | Falsifier: REPLACE_ME | Next check: REPLACE_ME
@@ -48,10 +56,11 @@ State: active
 
 ## Failure Memory
 
-- REPLACE_ME_OR_NONE | Root cause: REPLACE_ME | Invariant: REPLACE_ME | Do not repeat: REPLACE_ME
+- REPLACE_ME_OR_NONE | Class: REPLACE_ME | Evidence: REPLACE_ME | Invariant: REPLACE_ME | Do not repeat: REPLACE_ME
 
 ## Current Slice
 
+- Acceptance ID: REQ-001
 - Objective: REPLACE_ME
 - Acceptance evidence: REPLACE_ME
 - Protect: REPLACE_ME

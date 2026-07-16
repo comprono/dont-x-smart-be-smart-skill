@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "updated_utc": "2026-07-16T00:41:04Z",
+  "project_state": "active",
+  "current_slice_requirement_id": "REQ-PACKAGE",
+  "requirements": [
+    {
+      "id": "REQ-STATE",
+      "description": "Human intent and machine-verifiable acceptance are stored separately and validated together.",
+      "required": true,
+      "status": "passing",
+      "minimum_evidence_level": "focused-test",
+      "acceptance_steps": [
+        "Initialize both project files without overwriting existing state.",
+        "Reject placeholders, mismatched state, stale resume state, and unsupported passing evidence.",
+        "Accept a complete structurally valid active state."
+      ],
+      "evidence": [
+        {
+          "level": "focused-test",
+          "ref": "python -m unittest discover -s tests -v",
+          "summary": "Eight deterministic tests passed, including dual-file initialization, stale resume rejection, evidence enforcement, blocker recovery, and completion gating.",
+          "verified_utc": "2026-07-16T00:38:55Z"
+        }
+      ],
+      "blocker": null
+    },
+    {
+      "id": "REQ-RECOVERY",
+      "description": "Failure handling classifies errors before retrying and prevents repeated semantic attempts.",
+      "required": true,
+      "status": "passing",
+      "minimum_evidence_level": "focused-test",
+      "acceptance_steps": [
+        "The skill distinguishes transient, reasoning-recoverable, user-fixable, and unexpected failures.",
+        "A fresh agent refuses an unchanged third attempt after repeated semantic failure."
+      ],
+      "evidence": [
+        {
+          "level": "focused-test",
+          "ref": "fresh-agent scenarios 019f685d-8469-7121-8c68-94d684bde906 and 019f685d-a15b-7442-bdc0-07652de4e4f7",
+          "summary": "Fresh Luna agents reconciled an ambiguous external write and refused an unchanged third semantic retry in favor of authoritative transition tracing.",
+          "verified_utc": "2026-07-16T00:41:04Z"
+        }
+      ],
+      "blocker": null
+    },
+    {
+      "id": "REQ-DELEGATION",
+      "description": "Delegation occurs only for independent work whose expected contribution exceeds coordination cost.",
+      "required": true,
+      "status": "passing",
+      "minimum_evidence_level": "focused-test",
+      "acceptance_steps": [
+        "The skill defines a conjunctive delegation admission gate.",
+        "Fresh-agent tests keep sequential critical-path work local and allow bounded parallel work."
+      ],
+      "evidence": [
+        {
+          "level": "focused-test",
+          "ref": "fresh-agent scenario 019f685d-d3d6-7ec1-81ab-29588f4e065e",
+          "summary": "A fresh Luna agent kept tightly coupled critical-path diagnosis local, rejected duplicate diagnosis, and delegated only the disjoint read-only acceptance lane.",
+          "verified_utc": "2026-07-16T00:41:04Z"
+        }
+      ],
+      "blocker": null
+    },
+    {
+      "id": "REQ-PACKAGE",
+      "description": "The public package passes deterministic, behavioral, privacy, and GitHub CI verification.",
+      "required": true,
+      "status": "failing",
+      "minimum_evidence_level": "integration",
+      "acceptance_steps": [
+        "Run the repository test suite and Codex skill validator.",
+        "Run privacy scanning and fresh-agent behavioral scenarios.",
+        "Push the release and confirm GitHub Actions succeeds."
+      ],
+      "evidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-INSTALL",
+      "description": "The exact published release installs locally without duplicating global instructions.",
+      "required": true,
+      "status": "failing",
+      "minimum_evidence_level": "integration",
+      "acceptance_steps": [
+        "Run the public installer twice against an isolated Codex home.",
+        "Install locally and compare all installed skill file hashes with the repository.",
+        "Confirm one managed global instruction block remains."
+      ],
+      "evidence": [],
+      "blocker": null
+    }
+  ]
+}
