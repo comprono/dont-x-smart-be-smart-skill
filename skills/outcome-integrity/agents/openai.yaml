@@ -1,0 +1,4 @@
+interface:
+  display_name: "Outcome Integrity"
+  short_description: "Preserve project intent and stop execution drift"
+  default_prompt: "Preserve the project's north star, maintain the bounded outcome ledger, detect drift, and advance one verified slice."
