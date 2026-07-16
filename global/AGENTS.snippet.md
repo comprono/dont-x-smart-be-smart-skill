@@ -11,6 +11,8 @@ For every nontrivial task, preserve the user's latest explicit outcome as the co
 - Advance one material end-to-end slice at a time. Do not add another unverified architectural layer while the current slice lacks outcome evidence.
 - Rank evidence as: user-visible outcome, end-to-end acceptance, integration verification, focused test, process health, activity. Never report a lower level as proof of a higher one.
 - Plans, tool calls, worker launches, generated artifacts, passing unit tests, healthy processes, elapsed time, and token usage are not progress unless they reduce the verified gap to the user's outcome.
+- Before enabling recurring, unattended, scheduled, retrying, or automatic recovery work, define its progress signal, idempotency key or state fingerprint, cadence and backoff, resource cap and reserve, retention and cleanup, no-progress stop, and restart/cancellation recovery. Authorization to continue is not authorization for unbounded resource use.
+- Observed state may be checked frequently, but mutating recovery runs only on state change or explicit retry eligibility. Stop and fail closed when resources grow while acceptance evidence does not improve.
 - When evidence contradicts the plan, invalidate or revise the plan. Do not add rules merely to preserve it.
 - Classify failures before retrying. Retry only bounded transient or materially changed reasoning attempts. If the same acceptance outcome fails twice, stop blind retries, trace authoritative state, reproduce the failure, and correct the violated invariant.
 - Never add a blocking state without an owner, a recovery trigger, a recovery transition, and verification that the transition works.

@@ -37,6 +37,14 @@ State: active
 
 - REPLACE_ME_OR_NONE
 
+## Operational Envelope
+
+- Applies to: REPLACE_ME_OR_NOT_APPLICABLE
+- Progress signal and side-effect key: REPLACE_ME_OR_NOT_APPLICABLE
+- Cadence and retry eligibility: REPLACE_ME_OR_NOT_APPLICABLE
+- Resource budget, reserve, and retention: REPLACE_ME_OR_NOT_APPLICABLE
+- No-progress stop, restart, cancellation, and recovery: REPLACE_ME_OR_NOT_APPLICABLE
+
 ## Verified State
 
 - REPLACE_ME_FACT | Evidence: REPLACE_ME | Verified: REPLACE_ME_UTC

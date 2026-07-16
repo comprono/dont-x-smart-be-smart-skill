@@ -190,7 +190,40 @@ class PackageTests(unittest.TestCase):
 
         self.assertIn("- User-visible proof:", template)
         self.assertIn("- Methods, not outcomes:", template)
-        self.assertIn("Separate the user's final outcome and proof", openai_yaml)
+        self.assertIn("Separate the user's outcome from methods", openai_yaml)
+
+    def test_recurring_work_has_a_bounded_operational_envelope(self) -> None:
+        skill = SKILL.read_text(encoding="utf-8")
+        global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
+        template = PROJECT_TEMPLATE.read_text(encoding="utf-8")
+        readme = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
+        openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
+
+        for phrase in (
+            "Bound Autonomous And Recurring Work",
+            "Authorization to continue does not authorize unbounded resource use",
+            "Observe frequently; mutate only on state change",
+            "resource usage grows while the acceptance state does not improve",
+        ):
+            self.assertIn(phrase, skill)
+
+        for phrase in (
+            "Before enabling recurring, unattended, scheduled, retrying, or automatic recovery work",
+            "Observed state may be checked frequently",
+            "Stop and fail closed when resources grow",
+        ):
+            self.assertIn(phrase, global_rules)
+
+        for phrase in (
+            "## Operational Envelope",
+            "- Progress signal and side-effect key:",
+            "- Resource budget, reserve, and retention:",
+            "- No-progress stop, restart, cancellation, and recovery:",
+        ):
+            self.assertIn(phrase, template)
+
+        self.assertIn("unattended loops consume storage", readme)
+        self.assertIn("bound recurring side effects", openai_yaml)
 
     def test_installer_is_idempotent_and_preserves_existing_rules(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

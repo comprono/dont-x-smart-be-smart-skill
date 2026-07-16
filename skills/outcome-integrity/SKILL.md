@@ -1,6 +1,6 @@
 ---
 name: outcome-integrity
-description: Preserve project intent and prevent objective drift, method-outcome confusion, context-compaction loss, premature completion, proxy progress, repeated failure, and wasteful orchestration. Use for nontrivial project implementation or diagnosis, resumed or compacted work, user corrections, long-running or multi-agent work, external side effects, repeated failures, unexpected scope growth, disproportionate token use, or work the user says is irrelevant. Maintain bounded .codex/PROJECT_OUTCOME.md intent and .codex/ACCEPTANCE.json evidence state, reconcile them with current reality, classify failures before retrying, advance one verified end-to-end slice, and admit delegation only when it reduces total work.
+description: Preserve project intent and prevent objective drift, method-outcome confusion, context-compaction loss, premature completion, proxy progress, repeated failure, unbounded autonomous side effects, and wasteful orchestration. Use for nontrivial project implementation or diagnosis, resumed or compacted work, user corrections, long-running or multi-agent work, recurring loops, schedulers, watchdogs, automatic recovery, external side effects, repeated failures, unexpected scope growth, disproportionate resource use, or work the user says is irrelevant. Maintain bounded .codex/PROJECT_OUTCOME.md intent and .codex/ACCEPTANCE.json evidence state, reconcile them with current reality, classify failures before retrying, bound recurring work, advance one verified end-to-end slice, and admit delegation only when it reduces total work.
 ---
 
 # Outcome Integrity
@@ -130,6 +130,21 @@ Also run an outcome-distance check: an intermediate artifact counts as progress 
 Keep at most one unverified architectural layer in flight. A plan, scaffold, monitoring surface, or generated artifact is not a material slice unless it is itself the accepted outcome.
 
 After a coherent verified slice, update both state files and use a focused Git commit when repository policy and the user's working tree permit it. Never stage unrelated user changes.
+
+## Bound Autonomous And Recurring Work
+
+Before enabling or resuming a loop, watcher, scheduler, unattended worker, retrying supervisor, or automatic recovery that can outlive the current turn or accumulate side effects, define a proportional operational envelope in .codex/PROJECT_OUTCOME.md:
+
+- **Progress signal:** name the authoritative state change tied to an acceptance ID. Repeated checks, attempts, and unchanged health are not progress.
+- **Side-effect identity:** use a stable idempotency key or observed-state fingerprint so the same condition becomes a no-op.
+- **Cadence and retry:** observe frequently if useful; mutate only on a state transition or explicit retry eligibility with bounded cooldown or backoff.
+- **Resource limits:** cap relevant disk, file count, API calls, tokens, money, RAM, and concurrency while preserving a minimum reserve or free-space floor.
+- **Retention and lifecycle:** set maximum count, bytes, or age; prune before allocating near a limit; clean up after success, cancellation, crash recovery, and startup when appropriate.
+- **Stop and recovery:** define a no-progress threshold, fail-closed or degraded transition, owner, recovery trigger, and restart behavior. Persist safety-critical retry and budget state; an in-memory timer alone is insufficient for accumulating or irreversible effects.
+
+Authorization to continue does not authorize unbounded resource use or repeated irreversible side effects. Keep a bounded read-only poll lightweight; add only the controls proportional to its possible harm.
+
+Observe frequently; mutate only on state change or explicit retry eligibility. Before acceptance, test repeated identical ticks plus restart and cancellation, and assert bounded resource growth with no duplicate side effects. If resource usage grows while the acceptance state does not improve, stop the producer, preserve evidence, and diagnose before resuming.
 
 ## Classify Failure Before Retrying
 

@@ -17,6 +17,7 @@ Long agent sessions can drift after context compaction, promote an add-on into t
 - Treating a review, test, plan, or orchestration step as the final outcome when the user's real goal is broader.
 - Continuing a stale plan after the user corrects it.
 - Continuing a stale task contract after a correction or stopping merely because one worker or method was rejected.
+- Letting unattended loops consume storage, quota, money, or memory without verified outcome progress.
 - Treating tests, workers, tool calls, or service health as proof of the requested outcome.
 - Repeating the same symptom patch after two failed attempts.
 - Retrying semantic failures as though they were transient network errors.
@@ -51,6 +52,8 @@ python scripts/install.py --skip-global-rules
 ## How It Works
 
 Before substantive work, Codex forms a compact outcome frame: the final outcome, acceptable proof, intermediate methods, and constraints. It asks whether completing every proposed method would actually solve the user's problem. If not, it reframes the task before spending tokens or assigning workers.
+
+Before recurring or unattended work is enabled, Codex records a proportional operational envelope: progress identity, idempotency, retry cadence, resource cap and reserve, retention, cleanup, no-progress stop, and restart behavior. Read-only bounded polling stays lightweight; accumulating side effects fail closed when evidence stops improving.
 
 For a nontrivial project, Codex reads or creates:
 

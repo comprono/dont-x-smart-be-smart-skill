@@ -1,4 +1,4 @@
 interface:
   display_name: "Outcome Integrity"
   short_description: "Preserve intent and verify real project outcomes"
-  default_prompt: "Separate the user's final outcome and proof from intermediate methods, reconcile project intent and acceptance state, then advance one evidence-backed slice."
+  default_prompt: "Separate the user's outcome from methods, reconcile evidence, bound recurring side effects, then advance one verified slice."
