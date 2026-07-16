@@ -1,13 +1,15 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-07-16T00:43:15Z
+Updated: 2026-07-16T21:01:02Z
 State: complete
 
 ## North Star
 
-- Outcome: Upgrade and publish Outcome Integrity so Codex preserves project intent and proves outcomes across compaction, failures, and selective delegation.
-- Why it matters: Instruction-only continuity can still drift, retry the wrong failure, or claim progress from proxy evidence.
+- Outcome: Upgrade and publish Outcome Integrity so Codex frames the real outcome before methods, preserves intent, and proves outcomes across corrections, compaction, failures, and selective delegation.
+- User-visible proof: A future task keeps the user's actual result authoritative before tools or delegation and immediately replaces stale contracts after correction.
+- Methods, not outcomes: Review, planning, testing, delegation, installation, and publication.
+- Why it matters: A sound recovery system can still fail if it formalizes the wrong task before recovery begins.
 
 ## Done Means
 
@@ -18,14 +20,15 @@ State: complete
 
 - Priorities: Apply researched solutions without adding another orchestration system.
 - Working preferences: Implement, test, install, publish, and report verified results concisely.
-- Explicit corrections: Preserve project truth across compaction using maintained project files, not a project-specific AGENTS.md.
+- Explicit corrections: This is a separate global skill; prevent intermediate methods from replacing the actual user outcome before any task contract is created.
 - Non-negotiables: Stay token-efficient, globally reusable, and honest about guarantee boundaries.
 
 ## Work Map
 
 ### Critical Path
 
-- Add a machine-verifiable acceptance registry and mature recovery/delegation gates.
+- Add a pre-work outcome frame and stale-contract correction gate.
+- Preserve the machine-verifiable acceptance registry and mature recovery/delegation gates.
 - Test deterministic behavior and fresh-agent behavior, then publish and install the exact release.
 
 ### Add-ons
@@ -44,6 +47,7 @@ State: complete
 - Dual-file state validation passes eight deterministic tests | Evidence: python -m unittest discover -s tests -v | Verified: 2026-07-16T00:38:55Z
 - Failure classification and delegation admission pass three fresh-agent scenarios on GPT-5.6 Luna low | Evidence: agent results recorded in ACCEPTANCE.json | Verified: 2026-07-16T00:41:04Z
 - Public CI passed commit 2c85453 and the installed local skill matches every repository file hash | Evidence: GitHub Actions run 29462178379 and local SHA256 comparison | Verified: 2026-07-16T00:43:15Z
+- Outcome-framing rules, stale-contract invalidation, and method-rejection replanning passed local and public validation at commit 143d005 | Evidence: 10 package tests, Codex skill validator, GitHub Actions run 29534222570, installed SHA256 comparison | Verified: 2026-07-16T21:01:02Z
 
 ## Context Pointers
 
@@ -66,17 +70,18 @@ State: complete
 
 - Instruction-only continuity | Root cause: no machine-verifiable acceptance registry | Invariant: completion requires validated evidence-bearing acceptance items | Do not repeat: treating Markdown checkboxes as proof
 - Blanket retry handling | Root cause: transient and semantic failures were conflated | Invariant: classify before retry | Do not repeat: identical semantic retry
+- Method promoted to outcome | Root cause: the task contract formed before the real result was distinguished from review, testing, or orchestration | Invariant: frame outcome and proof before substantive work | Do not repeat: completing an intermediate method as though it solved the problem
 
 ## Current Slice
 
 - Acceptance ID: none
-- Objective: Release verification is complete.
-- Acceptance evidence: All five required acceptance items pass at their required evidence levels.
+- Objective: Outcome-framing revision is released and verified.
+- Acceptance evidence: All six required acceptance items pass at their required evidence levels.
 - Protect: Short global instructions, trivial-task proportionality, installer idempotency, and local privacy.
 - Status: complete
 
 ## Next
 
-- Action: Start a new Codex task after restart to exercise the installed release on real project work.
-- Why now: Implementation, publication, installation, and verification are complete.
+- Action: Start a new Codex task after restart to exercise the updated global framing rule.
+- Why now: Implementation, public CI, exact installation, and completion evidence are verified.
 - Blocker and recovery: None.

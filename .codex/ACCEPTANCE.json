@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-07-16T00:43:15Z",
+  "updated_utc": "2026-07-16T21:01:02Z",
   "project_state": "complete",
   "current_slice_requirement_id": null,
   "requirements": [
@@ -103,6 +103,27 @@
           "ref": "scripts/install.py and local SHA256 comparison",
           "summary": "The release installed to the active Codex home, every skill file hash matched, and exactly one managed global instruction block remained.",
           "verified_utc": "2026-07-16T00:43:15Z"
+        }
+      ],
+      "blocker": null
+    },
+    {
+      "id": "REQ-FRAMING",
+      "description": "The skill separates the final outcome and proof from intermediate methods before substantive work, invalidates stale contracts after correction, and replans after a rejected method.",
+      "required": true,
+      "status": "passing",
+      "minimum_evidence_level": "integration",
+      "acceptance_steps": [
+        "Assert the pre-work outcome frame, counterfactual, and no-capability-narrowing rules in the skill and global instructions.",
+        "Assert corrections invalidate dependent task contracts and rejected methods trigger replanning.",
+        "Run package tests, the Codex skill validator, local installation hash verification, and public CI."
+      ],
+      "evidence": [
+        {
+          "level": "integration",
+          "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/29534222570",
+          "summary": "Ten package tests, the Codex skill validator, public GitHub Actions, exact local installation hashes, and a single managed global rule block passed for commit 143d005.",
+          "verified_utc": "2026-07-16T21:01:02Z"
         }
       ],
       "blocker": null
