@@ -7,6 +7,8 @@ State: active
 ## North Star
 
 - Outcome: REPLACE_ME
+- User-visible proof: REPLACE_ME
+- Methods, not outcomes: REPLACE_ME
 - Why it matters: REPLACE_ME
 
 ## Done Means

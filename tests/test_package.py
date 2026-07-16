@@ -13,6 +13,17 @@ REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 INSTALLER = REPOSITORY_ROOT / "scripts" / "install.py"
 STATE_SCRIPT = REPOSITORY_ROOT / "skills" / "outcome-integrity" / "scripts" / "project_outcome.py"
 SKILL = REPOSITORY_ROOT / "skills" / "outcome-integrity" / "SKILL.md"
+GLOBAL_RULES = REPOSITORY_ROOT / "global" / "AGENTS.snippet.md"
+PROJECT_TEMPLATE = (
+    REPOSITORY_ROOT
+    / "skills"
+    / "outcome-integrity"
+    / "assets"
+    / "PROJECT_OUTCOME.template.md"
+)
+OPENAI_YAML = (
+    REPOSITORY_ROOT / "skills" / "outcome-integrity" / "agents" / "openai.yaml"
+)
 
 
 def load_module(path: Path, name: str):
@@ -155,6 +166,31 @@ class PackageTests(unittest.TestCase):
             "completion --root",
         ):
             self.assertIn(phrase, text)
+
+    def test_outcome_framing_precedes_methods_and_stale_contracts(self) -> None:
+        skill = SKILL.read_text(encoding="utf-8")
+        global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
+        template = PROJECT_TEMPLATE.read_text(encoding="utf-8")
+        openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
+
+        for phrase in (
+            "Frame The Outcome Before The Method",
+            "if every proposed method completed successfully",
+            "cancel or replace it safely",
+            "replan from the outcome",
+        ):
+            self.assertIn(phrase, skill)
+
+        for phrase in (
+            "Before the first substantive tool call or durable task contract",
+            "A correction that changes the outcome invalidates",
+            "After a worker or method is rejected",
+        ):
+            self.assertIn(phrase, global_rules)
+
+        self.assertIn("- User-visible proof:", template)
+        self.assertIn("- Methods, not outcomes:", template)
+        self.assertIn("Separate the user's final outcome and proof", openai_yaml)
 
     def test_installer_is_idempotent_and_preserves_existing_rules(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

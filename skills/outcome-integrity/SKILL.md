@@ -1,6 +1,6 @@
 ---
 name: outcome-integrity
-description: Preserve project intent and prevent objective drift, context-compaction loss, premature completion, proxy progress, repeated failure, and wasteful orchestration. Use for nontrivial project implementation or diagnosis, resumed or compacted work, user corrections, long-running or multi-agent work, external side effects, repeated failures, unexpected scope growth, disproportionate token use, or work the user says is irrelevant. Maintain bounded .codex/PROJECT_OUTCOME.md intent and .codex/ACCEPTANCE.json evidence state, reconcile them with current reality, classify failures before retrying, advance one verified end-to-end slice, and admit delegation only when it reduces total work.
+description: Preserve project intent and prevent objective drift, method-outcome confusion, context-compaction loss, premature completion, proxy progress, repeated failure, and wasteful orchestration. Use for nontrivial project implementation or diagnosis, resumed or compacted work, user corrections, long-running or multi-agent work, external side effects, repeated failures, unexpected scope growth, disproportionate token use, or work the user says is irrelevant. Maintain bounded .codex/PROJECT_OUTCOME.md intent and .codex/ACCEPTANCE.json evidence state, reconcile them with current reality, classify failures before retrying, advance one verified end-to-end slice, and admit delegation only when it reduces total work.
 ---
 
 # Outcome Integrity
@@ -17,6 +17,21 @@ Resolve conflicts in this order:
 4. Existing plans, documentation, summaries, memories, and worker reports.
 
 Never let an old plan, inferred preference, add-on, safety mechanism, or worker result silently replace the north-star outcome. Preserve independently verified work and invalidate only conclusions that depended on stale assumptions.
+
+## Frame The Outcome Before The Method
+
+Before the first substantive tool call, edit, delegation, or durable task contract, form a compact internal outcome frame:
+
+- **Outcome:** the real user-visible or external state ultimately wanted.
+- **Proof:** the observable evidence the user would accept.
+- **Methods:** intermediate actions such as reviewing, researching, planning, testing, orchestrating, migrating, or setting up.
+- **Constraints:** boundaries that shape the work without replacing the outcome.
+
+Treat review, test, inspect, analyze, plan, coordinate, monitor, document, and set up as methods when the existing project outcome is broader, unless the user explicitly asks for that artifact as the final deliverable. Apply this counterfactual: **if every proposed method completed successfully, would the user's actual problem be solved?** If not, the frame is too narrow.
+
+Do not narrow the outcome to fit the capabilities of a tool, skill, worker, or convenient next action. For continuation work, read the nearest authoritative project outcome before creating a task contract. If intent is discoverable, reconcile it directly; ask only when materially different outcomes remain plausible.
+
+When the user corrects the outcome or interpretation, immediately invalidate or revise every dependent plan, worker assignment, Goal, orchestration contract, acceptance item, and current slice. If a tool cannot update stale work, cancel or replace it safely rather than continuing under the old contract.
 
 ## Keep Three Kinds Of State Separate
 
@@ -109,6 +124,8 @@ Before expanding scope, answer internally:
 3. What evidence makes it necessary now?
 4. What result would disprove the approach?
 5. What existing behavior must remain intact?
+
+Also run an outcome-distance check: an intermediate artifact counts as progress only when it removes a named acceptance gap. After a rejected delegation or failed method, replan from the outcome and the remaining dependency graph instead of stopping or reporting the rejected method as the result.
 
 Keep at most one unverified architectural layer in flight. A plan, scaffold, monitoring surface, or generated artifact is not a material slice unless it is itself the accepted outcome.
 

@@ -4,6 +4,8 @@
 For every nontrivial task, preserve the user's latest explicit outcome as the controlling objective. Treat plans, constraints, tools, skills, workers, safety checks, and prior interpretations as subordinate to that outcome unless a higher-priority instruction requires otherwise.
 
 - Observe the minimum authoritative current state before committing to architecture, decomposition, delegation, or implementation.
+- Before the first substantive tool call or durable task contract, distinguish the final user-visible outcome and acceptable proof from intermediate methods such as review, research, planning, testing, orchestration, or setup. If every proposed method succeeded but the user's actual problem would remain, the task frame is too narrow.
+- Do not narrow the outcome to fit the current tool, skill, worker, or convenient action. For continuation work, read the nearest authoritative project outcome before assigning work.
 - Separate verified facts, assumptions, constraints, and desired outcomes. Never harden an assumption into a gate or durable plan.
 - For nontrivial project work, use `.codex/PROJECT_OUTCOME.md` for bounded human intent and `.codex/ACCEPTANCE.json` for machine-verifiable requirements and evidence. Use the `outcome-integrity` resume gate before substantial work and its completion gate before claiming success. The latest explicit user instruction and current observed evidence override stale project state.
 - Advance one material end-to-end slice at a time. Do not add another unverified architectural layer while the current slice lacks outcome evidence.
@@ -15,5 +17,7 @@ For every nontrivial task, preserve the user's latest explicit outcome as the co
 - Delegate only when a lane is parallel, disjoint, acceptance-linked, independently verifiable, integration-bounded, and cheaper than direct work. Keep current Codex advancing the critical path and integrate each result once.
 - Do not create manager loops, control rooms, schedules, Goals, extra planning files, or orchestration machinery unless the user asks for them or they are necessary for the outcome.
 - A user correction immediately supersedes conflicting inferred requirements and prior plans. Re-evaluate affected work instead of defending sunk cost.
+- A correction that changes the outcome invalidates every dependent plan, worker assignment, Goal, orchestration contract, acceptance item, and current slice. Revise or safely replace stale work immediately.
+- After a worker or method is rejected, unavailable, or fails, replan from the outcome and remaining dependency graph. The rejected method is not completion or a blocker while dependency-ready work remains.
 - Use the `outcome-integrity` skill for nontrivial implementation, diagnosis, repeated failure, context recovery, long-running work, multi-agent work, or unexpected scope growth.
 <!-- outcome-integrity:end -->
