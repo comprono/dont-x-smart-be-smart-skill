@@ -1,8 +1,8 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-07-16T00:41:04Z
-State: active
+Updated: 2026-07-16T00:43:15Z
+State: complete
 
 ## North Star
 
@@ -43,6 +43,7 @@ State: active
 - Existing package tests and GitHub CI passed before this upgrade | Evidence: prior local and GitHub Actions results | Verified: 2026-07-16T00:31:42Z
 - Dual-file state validation passes eight deterministic tests | Evidence: python -m unittest discover -s tests -v | Verified: 2026-07-16T00:38:55Z
 - Failure classification and delegation admission pass three fresh-agent scenarios on GPT-5.6 Luna low | Evidence: agent results recorded in ACCEPTANCE.json | Verified: 2026-07-16T00:41:04Z
+- Public CI passed commit 2c85453 and the installed local skill matches every repository file hash | Evidence: GitHub Actions run 29462178379 and local SHA256 comparison | Verified: 2026-07-16T00:43:15Z
 
 ## Context Pointers
 
@@ -68,14 +69,14 @@ State: active
 
 ## Current Slice
 
-- Acceptance ID: REQ-PACKAGE
-- Objective: Run complete package, privacy, metadata, and installation verification before publication.
-- Acceptance evidence: All deterministic checks pass and no private data is present.
+- Acceptance ID: none
+- Objective: Release verification is complete.
+- Acceptance evidence: All five required acceptance items pass at their required evidence levels.
 - Protect: Short global instructions, trivial-task proportionality, installer idempotency, and local privacy.
-- Status: active
+- Status: complete
 
 ## Next
 
-- Action: Run the full local validation matrix and inspect the complete diff.
-- Why now: State, recovery, and delegation behavior pass; package integrity is the next dependency.
+- Action: Start a new Codex task after restart to exercise the installed release on real project work.
+- Why now: Implementation, publication, installation, and verification are complete.
 - Blocker and recovery: None.

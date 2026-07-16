@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-07-16T00:41:04Z",
-  "project_state": "active",
-  "current_slice_requirement_id": "REQ-PACKAGE",
+  "updated_utc": "2026-07-16T00:43:15Z",
+  "project_state": "complete",
+  "current_slice_requirement_id": null,
   "requirements": [
     {
       "id": "REQ-STATE",
@@ -69,28 +69,42 @@
       "id": "REQ-PACKAGE",
       "description": "The public package passes deterministic, behavioral, privacy, and GitHub CI verification.",
       "required": true,
-      "status": "failing",
+      "status": "passing",
       "minimum_evidence_level": "integration",
       "acceptance_steps": [
         "Run the repository test suite and Codex skill validator.",
         "Run privacy scanning and fresh-agent behavioral scenarios.",
         "Push the release and confirm GitHub Actions succeeds."
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "level": "integration",
+          "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/29462178379",
+          "summary": "Nine local tests, Codex skill validation, Python compilation, privacy scanning, diff checks, fresh-agent scenarios, and GitHub Actions passed for commit 2c85453.",
+          "verified_utc": "2026-07-16T00:43:15Z"
+        }
+      ],
       "blocker": null
     },
     {
       "id": "REQ-INSTALL",
       "description": "The exact published release installs locally without duplicating global instructions.",
       "required": true,
-      "status": "failing",
+      "status": "passing",
       "minimum_evidence_level": "integration",
       "acceptance_steps": [
         "Run the public installer twice against an isolated Codex home.",
         "Install locally and compare all installed skill file hashes with the repository.",
         "Confirm one managed global instruction block remains."
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "level": "integration",
+          "ref": "scripts/install.py and local SHA256 comparison",
+          "summary": "The release installed to the active Codex home, every skill file hash matched, and exactly one managed global instruction block remained.",
+          "verified_utc": "2026-07-16T00:43:15Z"
+        }
+      ],
       "blocker": null
     }
   ]
