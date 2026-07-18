@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-07-18T22:31:28Z",
-  "project_state": "blocked",
-  "current_slice_requirement_id": "REQ-PACKAGE",
+  "updated_utc": "2026-07-18T22:46:54Z",
+  "project_state": "complete",
+  "current_slice_requirement_id": null,
   "requirements": [
     {
       "id": "REQ-STATE",
@@ -69,39 +69,43 @@
       "id": "REQ-PACKAGE",
       "description": "The public package passes deterministic, behavioral, privacy, and GitHub CI verification.",
       "required": true,
-      "status": "blocked",
+      "status": "passing",
       "minimum_evidence_level": "integration",
       "acceptance_steps": [
         "Run the repository test suite and Codex skill validator.",
         "Run privacy scanning and fresh-agent behavioral scenarios.",
         "Push the release and confirm GitHub Actions succeeds."
       ],
-      "evidence": [],
-      "blocker": {
-        "owner": "user",
-        "reason": "The direct-answer-first and communication-loop revision has not been committed, pushed, or verified by GitHub CI.",
-        "recovery_trigger": "User authorizes publication of the scoped release.",
-        "recovery_action": "Commit and push the verified direct-answer-first and communication-loop change, then record the current GitHub Actions result."
-      }
+      "evidence": [
+        {
+          "level": "integration",
+          "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/29664026459",
+          "summary": "Communication-loop release commit 84ffb77 passed repository tests and GitHub Actions validation after local 13-test verification.",
+          "verified_utc": "2026-07-18T22:46:54Z"
+        }
+      ],
+      "blocker": null
     },
     {
       "id": "REQ-INSTALL",
       "description": "The exact published release installs locally without duplicating global instructions.",
       "required": true,
-      "status": "blocked",
+      "status": "passing",
       "minimum_evidence_level": "integration",
       "acceptance_steps": [
         "Run the public installer twice against an isolated Codex home.",
         "Install locally and compare all installed skill file hashes with the repository.",
         "Confirm one managed global instruction block remains."
       ],
-      "evidence": [],
-      "blocker": {
-        "owner": "user",
-        "reason": "The current direct-answer-first and communication-loop revision has not been installed into the active Codex home.",
-        "recovery_trigger": "User authorizes installation after the release is published or explicitly authorizes a local-only install.",
-        "recovery_action": "Run the installer against the active Codex home and compare installed skill and global-rule hashes."
-      }
+      "evidence": [
+        {
+          "level": "integration",
+          "ref": "python scripts/install.py; SHA256 comparison of C:\\Users\\paras\\.codex\\skills\\outcome-integrity against source; active AGENTS.md managed block inspection",
+          "summary": "The updated outcome-integrity skill installed into the active Codex home; installed non-cache skill files match source hashes and the active global rules include the layer-separated status rule.",
+          "verified_utc": "2026-07-18T22:46:54Z"
+        }
+      ],
+      "blocker": null
     },
     {
       "id": "REQ-FRAMING",

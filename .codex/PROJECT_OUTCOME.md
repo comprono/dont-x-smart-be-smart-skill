@@ -1,8 +1,8 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-07-18T22:31:03Z
-State: blocked
+Updated: 2026-07-18T22:46:54Z
+State: complete
 
 ## North Star
 
@@ -14,7 +14,7 @@ State: blocked
 ## Done Means
 
 - Authority: .codex/ACCEPTANCE.json
-- Summary: Intent, acceptance evidence, recovery, delegation, installation, and publication are verified through reproducible checks.
+- Summary: Intent, acceptance evidence, recovery, delegation, installation, publication, and active local installation are verified through reproducible checks.
 
 ## User Intent
 
@@ -53,6 +53,7 @@ State: blocked
 - Bounded-autonomy rules and operational-envelope template passed local and public validation at commit c0c46d2 | Evidence: 11 package tests, Codex skill validator, GitHub Actions run 29536198974, privacy scan, exact installed SHA256 comparison | Verified: 2026-07-16T21:30:51Z
 - Direct-answer-first behavior passes 12 local deterministic tests and the active state validates and resumes | Evidence: python -m unittest discover -s tests -v; project_outcome.py validate and resume | Verified: 2026-07-18T22:01:07Z
 - Confusing-reply-loop and layer-separated-status behavior passes 13 local deterministic tests and the active state validates and resumes | Evidence: TEMP/TMP=C:\tmp python -m unittest discover -s tests -v; project_outcome.py validate and resume | Verified: 2026-07-18T22:30:19Z
+- Communication-loop release commit 84ffb77 passed public CI and active local installation hash verification | Evidence: GitHub Actions run 29664026459; installed skill SHA256 comparison; active AGENTS.md managed block inspection | Verified: 2026-07-18T22:46:54Z
 
 ## Context Pointers
 
@@ -81,14 +82,14 @@ State: blocked
 
 ## Current Slice
 
-- Acceptance ID: REQ-PACKAGE
+- Acceptance ID: none
 - Objective: Publish and verify the direct-answer-first and communication-loop release.
 - Acceptance evidence: GitHub CI verifies the current commit after the local 13-test result.
 - Protect: Accuracy, necessary qualifications, short global instructions, layer-separated status, trivial-task proportionality, and unrelated user changes.
-- Status: blocked
+- Status: complete
 
 ## Next
 
-- Action: Await the user's authorization to commit, push, and then install the verified direct-answer-first and communication-loop release.
-- Why now: The source change is locally verified by 13 deterministic tests, but publishing and changing the active Codex installation are external writes requiring user direction.
-- Blocker and recovery: Owner: user | Trigger: explicit authorization to publish and/or install | Recovery: commit and push the scoped release, verify CI, then run the installer and compare hashes.
+- Action: None; release is committed, pushed, CI-verified, and installed locally.
+- Why now: The requested source, GitHub, and active local Codex installation are aligned.
+- Blocker and recovery: None.
