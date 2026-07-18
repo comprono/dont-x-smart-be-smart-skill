@@ -1,6 +1,6 @@
 ---
 name: outcome-integrity
-description: Preserve project intent and prevent objective drift, method-outcome confusion, context-compaction loss, premature completion, proxy progress, repeated failure, unbounded autonomous side effects, and wasteful orchestration. Use for nontrivial project implementation or diagnosis, resumed or compacted work, user corrections, long-running or multi-agent work, recurring loops, schedulers, watchdogs, automatic recovery, external side effects, repeated failures, unexpected scope growth, disproportionate resource use, or work the user says is irrelevant. Maintain bounded .codex/PROJECT_OUTCOME.md intent and .codex/ACCEPTANCE.json evidence state, reconcile them with current reality, classify failures before retrying, bound recurring work, advance one verified end-to-end slice, and admit delegation only when it reduces total work.
+description: Preserve project intent and prevent objective drift, method-outcome confusion, confusing communication loops, context-compaction loss, premature completion, proxy progress, repeated failure, unbounded autonomous side effects, and wasteful orchestration. Use for nontrivial project implementation or diagnosis, resumed or compacted work, user corrections, long-running or multi-agent work, recurring loops, schedulers, watchdogs, automatic recovery, external side effects, repeated failures, unexpected scope growth, disproportionate resource use, or work the user says is irrelevant. Maintain bounded .codex/PROJECT_OUTCOME.md intent and .codex/ACCEPTANCE.json evidence state, reconcile them with current reality, classify failures before retrying, bound recurring work, advance one verified end-to-end slice, and admit delegation only when it reduces total work.
 ---
 
 # Outcome Integrity
@@ -32,6 +32,32 @@ Treat review, test, inspect, analyze, plan, coordinate, monitor, document, and s
 Do not narrow the outcome to fit the capabilities of a tool, skill, worker, or convenient next action. For continuation work, read the nearest authoritative project outcome before creating a task contract. If intent is discoverable, reconcile it directly; ask only when materially different outcomes remain plausible.
 
 When the user corrects the outcome or interpretation, immediately invalidate or revise every dependent plan, worker assignment, Goal, orchestration contract, acceptance item, and current slice. If a tool cannot update stale work, cancel or replace it safely rather than continuing under the old contract.
+
+## Answer The Immediate Question First
+
+For a simple question about current status, version alignment, meaning, ownership, or the next action, give the plain-language conclusion in the first sentence. Do this before history, paths, hashes, implementation detail, or a plan.
+
+Use the smallest accurate answer that resolves the user's actual uncertainty. If terms such as "local", "updated", or "installed" can refer to more than one thing, name the relevant copies in everyday language and state which one is authoritative. Do not make the user translate a technical distinction or restate the question in simpler words to get an answer.
+
+Expand only when the user asks for detail or when one short qualification is necessary to keep the first answer true. If the user says the explanation is confusing, too long, or irrelevant, treat that as a correction: stop the explanation, answer their immediate question in one or two plain sentences, then continue only if they request it.
+
+Never answer "yes, exactly" to an interpretation that loses a material distinction. Correct it briefly instead. Activity such as investigation, hash comparison, or a plan is not a substitute for the direct answer.
+
+## Prevent Confusing Reply Loops
+
+Treat confusing communication as an execution defect when it causes the user to repeat, simplify, or ask what is happening. The next response must repair the frame before adding detail or continuing a prior path.
+
+When the user asks for status, meaning, "is it working", or "what are you doing", answer in this order:
+
+- **Real outcome:** whether the user's actual result moved, with evidence level.
+- **Layer status:** separate product or project outcome, tooling or plugin state, restart or model state, and communication state when more than one is relevant.
+- **Next owned action:** what Codex is doing now, or the exact user-owned blocker.
+
+Never let `Done`, `working`, `complete`, `blocked`, `restart`, `plugin`, `local`, or `installed` refer to multiple layers in the same sentence. Name the layer. "Plugin released" is not "Job outcome achieved"; "worker running" is not "application submitted"; "restart scheduled" is not "same task continued".
+
+If the user says they are confused, asks the same status or meaning question again, or restates your answer in simpler words, stop the current explanation loop. Reply with at most three plain sentences that state the conclusion, the important distinction, and the next action. Do not add architecture history, tool narration, or a new plan unless the user asks.
+
+For project reports, `Next` means an agent-owned action already started or immediately executable. If the next executable action is safe and authorized, do it; do not hand it to the user as homework. If it needs the user, say the exact decision or authorization required.
 
 ## Keep Three Kinds Of State Separate
 
@@ -183,8 +209,10 @@ Stop and reconcile before spending more when:
 - an add-on becomes the practical objective;
 - the plan relies on stale summaries or assumptions;
 - lower-level evidence is being reported as completion;
+- status language mixes product outcome, tooling state, model or restart state, and communication state;
 - coordination costs more than its likely contribution;
 - a user correction conflicts with the active slice;
+- the user says the answer is confusing, repeats the same question, or has to translate the reply into simpler words;
 - the same failure is approaching an unchanged third attempt.
 
 Correct the state files first, then choose the next slice from the remaining verified gap. Do not preserve a bad plan by adding more rules, and do not swing to a full rebuild unless evidence requires it.

@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-07-16T21:30:51Z",
-  "project_state": "complete",
-  "current_slice_requirement_id": null,
+  "updated_utc": "2026-07-18T22:31:28Z",
+  "project_state": "blocked",
+  "current_slice_requirement_id": "REQ-PACKAGE",
   "requirements": [
     {
       "id": "REQ-STATE",
@@ -69,43 +69,39 @@
       "id": "REQ-PACKAGE",
       "description": "The public package passes deterministic, behavioral, privacy, and GitHub CI verification.",
       "required": true,
-      "status": "passing",
+      "status": "blocked",
       "minimum_evidence_level": "integration",
       "acceptance_steps": [
         "Run the repository test suite and Codex skill validator.",
         "Run privacy scanning and fresh-agent behavioral scenarios.",
         "Push the release and confirm GitHub Actions succeeds."
       ],
-      "evidence": [
-        {
-          "level": "integration",
-          "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/29462178379",
-          "summary": "Nine local tests, Codex skill validation, Python compilation, privacy scanning, diff checks, fresh-agent scenarios, and GitHub Actions passed for commit 2c85453.",
-          "verified_utc": "2026-07-16T00:43:15Z"
-        }
-      ],
-      "blocker": null
+      "evidence": [],
+      "blocker": {
+        "owner": "user",
+        "reason": "The direct-answer-first and communication-loop revision has not been committed, pushed, or verified by GitHub CI.",
+        "recovery_trigger": "User authorizes publication of the scoped release.",
+        "recovery_action": "Commit and push the verified direct-answer-first and communication-loop change, then record the current GitHub Actions result."
+      }
     },
     {
       "id": "REQ-INSTALL",
       "description": "The exact published release installs locally without duplicating global instructions.",
       "required": true,
-      "status": "passing",
+      "status": "blocked",
       "minimum_evidence_level": "integration",
       "acceptance_steps": [
         "Run the public installer twice against an isolated Codex home.",
         "Install locally and compare all installed skill file hashes with the repository.",
         "Confirm one managed global instruction block remains."
       ],
-      "evidence": [
-        {
-          "level": "integration",
-          "ref": "scripts/install.py and local SHA256 comparison",
-          "summary": "The release installed to the active Codex home, every skill file hash matched, and exactly one managed global instruction block remained.",
-          "verified_utc": "2026-07-16T00:43:15Z"
-        }
-      ],
-      "blocker": null
+      "evidence": [],
+      "blocker": {
+        "owner": "user",
+        "reason": "The current direct-answer-first and communication-loop revision has not been installed into the active Codex home.",
+        "recovery_trigger": "User authorizes installation after the release is published or explicitly authorizes a local-only install.",
+        "recovery_action": "Run the installer against the active Codex home and compare installed skill and global-rule hashes."
+      }
     },
     {
       "id": "REQ-FRAMING",
@@ -145,6 +141,48 @@
           "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/29536198974",
           "summary": "Eleven package tests, official skill validation, Python compilation, privacy scanning, public CI, exact five-file installation hashes, and one managed global rule block passed for commit c0c46d2.",
           "verified_utc": "2026-07-16T21:30:51Z"
+        }
+      ],
+      "blocker": null
+    },
+    {
+      "id": "REQ-DIRECT-ANSWER",
+      "description": "Simple user questions receive their plain-language conclusion before technical detail, process narration, or an unnecessary plan.",
+      "required": true,
+      "status": "passing",
+      "minimum_evidence_level": "focused-test",
+      "acceptance_steps": [
+        "Add a concise direct-answer-first rule to the skill, global instructions, and default prompt.",
+        "Require ambiguous terms to be distinguished briefly without forcing the user to simplify their question.",
+        "Add and pass a regression test for the rule."
+      ],
+      "evidence": [
+        {
+          "level": "focused-test",
+          "ref": "TEMP/TMP=C:\\tmp python -m unittest discover -s tests -v; project_outcome.py validate --root .; project_outcome.py resume --root .",
+          "summary": "Thirteen deterministic tests passed, preserving direct-answer-first wording across the skill, global rules, documentation, and default prompt; active project state also validated and resumed.",
+          "verified_utc": "2026-07-18T22:30:19Z"
+        }
+      ],
+      "blocker": null
+    },
+    {
+      "id": "REQ-COMM-LOOP",
+      "description": "Confusing status replies are treated as drift: the agent separates real outcome, tooling or restart state, model state, and communication state, then stops explanation loops with a short conclusion/distinction/next-action frame.",
+      "required": true,
+      "status": "passing",
+      "minimum_evidence_level": "focused-test",
+      "acceptance_steps": [
+        "Add a concise confusing-reply-loop rule to the skill and global instructions.",
+        "Require status language to name separate project, tooling, restart/model, and communication layers.",
+        "Add and pass a regression test for the rule."
+      ],
+      "evidence": [
+        {
+          "level": "focused-test",
+          "ref": "TEMP/TMP=C:\\tmp python -m unittest discover -s tests -v; project_outcome.py validate --root .; project_outcome.py resume --root .",
+          "summary": "Thirteen deterministic tests passed, including confusing-reply-loop and layer-separated status wording across the skill, global rules, documentation, and default prompt; active project state also validated and resumed.",
+          "verified_utc": "2026-07-18T22:30:19Z"
         }
       ],
       "blocker": null

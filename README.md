@@ -5,7 +5,7 @@
 
 A community Codex skill for keeping long, complicated project work aligned with the user's real outcome.
 
-Long agent sessions can drift after context compaction, promote an add-on into the main objective, confuse healthy processes with user-visible progress, repeat the same failed patch, or spend more tokens coordinating work than completing it. This repository installs a small two-layer correction:
+Long agent sessions can drift after context compaction, promote an add-on into the main objective, confuse healthy processes with user-visible progress, turn unclear replies into repeated clarification loops, repeat the same failed patch, or spend more tokens coordinating work than completing it. This repository installs a small two-layer correction:
 
 1. A concise global Codex rule block that activates outcome integrity for nontrivial project work.
 2. The `outcome-integrity` skill, which maintains bounded human intent and machine-verifiable acceptance inside each active project.
@@ -25,6 +25,9 @@ Long agent sessions can drift after context compaction, promote an add-on into t
 - Losing key intent and failed approaches after context compaction.
 - Marking requirements complete without sufficient evidence.
 - Creating project-management overhead for trivial work.
+- Burying a simple answer under investigation detail, jargon, or an unnecessary plan.
+- Mixing product progress, plugin or tooling state, model or restart state, and communication state in one ambiguous status.
+- Continuing an explanation loop after the user says the answer is confusing or restates it more simply.
 
 ## Install
 
@@ -52,6 +55,10 @@ python scripts/install.py --skip-global-rules
 ## How It Works
 
 Before substantive work, Codex forms a compact outcome frame: the final outcome, acceptable proof, intermediate methods, and constraints. It asks whether completing every proposed method would actually solve the user's problem. If not, it reframes the task before spending tokens or assigning workers.
+
+For a simple question—such as whether one copy is newer, what a result means, or what happens next—Codex answers the direct plain-language conclusion first. It distinguishes ambiguous terms briefly and only expands when asked or needed for accuracy. A user should not need to simplify their own question to get the actual answer.
+
+For status updates, Codex names the layer being discussed. Package, installer, model, restart, worker, and project-outcome states are not interchangeable. If an explanation confuses the user or the same question repeats, Codex treats that as drift and returns to a short conclusion, distinction, and next-action frame before continuing.
 
 Before recurring or unattended work is enabled, Codex records a proportional operational envelope: progress identity, idempotency, retry cadence, resource cap and reserve, retention, cleanup, no-progress stop, and restart behavior. Read-only bounded polling stays lightweight; accumulating side effects fail closed when evidence stops improving.
 

@@ -192,6 +192,47 @@ class PackageTests(unittest.TestCase):
         self.assertIn("- Methods, not outcomes:", template)
         self.assertIn("Separate the user's outcome from methods", openai_yaml)
 
+    def test_simple_questions_receive_a_direct_plain_language_answer_first(self) -> None:
+        skill = SKILL.read_text(encoding="utf-8")
+        global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
+        readme = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
+        openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
+
+        for phrase in (
+            "Answer The Immediate Question First",
+            "plain-language conclusion in the first sentence",
+            "Do not make the user translate a technical distinction",
+            "Never answer \"yes, exactly\"",
+        ):
+            self.assertIn(phrase, skill)
+
+        self.assertIn("Do not bury the conclusion behind investigation detail", global_rules)
+        self.assertIn("direct plain-language conclusion first", readme)
+        self.assertIn("Answer the user's immediate question plainly first", openai_yaml)
+
+    def test_confusing_reply_loops_are_stopped_and_status_layers_are_separated(self) -> None:
+        skill = SKILL.read_text(encoding="utf-8")
+        global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
+        readme = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
+        openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
+
+        for phrase in (
+            "Prevent Confusing Reply Loops",
+            "Real outcome:",
+            "Layer status:",
+            "Next owned action:",
+            "Never let `Done`, `working`, `complete`, `blocked`, `restart`, `plugin`, `local`, or `installed` refer to multiple layers",
+            "If the user says they are confused",
+            "`Next` means an agent-owned action",
+        ):
+            self.assertIn(phrase, skill)
+
+        self.assertIn("Keep status language layer-separated", global_rules)
+        self.assertIn("restate the conclusion, distinction, and next owned action", global_rules)
+        self.assertIn("repeated clarification loops", readme)
+        self.assertIn("short conclusion, distinction, and next-action frame", readme)
+        self.assertIn("stop confusing reply loops", openai_yaml)
+
     def test_recurring_work_has_a_bounded_operational_envelope(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
         global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
