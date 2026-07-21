@@ -1,8 +1,8 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-07-21T11:31:02Z
-State: active
+Updated: 2026-07-21T11:40:28Z
+State: complete
 
 ## North Star
 
@@ -55,6 +55,7 @@ State: active
 - Direct-answer-first behavior passes 12 local deterministic tests and the active state validates and resumes | Evidence: python -m unittest discover -s tests -v; project_outcome.py validate and resume | Verified: 2026-07-18T22:01:07Z
 - Confusing-reply-loop and layer-separated-status behavior passes 13 local deterministic tests and the active state validates and resumes | Evidence: TEMP/TMP=C:\tmp python -m unittest discover -s tests -v; project_outcome.py validate and resume | Verified: 2026-07-18T22:30:19Z
 - Communication-loop release commit 84ffb77 passed public CI and active local installation hash verification | Evidence: GitHub Actions run 29664026459; installed skill SHA256 comparison; active AGENTS.md managed block inspection | Verified: 2026-07-18T22:46:54Z
+- Continuous-project-ownership release f331bfd passed 14 deterministic tests, official skill validation, public CI, active installation hash verification, and one managed global rule block | Evidence: GitHub Actions run 29826933922; exact five-file SHA256 comparison; active AGENTS.md continuity-rule inspection | Verified: 2026-07-21T11:40:28Z
 
 ## Context Pointers
 
@@ -83,14 +84,14 @@ State: active
 
 ## Current Slice
 
-- Acceptance ID: REQ-CONTINUITY
-- Objective: Make continuous project ownership mandatory across questions, corrections, and noisy prompts.
-- Acceptance evidence: Deterministic package test, project validation, public CI, and installed-source hash equality.
+- Acceptance ID: none
+- Objective: Publish and verify continuous project ownership across questions, corrections, and noisy prompts.
+- Acceptance evidence: Fourteen deterministic tests, official validation, GitHub Actions, exact installed-source hashes, and active global-rule inspection.
 - Protect: Explicit pause and diagnosis-only requests, genuine authorization boundaries, concise answers, and unrelated user changes.
-- Status: active
+- Status: complete
 
 ## Next
 
-- Action: Run deterministic validation, publish the release, install it, and verify exact alignment.
-- Why now: The continuity rule and regression test are implemented.
+- Action: None; the continuity release is tested, published, installed, and aligned.
+- Why now: The requested project-ownership behavior is active for newly loaded Codex tasks.
 - Blocker and recovery: None.

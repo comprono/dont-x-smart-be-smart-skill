@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-07-21T11:31:02Z",
-  "project_state": "active",
-  "current_slice_requirement_id": "REQ-CONTINUITY",
+  "updated_utc": "2026-07-21T11:40:28Z",
+  "project_state": "complete",
+  "current_slice_requirement_id": null,
   "requirements": [
     {
       "id": "REQ-STATE",
@@ -195,7 +195,7 @@
       "id": "REQ-CONTINUITY",
       "description": "An active project retains Codex ownership across questions, corrections, and noisy prompts, and resumes the next safe already-authorized action without repeated user management.",
       "required": true,
-      "status": "failing",
+      "status": "passing",
       "minimum_evidence_level": "integration",
       "acceptance_steps": [
         "Require a compact control frame and message classification in the skill and global rules.",
@@ -203,7 +203,14 @@
         "Require same-turn continuation of safe authorized work while respecting explicit pause, diagnosis-only, authorization, and blocker boundaries.",
         "Pass package tests, project validation, public CI, installation, and exact installed-source hash verification."
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "level": "integration",
+          "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/29826933922",
+          "summary": "Release f331bfd passed 14 deterministic tests, official skill validation, public GitHub Actions, exact active installation hash comparison, and one managed global continuity-rule block.",
+          "verified_utc": "2026-07-21T11:40:28Z"
+        }
+      ],
       "blocker": null
     }
   ]
