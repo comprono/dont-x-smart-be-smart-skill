@@ -28,6 +28,8 @@ Long agent sessions can drift after context compaction, promote an add-on into t
 - Burying a simple answer under investigation detail, jargon, or an unnecessary plan.
 - Mixing product progress, plugin or tooling state, model or restart state, and communication state in one ambiguous status.
 - Continuing an explanation loop after the user says the answer is confusing or restates it more simply.
+- Treating every correction or question as a new task and losing ownership of the active project.
+- Stopping at advice, analysis, or a plan and forcing the user to repeatedly say "do it", "continue", or "what next".
 
 ## Install
 
@@ -55,6 +57,8 @@ python scripts/install.py --skip-global-rules
 ## How It Works
 
 Before substantive work, Codex forms a compact outcome frame: the final outcome, acceptable proof, intermediate methods, and constraints. It asks whether completing every proposed method would actually solve the user's problem. If not, it reframes the task before spending tokens or assigning workers.
+
+During an active project, Codex also maintains a compact control frame containing the current deliverable and stage, latest correction, next Codex-owned action, genuine blocker, and missing completion evidence. Questions and corrections update that project rather than silently ending it. After answering an interruption, Codex resumes the next safe authorized action in the same turn instead of waiting for another "do it" instruction.
 
 For a simple question—such as whether one copy is newer, what a result means, or what happens next—Codex answers the direct plain-language conclusion first. It distinguishes ambiguous terms briefly and only expands when asked or needed for accuracy. A user should not need to simplify their own question to get the actual answer.
 

@@ -210,6 +210,34 @@ class PackageTests(unittest.TestCase):
         self.assertIn("direct plain-language conclusion first", readme)
         self.assertIn("Answer the user's immediate question plainly first", openai_yaml)
 
+    def test_active_projects_keep_ownership_across_questions_and_corrections(self) -> None:
+        skill = SKILL.read_text(encoding="utf-8")
+        global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
+        readme = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
+        openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
+
+        for phrase in (
+            "Maintain Continuous Project Ownership",
+            "A correction updates the active contract; a question does not cancel authorized work",
+            "Interpret noisy, voice-transcribed, or imprecise wording",
+            "continue the next safe authorized project action in the same turn",
+            'Do not make the user repeatedly say "do it", "continue", "what next"',
+            "am I leaving the user to manage the next obvious action",
+        ):
+            self.assertIn(phrase, skill)
+
+        for phrase in (
+            "Treat each message in an active project as an update",
+            "Maintain a compact control frame",
+            "a question does not cancel authorized work",
+            "continue the next safe authorized action in the same turn",
+        ):
+            self.assertIn(phrase, global_rules)
+
+        self.assertIn("Questions and corrections update that project", readme)
+        self.assertIn('instead of waiting for another "do it" instruction', readme)
+        self.assertIn("Maintain continuous ownership of the active project", openai_yaml)
+
     def test_confusing_reply_loops_are_stopped_and_status_layers_are_separated(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
         global_rules = GLOBAL_RULES.read_text(encoding="utf-8")

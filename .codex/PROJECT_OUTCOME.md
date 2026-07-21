@@ -1,13 +1,13 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-07-18T22:46:54Z
-State: complete
+Updated: 2026-07-21T11:31:02Z
+State: active
 
 ## North Star
 
-- Outcome: Upgrade and publish Outcome Integrity so Codex frames the real outcome, answers simple user questions directly, stops confusing reply loops with layer-separated status, bounds autonomous resource use, preserves intent, and proves outcomes across corrections, compaction, failures, and selective delegation.
-- User-visible proof: A future task answers a simple status or meaning question in plain language before technical detail, names separate project/tooling/restart/communication layers when relevant, stops expansion when the user is confused, keeps the user's actual result authoritative, and cannot run accumulating autonomous side effects without explicit progress, resource, retention, and stop bounds.
+- Outcome: Upgrade and publish Outcome Integrity so Codex continuously owns the active project across questions and corrections, continues already-authorized work without repeated prompting, preserves context, prevents confusing loops, and proves real outcomes.
+- User-visible proof: In a future long project, a question or correction updates the active project without ending it; Codex answers briefly, resumes the next safe authorized action in the same turn, and does not require repeated "do it", "continue", context, or next-step instructions.
 - Methods, not outcomes: Review, planning, testing, delegation, installation, and publication.
 - Why it matters: A sound recovery system can still fail if it formalizes the wrong task before recovery begins.
 
@@ -19,8 +19,8 @@ State: complete
 ## User Intent
 
 - Priorities: Apply researched solutions without adding another orchestration system.
-- Working preferences: Implement, test, install, publish, and report verified results concisely; give the answer first when the user asks a simple question; stop clarification loops by restating the conclusion, distinction, and next owned action.
-- Explicit corrections: This is a separate global skill; prevent method-outcome substitution, buried answers, and unbounded recurring side effects without adding project-specific rules.
+- Working preferences: Implement, test, install, publish, and report verified results concisely; preserve continuous project ownership; do not make the user repeatedly manage the next obvious action.
+- Explicit corrections: This is a global project-relevance skill, not plugin-specific; short replies alone are insufficient; Codex must keep building the authorized outcome across questions, corrections, and imperfect voice-transcribed prompts.
 - Non-negotiables: Stay token-efficient, globally reusable, and honest about guarantee boundaries.
 
 ## Work Map
@@ -31,6 +31,7 @@ State: complete
 - Add a proportional bounded-autonomy gate for recurring, unattended, scheduled, retrying, and resource-producing work.
 - Preserve the machine-verifiable acceptance registry and mature recovery/delegation gates.
 - Add and verify direct-answer-first and confusing-reply-loop rules for simple status, meaning, alignment, ownership, and next-action questions.
+- Add and verify continuous project ownership, message classification, noisy-prompt inference, and same-turn continuation rules.
 - Test deterministic behavior and fresh-agent behavior, then publish and install the exact release.
 
 ### Add-ons
@@ -82,14 +83,14 @@ State: complete
 
 ## Current Slice
 
-- Acceptance ID: none
-- Objective: Publish and verify the direct-answer-first and communication-loop release.
-- Acceptance evidence: GitHub CI verifies the current commit after the local 13-test result.
-- Protect: Accuracy, necessary qualifications, short global instructions, layer-separated status, trivial-task proportionality, and unrelated user changes.
-- Status: complete
+- Acceptance ID: REQ-CONTINUITY
+- Objective: Make continuous project ownership mandatory across questions, corrections, and noisy prompts.
+- Acceptance evidence: Deterministic package test, project validation, public CI, and installed-source hash equality.
+- Protect: Explicit pause and diagnosis-only requests, genuine authorization boundaries, concise answers, and unrelated user changes.
+- Status: active
 
 ## Next
 
-- Action: None; release is committed, pushed, CI-verified, and installed locally.
-- Why now: The requested source, GitHub, and active local Codex installation are aligned.
+- Action: Run deterministic validation, publish the release, install it, and verify exact alignment.
+- Why now: The continuity rule and regression test are implemented.
 - Blocker and recovery: None.

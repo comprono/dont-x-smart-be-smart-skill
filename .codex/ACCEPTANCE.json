@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-07-18T22:46:54Z",
-  "project_state": "complete",
-  "current_slice_requirement_id": null,
+  "updated_utc": "2026-07-21T11:31:02Z",
+  "project_state": "active",
+  "current_slice_requirement_id": "REQ-CONTINUITY",
   "requirements": [
     {
       "id": "REQ-STATE",
@@ -189,6 +189,21 @@
           "verified_utc": "2026-07-18T22:30:19Z"
         }
       ],
+      "blocker": null
+    },
+    {
+      "id": "REQ-CONTINUITY",
+      "description": "An active project retains Codex ownership across questions, corrections, and noisy prompts, and resumes the next safe already-authorized action without repeated user management.",
+      "required": true,
+      "status": "failing",
+      "minimum_evidence_level": "integration",
+      "acceptance_steps": [
+        "Require a compact control frame and message classification in the skill and global rules.",
+        "Require questions and corrections to update rather than cancel the active project.",
+        "Require same-turn continuation of safe authorized work while respecting explicit pause, diagnosis-only, authorization, and blocker boundaries.",
+        "Pass package tests, project validation, public CI, installation, and exact installed-source hash verification."
+      ],
+      "evidence": [],
       "blocker": null
     }
   ]

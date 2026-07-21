@@ -1,4 +1,4 @@
 interface:
   display_name: "Outcome Integrity"
   short_description: "Preserve intent and verify real project outcomes"
-  default_prompt: "Answer the user's immediate question plainly first. Separate the user's outcome from methods and tooling layers, stop confusing reply loops, reconcile evidence, bound recurring side effects, and advance one verified slice."
+  default_prompt: "Maintain continuous ownership of the active project and apply corrections without resetting it. Answer the user's immediate question plainly first, continue the next authorized action. Separate the user's outcome from methods and tooling layers, stop confusing reply loops, bound recurring side effects, reconcile evidence, and advance one verified slice."
