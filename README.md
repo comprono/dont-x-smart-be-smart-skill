@@ -10,11 +10,14 @@ Long agent sessions can drift after context compaction, promote an add-on into t
 1. A concise global Codex rule block that activates outcome integrity for nontrivial project work.
 2. The `outcome-integrity` skill, which maintains bounded human intent and machine-verifiable acceptance inside each active project.
 
-`PROJECT_OUTCOME.md` preserves the north-star outcome, user intent, scope, current facts, context pointers, failure invariants, and active slice. `ACCEPTANCE.json` owns stable requirements, reproducible acceptance steps, evidence levels, status, and blocker recovery. Git owns history; neither project file is an activity transcript.
+`PROJECT_OUTCOME.md` preserves the product outcome, active proof slice and limits, user intent, scope, current facts, failure invariants, and next owned action. Schema-v2 `ACCEPTANCE.json` owns project-root identity, required product capabilities, exact named-entity constraints, reproducible acceptance steps, step-bound evidence, counterevidence, status, and blocker recovery. Git owns history; neither project file is an activity transcript.
 
 ## What It Prevents
 
-- Treating a review, test, plan, or orchestration step as the final outcome when the user's real goal is broader.
+- Treating a review, demo, test, pilot, plan, or orchestration step as the product outcome when the user's real goal is broader.
+- Treating a matching display name or capability as proof that an explicitly named entity is the same one.
+- Routing around contradictory evidence or presenting a fallback as resolution.
+- Resuming from a nearby parent, child, plugin, or sibling project's state because its topic looks related.
 - Continuing a stale plan after the user corrects it.
 - Continuing a stale task contract after a correction or stopping merely because one worker or method was rejected.
 - Letting unattended loops consume storage, quota, money, or memory without verified outcome progress.
@@ -56,7 +59,7 @@ python scripts/install.py --skip-global-rules
 
 ## How It Works
 
-Before substantive work, Codex forms a compact outcome frame: the final outcome, acceptable proof, intermediate methods, and constraints. It asks whether completing every proposed method would actually solve the user's problem. If not, it reframes the task before spending tokens or assigning workers.
+Before substantive work, Codex forms a compact outcome frame: the full product outcome, its required capabilities, the active proof slice, that slice's limits, methods, and constraints. It asks whether completing every proposed method would actually solve the user's problem. A successful demo or test can satisfy only the capabilities it proves; it cannot silently redefine the broader outcome.
 
 During an active project, Codex also maintains a compact control frame containing the current deliverable and stage, latest correction, next Codex-owned action, genuine blocker, and missing completion evidence. Questions and corrections update that project rather than silently ending it. After answering an interruption, Codex resumes the next safe authorized action in the same turn instead of waiting for another "do it" instruction.
 
@@ -66,6 +69,8 @@ For status updates, Codex names the layer being discussed. Package, installer, m
 
 Before recurring or unattended work is enabled, Codex records a proportional operational envelope: progress identity, idempotency, retry cadence, resource cap and reserve, retention, cleanup, no-progress stop, and restart behavior. Read-only bounded polling stays lightweight; accumulating side effects fail closed when evidence stops improving.
 
+Explicitly named people, accounts, tools, providers, runtimes, repositories, credentials, sessions, systems, files, and resources remain distinct until substitution is authorized or equivalence is proven. Conflicting observations are retained as counterevidence and reconciled on the same identity and access surface; a convenient alternative does not erase the conflict.
+
 For a nontrivial project, Codex reads or creates:
 
 ```text
@@ -74,7 +79,7 @@ For a nontrivial project, Codex reads or creates:
 └── ACCEPTANCE.json
 ```
 
-Codex reconciles both files with the latest user instruction and current evidence before substantial planning or editing. The newest explicit correction wins. Observed state wins over stale summaries. Add-ons stay separate from the critical path.
+Codex first verifies that declared root markers belong to the selected project, then reconciles both files with the latest user instruction and current evidence. The newest explicit correction wins. Contradictions remain visible until resolved. Add-ons and proof slices stay separate from the product outcome.
 
 Project state updates only after a material transition: changed intent, verified progress, a disproven assumption, a confirmed root cause, a changed recovery path, or a new current slice. Routine status and tool activity are excluded.
 
@@ -107,7 +112,7 @@ Delegation is admitted only when work is parallel, disjoint, tied to an acceptan
 python -m unittest discover -s tests -v
 ```
 
-The tests cover skill packaging, idempotent installation, dual-file initialization, stale resume state, slice mismatch, insufficient passing evidence, incomplete blocker recovery, and evidence-backed completion.
+The tests cover skill packaging, idempotent installation, dual-file initialization, legacy recovery, project-root mismatch, product-capability coverage, proof boundaries, exact-identity evidence, unresolved counterevidence, stale resume state, blocker recovery, and evidence-backed completion.
 
 ## Design Basis
 
@@ -115,7 +120,7 @@ The design incorporates published patterns from [Anthropic's long-running agent 
 
 ## Guarantee Boundary
 
-No prompt or skill can guarantee that every probabilistic model response will be perfect. This project instead makes the process enforceable and auditable: project intent survives compaction, repeated failures trigger a stop condition, progress claims require matching evidence, and drift has a deterministic recovery path.
+No prompt or skill can guarantee that every probabilistic model response will be perfect. This project instead makes the process enforceable and auditable: project intent survives compaction, product capabilities remain above proof slices, exact identities remain explicit, contradictory evidence cannot silently disappear, repeated failures trigger a stop condition, and completion requires mapped evidence.
 
 The skill runs locally, uses no network service, and does not transmit project ledger contents.
 

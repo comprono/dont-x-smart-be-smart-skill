@@ -48,7 +48,11 @@ Updated: {updated}
 State: {state}
 
 ## North Star
-- Outcome: Produce the requested verified result.
+- Product outcome: Produce the complete requested verified result.
+- User-visible proof: The real user path passes.
+- Active proof slice: Exercise one bounded real path.
+- Proof limits: This path does not prove unrelated capabilities.
+- Methods, not outcomes: Testing and inspection.
 - Why it matters: The user needs the real outcome, not proxy activity.
 
 ## Done Means
@@ -110,40 +114,74 @@ def acceptance_data(
     minimum_level: str = "end-to-end",
     evidence_level: str | None = None,
     blocker: dict[str, str] | None = None,
+    schema_version: int = 2,
 ) -> dict[str, object]:
     evidence = []
     if evidence_level:
-        evidence.append(
-            {
-                "level": evidence_level,
-                "ref": "tests/evidence/result.json",
-                "summary": "The reproducible path produced the expected result.",
-                "verified_utc": updated,
-            }
-        )
-    return {
-        "schema_version": 1,
+        evidence_entry: dict[str, object] = {
+            "level": evidence_level,
+            "ref": "tests/evidence/result.json",
+            "summary": "The reproducible path produced the expected result.",
+            "verified_utc": updated,
+        }
+        if schema_version == 2:
+            evidence_entry["step_ids"] = ["STEP-001"]
+            evidence_entry["identity_ids"] = ["ENTITY-001"]
+        evidence.append(evidence_entry)
+
+    requirement: dict[str, object] = {
+        "id": "REQ-001",
+        "description": "The real user path passes.",
+        "required": True,
+        "status": status,
+        "minimum_evidence_level": minimum_level,
+        "acceptance_steps": ["Exercise the real path and inspect the result."],
+        "evidence": evidence,
+        "blocker": blocker,
+    }
+    data: dict[str, object] = {
+        "schema_version": schema_version,
         "updated_utc": updated,
         "project_state": project_state,
         "current_slice_requirement_id": current_id,
-        "requirements": [
-            {
-                "id": "REQ-001",
-                "description": "The real user path passes.",
-                "required": True,
-                "status": status,
-                "minimum_evidence_level": minimum_level,
-                "acceptance_steps": ["Exercise the real path and inspect the result."],
-                "evidence": evidence,
-                "blocker": blocker,
-            }
-        ],
+        "requirements": [requirement],
     }
-
+    if schema_version == 2:
+        data["project_identity"] = {
+            "id": "test-project",
+            "root_markers": ["project.marker"],
+        }
+        data["outcome_capabilities"] = [
+            {
+                "id": "CAP-001",
+                "description": "The complete real path works.",
+                "required": True,
+            }
+        ]
+        data["identity_requirements"] = [
+            {
+                "id": "ENTITY-001",
+                "description": "The explicitly requested target.",
+                "substitutable": False,
+            }
+        ]
+        requirement["capability_ids"] = ["CAP-001"]
+        requirement["identity_ids"] = ["ENTITY-001"]
+        requirement["proof_scope"] = "The bounded real path for the declared target."
+        requirement["proof_limits"] = "It does not establish any undeclared capability."
+        requirement["acceptance_steps"] = [
+            {
+                "id": "STEP-001",
+                "description": "Exercise the real path and inspect the result.",
+            }
+        ]
+        requirement["counterevidence"] = []
+    return data
 
 def write_state(root: Path, project: str, acceptance: dict[str, object]) -> None:
     state_dir = root / ".codex"
     state_dir.mkdir(parents=True, exist_ok=True)
+    (root / "project.marker").write_text("test project\n", encoding="utf-8")
     (state_dir / "PROJECT_OUTCOME.md").write_text(project, encoding="utf-8")
     (state_dir / "ACCEPTANCE.json").write_text(
         json.dumps(acceptance, indent=2) + "\n", encoding="utf-8"
@@ -176,6 +214,7 @@ class PackageTests(unittest.TestCase):
         for phrase in (
             "Frame The Outcome Before The Method",
             "if every proposed method completed successfully",
+            "Never rewrite the product outcome to match a convenient proof slice",
             "cancel or replace it safely",
             "replan from the outcome",
         ):
@@ -188,9 +227,12 @@ class PackageTests(unittest.TestCase):
         ):
             self.assertIn(phrase, global_rules)
 
+        self.assertIn("- Product outcome:", template)
         self.assertIn("- User-visible proof:", template)
+        self.assertIn("- Active proof slice:", template)
+        self.assertIn("- Proof limits:", template)
         self.assertIn("- Methods, not outcomes:", template)
-        self.assertIn("Separate the user's outcome from methods", openai_yaml)
+        self.assertIn("Use $outcome-integrity", openai_yaml)
 
     def test_simple_questions_receive_a_direct_plain_language_answer_first(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -208,7 +250,7 @@ class PackageTests(unittest.TestCase):
 
         self.assertIn("Do not bury the conclusion behind investigation detail", global_rules)
         self.assertIn("direct plain-language conclusion first", readme)
-        self.assertIn("Answer the user's immediate question plainly first", openai_yaml)
+        self.assertIn("Use $outcome-integrity", openai_yaml)
 
     def test_active_projects_keep_ownership_across_questions_and_corrections(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -236,7 +278,7 @@ class PackageTests(unittest.TestCase):
 
         self.assertIn("Questions and corrections update that project", readme)
         self.assertIn('instead of waiting for another "do it" instruction', readme)
-        self.assertIn("Maintain continuous ownership of the active project", openai_yaml)
+        self.assertIn("continuous ownership", openai_yaml)
 
     def test_confusing_reply_loops_are_stopped_and_status_layers_are_separated(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -259,7 +301,7 @@ class PackageTests(unittest.TestCase):
         self.assertIn("restate the conclusion, distinction, and next owned action", global_rules)
         self.assertIn("repeated clarification loops", readme)
         self.assertIn("short conclusion, distinction, and next-action frame", readme)
-        self.assertIn("stop confusing reply loops", openai_yaml)
+        self.assertIn("exact identities", openai_yaml)
 
     def test_recurring_work_has_a_bounded_operational_envelope(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -292,8 +334,50 @@ class PackageTests(unittest.TestCase):
             self.assertIn(phrase, template)
 
         self.assertIn("unattended loops consume storage", readme)
-        self.assertIn("bound recurring side effects", openai_yaml)
+        self.assertIn("next verified authorized slice", openai_yaml)
 
+    def test_product_proof_identity_and_conflict_rules_are_generic(self) -> None:
+        skill = SKILL.read_text(encoding="utf-8")
+        global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
+
+        for phrase in (
+            "Preserve Exact Identity And Contradictory Evidence",
+            "A matching display name, interface, capability, output, or family is not proof of equivalence",
+            "preserve both observations as counterevidence",
+            "A fallback is progress only for requirements it independently satisfies",
+        ):
+            self.assertIn(phrase, skill)
+
+        for phrase in (
+            "full product outcome and its required capabilities",
+            "A passing slice proves only the capabilities it actually covers",
+            "matching name, interface, capability, output, or family is not equivalence",
+            "preserve unresolved counterevidence",
+            "project_identity.root_markers",
+        ):
+            self.assertIn(phrase, global_rules)
+
+
+    def test_schema_v2_template_declares_mechanical_proof_fields(self) -> None:
+        acceptance_template = (
+            REPOSITORY_ROOT
+            / "skills"
+            / "outcome-integrity"
+            / "assets"
+            / "ACCEPTANCE.template.json"
+        ).read_text(encoding="utf-8")
+        for phrase in (
+            '"schema_version": 2',
+            '"project_identity"',
+            '"outcome_capabilities"',
+            '"identity_requirements"',
+            '"capability_ids"',
+            '"identity_ids"',
+            '"proof_scope"',
+            '"proof_limits"',
+            '"counterevidence"',
+        ):
+            self.assertIn(phrase, acceptance_template)
     def test_installer_is_idempotent_and_preserves_existing_rules(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             codex_home = Path(temporary) / ".codex"
@@ -369,6 +453,126 @@ class PackageTests(unittest.TestCase):
             self.assertFalse(result["ok"])
             self.assertTrue(any("does not exist" in error for error in result["errors"]))
 
+    def test_legacy_state_resumes_but_cannot_prove_completion(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            legacy = acceptance_data(schema_version=1)
+            write_state(root, project_text(), legacy)
+            resumed = self.state.validate(root, mode="resume")
+            self.assertTrue(resumed["ok"], resumed)
+            self.assertTrue(any("legacy" in warning for warning in resumed["warnings"]))
+
+            completed = acceptance_data(
+                schema_version=1,
+                project_state="complete",
+                current_id=None,
+                status="passing",
+                evidence_level="end-to-end",
+            )
+            write_state(root, project_text(state="complete", current_id="none"), completed)
+            result = self.state.validate(root, mode="completion")
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("schema_version 2" in error for error in result["errors"]))
+
+    def test_completion_requires_every_product_capability(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            completed = acceptance_data(
+                project_state="complete",
+                current_id=None,
+                status="passing",
+                evidence_level="end-to-end",
+            )
+            completed["outcome_capabilities"].append(
+                {
+                    "id": "CAP-UNMAPPED",
+                    "description": "A second required product capability.",
+                    "required": True,
+                }
+            )
+            write_state(root, project_text(state="complete", current_id="none"), completed)
+            result = self.state.validate(root, mode="completion")
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("CAP-UNMAPPED" in error for error in result["errors"]))
+
+    def test_passing_requires_step_and_exact_identity_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            completed = acceptance_data(
+                project_state="complete",
+                current_id=None,
+                status="passing",
+                evidence_level="end-to-end",
+            )
+            evidence = completed["requirements"][0]["evidence"][0]
+            evidence["step_ids"] = []
+            evidence["identity_ids"] = []
+            write_state(root, project_text(state="complete", current_id="none"), completed)
+            result = self.state.validate(root, mode="completion")
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("sufficient evidence for steps" in error for error in result["errors"]))
+            self.assertTrue(any("exact identity evidence" in error for error in result["errors"]))
+
+    def test_alternate_identity_cannot_satisfy_a_named_requirement(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            completed = acceptance_data(
+                project_state="complete",
+                current_id=None,
+                status="passing",
+                evidence_level="end-to-end",
+            )
+            completed["requirements"][0]["evidence"][0]["identity_ids"] = [
+                "ENTITY-ALTERNATE"
+            ]
+            write_state(root, project_text(state="complete", current_id="none"), completed)
+            result = self.state.validate(root, mode="completion")
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("unknown ID: ENTITY-ALTERNATE" in error for error in result["errors"]))
+            self.assertTrue(any("exact identity evidence" in error for error in result["errors"]))
+    def test_unresolved_counterevidence_blocks_passing(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            completed = acceptance_data(
+                project_state="complete",
+                current_id=None,
+                status="passing",
+                evidence_level="end-to-end",
+            )
+            completed["requirements"][0]["counterevidence"] = [
+                {
+                    "ref": "conflicting observation",
+                    "summary": "The same declared target failed on another authoritative surface.",
+                    "observed_utc": "2026-07-16T10:00:00Z",
+                    "status": "unresolved",
+                    "resolution": None,
+                }
+            ]
+            write_state(root, project_text(state="complete", current_id="none"), completed)
+            result = self.state.validate(root, mode="completion")
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("unresolved counterevidence" in error for error in result["errors"]))
+
+    def test_project_identity_markers_bind_state_to_the_selected_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["project_identity"]["root_markers"] = ["missing-project.marker"]
+            write_state(root, project_text(), state)
+            result = self.state.validate(root, mode="resume")
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("does not exist" in error for error in result["errors"]))
+
+    def test_schema_v2_requires_product_outcome_and_proof_boundaries(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            incomplete_project = project_text().replace(
+                "- Proof limits: This path does not prove unrelated capabilities.\n", ""
+            )
+            write_state(root, incomplete_project, acceptance_data())
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("Proof limits" in error for error in result["errors"]))
     def test_completion_rejects_incomplete_and_accepts_evidence_backed_state(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
