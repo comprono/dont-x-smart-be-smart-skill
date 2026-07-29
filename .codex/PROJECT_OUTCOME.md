@@ -1,14 +1,14 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-07-29T19:22:03Z
-State: active
+Updated: 2026-07-29T19:26:24Z
+State: complete
 
 ## North Star
 
 - Product outcome: Improve and publicly release the standalone Outcome Integrity skill so Codex preserves the user's full outcome, distinguishes it from a proof slice, preserves exact named-entity identity, reconciles contradictory evidence, resumes from the correct project root, and communicates and executes with less wasted work.
 - User-visible proof: Generic state validation and regression tests reject invalid completion, the exact verified source is merged into GitHub main, public CI succeeds, and GitHub shows v2.0.0 as the latest release for that implementation revision.
-- Active proof slice: Publish the verified standalone changes through a GitHub pull request, confirm CI, and create the first GitHub Release as v2.0.0.
+- Active proof slice: Verify and record the merged implementation, successful public CI, exact release tag, and latest GitHub Release.
 - Proof limits: The release proves public source, CI, tag, and release alignment; it does not guarantee perfect behavior from every probabilistic model in every future project.
 - Methods, not outcomes: Auditing prior tasks, editing instructions, changing schemas, testing, installation, and reporting.
 - Why it matters: Efficient execution is impossible when a convenient test, similarly named resource, stale state file, or unresolved contradiction is allowed to replace the user's real objective.
@@ -58,6 +58,9 @@ State: active
 - Twenty-three deterministic tests pass for schema-v2 mechanics and existing behavior | Evidence: TEMP/TMP=C:\tmp python -m unittest discover -s tests -v | Verified: 2026-07-29T19:10:35Z
 - The official skill validator, Python compilation, project validate/resume gates, isolated double-install test, active installation, exact five-file SHA256 comparison, and one normalized managed global rule block pass | Evidence: local command outputs and installed-source comparison | Verified: 2026-07-29T19:10:35Z
 - Generic-source scanning found no names from the motivating provider/plugin case in the skill, validator, templates, tests, global rules, or README | Evidence: case-insensitive repository scan | Verified: 2026-07-29T19:10:35Z
+- Pull request 1 merged the verified standalone implementation to main at commit 17b07e81ecb654071ff49087be4d120e90c4d3f1 | Evidence: https://github.com/comprono/dont-x-smart-be-smart-skill/pull/1 | Verified: 2026-07-29T19:26:24Z
+- Public main-branch validation passed the merged implementation | Evidence: https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/30484327986 | Verified: 2026-07-29T19:26:24Z
+- GitHub Release v2.0.0 is public, non-draft, non-prerelease, marked latest, and its tag points exactly to implementation commit 17b07e81ecb654071ff49087be4d120e90c4d3f1 | Evidence: https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v2.0.0 and GitHub release/ref API responses | Verified: 2026-07-29T19:26:24Z
 
 ## Context Pointers
 
@@ -85,14 +88,14 @@ State: active
 
 ## Current Slice
 
-- Acceptance ID: REQ-PUBLISH
-- Objective: Merge the verified standalone source, pass public CI, and publish GitHub release v2.0.0.
-- Acceptance evidence: Local package evidence passes; GitHub merge, public CI, tag, and latest-release evidence are pending.
+- Acceptance ID: none
+- Objective: Publish and verify the standalone Outcome Integrity v2 release.
+- Acceptance evidence: Pull request 1 merged at 17b07e8, main validation run 30484327986 passed, and public latest release v2.0.0 points exactly to that implementation commit.
 - Protect: Standalone packaging, token efficiency, backward-readable project state, unrelated projects, and user-owned changes.
-- Status: active
+- Status: complete
 
 ## Next
 
-- Action: Commit the scoped changes on a publication branch, open and merge the GitHub pull request after CI, then create and verify v2.0.0.
-- Why now: The user explicitly extended the completed local upgrade to public GitHub publication.
+- Action: None; the verified standalone implementation is merged, public CI passed, and v2.0.0 is the latest GitHub Release.
+- Why now: All local, repository, CI, tag, and public-release acceptance evidence is verified.
 - Blocker and recovery: None.
