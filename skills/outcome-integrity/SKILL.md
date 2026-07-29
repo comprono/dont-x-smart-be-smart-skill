@@ -1,6 +1,6 @@
 ---
 name: outcome-integrity
-description: Preserve project intent and prevent objective drift, method-outcome confusion, confusing communication loops, context-compaction loss, premature completion, proxy progress, repeated failure, unbounded autonomous side effects, and wasteful orchestration. Use for nontrivial project implementation or diagnosis, resumed or compacted work, user corrections, long-running or multi-agent work, recurring loops, schedulers, watchdogs, automatic recovery, external side effects, repeated failures, unexpected scope growth, disproportionate resource use, or work the user says is irrelevant. Maintain bounded .codex/PROJECT_OUTCOME.md intent and .codex/ACCEPTANCE.json evidence state, reconcile them with current reality, classify failures before retrying, bound recurring work, advance one verified end-to-end slice, and admit delegation only when it reduces total work.
+description: Preserve project intent and prevent product-proof collapse, named-entity substitution, contradictory-evidence loss, wrong-project resume, objective drift, confusing communication loops, premature completion, repeated failure, unbounded autonomous side effects, and wasteful orchestration. Use for nontrivial implementation or diagnosis, resumed or compacted work, user corrections, long-running or multi-agent work, recurring loops, external side effects, repeated failures, unexpected scope growth, disproportionate resource use, or work the user says is irrelevant. Maintain bounded .codex/PROJECT_OUTCOME.md intent and .codex/ACCEPTANCE.json evidence state, reconcile them with current reality, classify failures before retrying, advance one verified product-linked slice, and delegate only when it reduces total work.
 ---
 
 # Outcome Integrity
@@ -22,16 +22,25 @@ Never let an old plan, inferred preference, add-on, safety mechanism, or worker 
 
 Before the first substantive tool call, edit, delegation, or durable task contract, form a compact internal outcome frame:
 
-- **Outcome:** the real user-visible or external state ultimately wanted.
-- **Proof:** the observable evidence the user would accept.
-- **Methods:** intermediate actions such as reviewing, researching, planning, testing, orchestrating, migrating, or setting up.
-- **Constraints:** boundaries that shape the work without replacing the outcome.
+- **Product outcome:** the complete user-visible or external state ultimately wanted.
+- **Required capabilities:** the independent properties that must all be true for that outcome.
+- **Proof slice:** the bounded demonstration, test, pilot, artifact, or path being used to establish some capabilities now.
+- **Proof limits:** what that slice does not establish.
+- **Methods and constraints:** actions and boundaries that shape the work without replacing the outcome.
 
-Treat review, test, inspect, analyze, plan, coordinate, monitor, document, and set up as methods when the existing project outcome is broader, unless the user explicitly asks for that artifact as the final deliverable. Apply this counterfactual: **if every proposed method completed successfully, would the user's actual problem be solved?** If not, the frame is too narrow.
+Treat review, test, inspect, analyze, plan, coordinate, monitor, document, demo, pilot, baseline, and set up as methods or proof slices when the existing product outcome is broader, unless the user explicitly asks for that artifact as the final deliverable. Apply this counterfactual: **if every proposed method completed successfully, would the user's actual problem be solved?** If not, the frame is too narrow.
 
-Do not narrow the outcome to fit the capabilities of a tool, skill, worker, or convenient next action. For continuation work, read the nearest authoritative project outcome before creating a task contract. If intent is discoverable, reconcile it directly; ask only when materially different outcomes remain plausible.
+Never rewrite the product outcome to match a convenient proof slice. A successful slice can satisfy only the required capabilities it actually covers, within its recorded proof limits. Do not narrow the outcome to fit a tool, skill, worker, available model, or convenient action. For continuation work, read the nearest authoritative project outcome before creating a task contract. If intent is discoverable, reconcile it directly; ask only when materially different outcomes remain plausible.
 
 When the user corrects the outcome or interpretation, immediately invalidate or revise every dependent plan, worker assignment, Goal, orchestration contract, acceptance item, and current slice. If a tool cannot update stale work, cancel or replace it safely rather than continuing under the old contract.
+
+## Preserve Exact Identity And Contradictory Evidence
+
+Treat an explicitly named person, account, tool, provider, runtime, repository, credential, session, system, file, or resource as an identity-bound requirement. A matching display name, interface, capability, output, or family is not proof of equivalence. An alternative may advance unrelated requirements, but it cannot satisfy the named requirement unless the user authorizes substitution or authoritative evidence proves the identities equivalent.
+
+When observed evidence conflicts with the user's explicit statement or another authoritative observation, do not choose the convenient side or route around the conflict. Identify the exact entity, access surface, session, principal, context, and observation time; probe the same identity and surface; preserve both observations as counterevidence; and reconcile the violated assumption. A fallback is progress only for requirements it independently satisfies, not resolution of the contradiction.
+
+Neither a user assertion nor one probe is automatically infallible. Until the conflict is resolved, keep the affected requirement failing or blocked and state what remains unknown. Ask the user only when the exact identity or authority cannot be determined safely from available evidence.
 
 ## Maintain Continuous Project Ownership
 
@@ -84,7 +93,7 @@ For project reports, `Next` means an agent-owned action already started or immed
 For nontrivial project work, use:
 
 - `.codex/PROJECT_OUTCOME.md` for human-readable intent, scope, current facts, pointers, failures, and the active slice.
-- `.codex/ACCEPTANCE.json` for stable requirement IDs, reproducible acceptance steps, statuses, minimum evidence levels, evidence references, and recoverable blockers.
+- `.codex/ACCEPTANCE.json` for project identity, required product capabilities, exact identity constraints, proof scope and limits, stable acceptance steps, mapped evidence, counterevidence, statuses, and recoverable blockers.
 - Git history for chronology and recovery. Do not grow an append-only activity transcript.
 
 Do not create these files for a trivial question, one-off command, or work outside a project.
@@ -109,9 +118,10 @@ At the start of nontrivial work, after compaction, or after interruption:
 python <skill-dir>/scripts/project_outcome.py resume --root <project-root>
 ```
 
-4. Inspect the current diff and the smallest authoritative source needed to check the state files.
-5. Reconcile stale intent, acceptance, current-slice, or timestamp data before substantial planning or editing.
-6. Load only the relevant sources named under `Context Pointers`; do not rescan the full history or project by default.
+4. Verify `project_identity.root_markers` under the selected root before trusting either file; never borrow a nearby parent, child, plugin, or sibling project's state because its topic looks related.
+5. Inspect the current diff and the smallest authoritative source needed to check the state files.
+6. Reconcile stale intent, acceptance, identity, counterevidence, current-slice, or timestamp data before substantial planning or editing.
+7. Load only the relevant sources named under `Context Pointers`; do not rescan the full history or project by default.
 
 The latest user correction must update intent immediately. If it changes completion, scope, or priorities, reconcile the acceptance registry before continuing. Conversation summaries never override these checks.
 
@@ -130,17 +140,21 @@ Do not record routine tool calls, unchanged status, worker chatter, token counts
 
 ## Make Acceptance Mechanical
 
-`ACCEPTANCE.json` is authoritative for completion. Each requirement must have:
+`ACCEPTANCE.json` is authoritative for completion. Use schema version 2 for new work and completion claims. It must declare:
 
-- a stable ID and observable description;
-- `required: true` or `false`;
-- `failing`, `blocked`, or `passing` status;
-- reproducible acceptance steps;
-- a minimum evidence level;
-- evidence references with timestamps when passing;
+- a stable project identity plus relative root markers;
+- the required product capabilities that collectively define the outcome;
+- exact identity requirements, with substitution allowed only when explicit;
+- requirements mapped to capability IDs and any identity IDs;
+- a proof scope and proof limits for every requirement;
+- stable acceptance-step IDs, minimum evidence level, and `failing`, `blocked`, or `passing` status;
+- evidence references with timestamps, exact step IDs, and exact identity IDs when applicable;
+- counterevidence retained as `unresolved` or with a specific resolution;
 - owner, reason, recovery trigger, and recovery action when blocked.
 
-Never delete or weaken a required item merely to make completion possible. Change acceptance only when the latest user instruction changes the outcome or current evidence disproves the requirement. A previously passing item must return to failing when its evidence is invalidated.
+Every passing requirement needs sufficient evidence for each of its steps and each identity it claims to cover. Completion also needs passing coverage for every required product capability and no unresolved counterevidence. Schema version 1 remains readable for recovery, but migrate it before claiming completion.
+
+Never delete or weaken a capability or required item merely to make completion possible. Change acceptance only when the latest user instruction changes the outcome or current evidence disproves the requirement. A previously passing item must return to failing when its evidence is invalidated or contradicted.
 
 Evidence levels, strongest first:
 
@@ -171,7 +185,7 @@ Before expanding scope, answer internally:
 4. What result would disprove the approach?
 5. What existing behavior must remain intact?
 
-Also run an outcome-distance check: an intermediate artifact counts as progress only when it removes a named acceptance gap. After a rejected delegation or failed method, replan from the outcome and the remaining dependency graph instead of stopping or reporting the rejected method as the result.
+Also run an outcome-distance check: an intermediate artifact counts as progress only when it removes a named acceptance gap. Record which product capabilities the slice proves and its proof limits before treating it as acceptance evidence. After a rejected delegation or failed method, replan from the outcome and the remaining dependency graph instead of stopping or reporting the rejected method as the result.
 
 Keep at most one unverified architectural layer in flight. A plan, scaffold, monitoring surface, or generated artifact is not a material slice unless it is itself the accepted outcome.
 
@@ -226,7 +240,10 @@ If any condition is false, work directly. Keep sequential reasoning in one agent
 Stop and reconcile before spending more when:
 
 - an action advances no required acceptance ID;
-- an add-on becomes the practical objective;
+- a proof slice or add-on becomes the practical product outcome;
+- a same-label alternative is treated as the explicitly named entity without equivalence proof;
+- contradictory evidence is ignored, downgraded, or routed around;
+- project state was loaded from a root whose declared markers do not match;
 - the plan relies on stale summaries or assumptions;
 - lower-level evidence is being reported as completion;
 - status language mixes product outcome, tooling state, model or restart state, and communication state;
@@ -245,7 +262,7 @@ Before claiming completion, run:
 python <skill-dir>/scripts/project_outcome.py completion --root <project-root>
 ```
 
-Completion requires both project states to be `complete`, no current slice, and every required acceptance item passing with sufficient evidence. Do not redefine success downward to match what was built.
+Completion requires schema version 2, both project states `complete`, no current slice, every required product capability covered by passing requirements, sufficient evidence for every acceptance step and declared identity, and no unresolved counterevidence. Do not redefine success downward to match what was built or substitute a successful proof slice for the product outcome.
 
 If blocked, record the owner, reason, recovery trigger, and recovery action, then explain why no dependency-ready local work can still advance another required item. Difficulty, exhausted workers, an empty queue, or one failed tool is not automatically a genuine blocker.
 

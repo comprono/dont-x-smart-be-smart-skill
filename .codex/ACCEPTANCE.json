@@ -1,217 +1,248 @@
 {
-  "schema_version": 1,
-  "updated_utc": "2026-07-21T11:40:28Z",
-  "project_state": "complete",
-  "current_slice_requirement_id": null,
-  "requirements": [
-    {
-      "id": "REQ-STATE",
-      "description": "Human intent and machine-verifiable acceptance are stored separately and validated together.",
-      "required": true,
-      "status": "passing",
-      "minimum_evidence_level": "focused-test",
-      "acceptance_steps": [
-        "Initialize both project files without overwriting existing state.",
-        "Reject placeholders, mismatched state, stale resume state, and unsupported passing evidence.",
-        "Accept a complete structurally valid active state."
-      ],
-      "evidence": [
-        {
-          "level": "focused-test",
-          "ref": "python -m unittest discover -s tests -v",
-          "summary": "Eight deterministic tests passed, including dual-file initialization, stale resume rejection, evidence enforcement, blocker recovery, and completion gating.",
-          "verified_utc": "2026-07-16T00:38:55Z"
-        }
-      ],
-      "blocker": null
-    },
-    {
-      "id": "REQ-RECOVERY",
-      "description": "Failure handling classifies errors before retrying and prevents repeated semantic attempts.",
-      "required": true,
-      "status": "passing",
-      "minimum_evidence_level": "focused-test",
-      "acceptance_steps": [
-        "The skill distinguishes transient, reasoning-recoverable, user-fixable, and unexpected failures.",
-        "A fresh agent refuses an unchanged third attempt after repeated semantic failure."
-      ],
-      "evidence": [
-        {
-          "level": "focused-test",
-          "ref": "fresh-agent scenarios 019f685d-8469-7121-8c68-94d684bde906 and 019f685d-a15b-7442-bdc0-07652de4e4f7",
-          "summary": "Fresh Luna agents reconciled an ambiguous external write and refused an unchanged third semantic retry in favor of authoritative transition tracing.",
-          "verified_utc": "2026-07-16T00:41:04Z"
-        }
-      ],
-      "blocker": null
-    },
-    {
-      "id": "REQ-DELEGATION",
-      "description": "Delegation occurs only for independent work whose expected contribution exceeds coordination cost.",
-      "required": true,
-      "status": "passing",
-      "minimum_evidence_level": "focused-test",
-      "acceptance_steps": [
-        "The skill defines a conjunctive delegation admission gate.",
-        "Fresh-agent tests keep sequential critical-path work local and allow bounded parallel work."
-      ],
-      "evidence": [
-        {
-          "level": "focused-test",
-          "ref": "fresh-agent scenario 019f685d-d3d6-7ec1-81ab-29588f4e065e",
-          "summary": "A fresh Luna agent kept tightly coupled critical-path diagnosis local, rejected duplicate diagnosis, and delegated only the disjoint read-only acceptance lane.",
-          "verified_utc": "2026-07-16T00:41:04Z"
-        }
-      ],
-      "blocker": null
-    },
-    {
-      "id": "REQ-PACKAGE",
-      "description": "The public package passes deterministic, behavioral, privacy, and GitHub CI verification.",
-      "required": true,
-      "status": "passing",
-      "minimum_evidence_level": "integration",
-      "acceptance_steps": [
-        "Run the repository test suite and Codex skill validator.",
-        "Run privacy scanning and fresh-agent behavioral scenarios.",
-        "Push the release and confirm GitHub Actions succeeds."
-      ],
-      "evidence": [
-        {
-          "level": "integration",
-          "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/29664026459",
-          "summary": "Communication-loop release commit 84ffb77 passed repository tests and GitHub Actions validation after local 13-test verification.",
-          "verified_utc": "2026-07-18T22:46:54Z"
-        }
-      ],
-      "blocker": null
-    },
-    {
-      "id": "REQ-INSTALL",
-      "description": "The exact published release installs locally without duplicating global instructions.",
-      "required": true,
-      "status": "passing",
-      "minimum_evidence_level": "integration",
-      "acceptance_steps": [
-        "Run the public installer twice against an isolated Codex home.",
-        "Install locally and compare all installed skill file hashes with the repository.",
-        "Confirm one managed global instruction block remains."
-      ],
-      "evidence": [
-        {
-          "level": "integration",
-          "ref": "python scripts/install.py; SHA256 comparison of C:\\Users\\paras\\.codex\\skills\\outcome-integrity against source; active AGENTS.md managed block inspection",
-          "summary": "The updated outcome-integrity skill installed into the active Codex home; installed non-cache skill files match source hashes and the active global rules include the layer-separated status rule.",
-          "verified_utc": "2026-07-18T22:46:54Z"
-        }
-      ],
-      "blocker": null
-    },
-    {
-      "id": "REQ-FRAMING",
-      "description": "The skill separates the final outcome and proof from intermediate methods before substantive work, invalidates stale contracts after correction, and replans after a rejected method.",
-      "required": true,
-      "status": "passing",
-      "minimum_evidence_level": "integration",
-      "acceptance_steps": [
-        "Assert the pre-work outcome frame, counterfactual, and no-capability-narrowing rules in the skill and global instructions.",
-        "Assert corrections invalidate dependent task contracts and rejected methods trigger replanning.",
-        "Run package tests, the Codex skill validator, local installation hash verification, and public CI."
-      ],
-      "evidence": [
-        {
-          "level": "integration",
-          "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/29534222570",
-          "summary": "Ten package tests, the Codex skill validator, public GitHub Actions, exact local installation hashes, and a single managed global rule block passed for commit 143d005.",
-          "verified_utc": "2026-07-16T21:01:02Z"
-        }
-      ],
-      "blocker": null
-    },
-    {
-      "id": "REQ-AUTONOMY",
-      "description": "Recurring or autonomous work is admitted only with bounded side effects, resource and retention limits, progress-aware retries, persistent restart behavior, and a fail-closed no-progress transition.",
-      "required": true,
-      "status": "passing",
-      "minimum_evidence_level": "integration",
-      "acceptance_steps": [
-        "Assert a concise bounded-autonomy gate in the skill and global rules without adding an orchestration runtime.",
-        "Assert the project template captures progress identity, resource limits, retention, restart, cancellation, and no-progress recovery.",
-        "Run package tests, Codex skill validation, public CI, exact installation hash verification, and the completion gate."
-      ],
-      "evidence": [
-        {
-          "level": "integration",
-          "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/29536198974",
-          "summary": "Eleven package tests, official skill validation, Python compilation, privacy scanning, public CI, exact five-file installation hashes, and one managed global rule block passed for commit c0c46d2.",
-          "verified_utc": "2026-07-16T21:30:51Z"
-        }
-      ],
-      "blocker": null
-    },
-    {
-      "id": "REQ-DIRECT-ANSWER",
-      "description": "Simple user questions receive their plain-language conclusion before technical detail, process narration, or an unnecessary plan.",
-      "required": true,
-      "status": "passing",
-      "minimum_evidence_level": "focused-test",
-      "acceptance_steps": [
-        "Add a concise direct-answer-first rule to the skill, global instructions, and default prompt.",
-        "Require ambiguous terms to be distinguished briefly without forcing the user to simplify their question.",
-        "Add and pass a regression test for the rule."
-      ],
-      "evidence": [
-        {
-          "level": "focused-test",
-          "ref": "TEMP/TMP=C:\\tmp python -m unittest discover -s tests -v; project_outcome.py validate --root .; project_outcome.py resume --root .",
-          "summary": "Thirteen deterministic tests passed, preserving direct-answer-first wording across the skill, global rules, documentation, and default prompt; active project state also validated and resumed.",
-          "verified_utc": "2026-07-18T22:30:19Z"
-        }
-      ],
-      "blocker": null
-    },
-    {
-      "id": "REQ-COMM-LOOP",
-      "description": "Confusing status replies are treated as drift: the agent separates real outcome, tooling or restart state, model state, and communication state, then stops explanation loops with a short conclusion/distinction/next-action frame.",
-      "required": true,
-      "status": "passing",
-      "minimum_evidence_level": "focused-test",
-      "acceptance_steps": [
-        "Add a concise confusing-reply-loop rule to the skill and global instructions.",
-        "Require status language to name separate project, tooling, restart/model, and communication layers.",
-        "Add and pass a regression test for the rule."
-      ],
-      "evidence": [
-        {
-          "level": "focused-test",
-          "ref": "TEMP/TMP=C:\\tmp python -m unittest discover -s tests -v; project_outcome.py validate --root .; project_outcome.py resume --root .",
-          "summary": "Thirteen deterministic tests passed, including confusing-reply-loop and layer-separated status wording across the skill, global rules, documentation, and default prompt; active project state also validated and resumed.",
-          "verified_utc": "2026-07-18T22:30:19Z"
-        }
-      ],
-      "blocker": null
-    },
-    {
-      "id": "REQ-CONTINUITY",
-      "description": "An active project retains Codex ownership across questions, corrections, and noisy prompts, and resumes the next safe already-authorized action without repeated user management.",
-      "required": true,
-      "status": "passing",
-      "minimum_evidence_level": "integration",
-      "acceptance_steps": [
-        "Require a compact control frame and message classification in the skill and global rules.",
-        "Require questions and corrections to update rather than cancel the active project.",
-        "Require same-turn continuation of safe authorized work while respecting explicit pause, diagnosis-only, authorization, and blocker boundaries.",
-        "Pass package tests, project validation, public CI, installation, and exact installed-source hash verification."
-      ],
-      "evidence": [
-        {
-          "level": "integration",
-          "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/29826933922",
-          "summary": "Release f331bfd passed 14 deterministic tests, official skill validation, public GitHub Actions, exact active installation hash comparison, and one managed global continuity-rule block.",
-          "verified_utc": "2026-07-21T11:40:28Z"
-        }
-      ],
-      "blocker": null
-    }
-  ]
+    "schema_version":  2,
+    "updated_utc":  "2026-07-29T19:22:03Z",
+    "project_state":  "active",
+    "project_identity":  {
+                             "id":  "outcome-integrity-skill",
+                             "root_markers":  [
+                                                  "skills/outcome-integrity/SKILL.md",
+                                                  "scripts/install.py"
+                                              ]
+                         },
+    "outcome_capabilities":  [
+                                 {
+                                     "id":  "CAP-OUTCOME-PROOF",
+                                     "description":  "The product outcome remains distinct from proof slices and their limits.",
+                                     "required":  true
+                                 },
+                                 {
+                                     "id":  "CAP-IDENTITY",
+                                     "description":  "Explicitly named entities cannot be silently satisfied by same-label substitutes.",
+                                     "required":  true
+                                 },
+                                 {
+                                     "id":  "CAP-CONFLICT",
+                                     "description":  "Contradictory evidence remains visible until reconciled at the exact identity and surface.",
+                                     "required":  true
+                                 },
+                                 {
+                                     "id":  "CAP-PROJECT-ROOT",
+                                     "description":  "State is accepted only from the intended project root.",
+                                     "required":  true
+                                 },
+                                 {
+                                     "id":  "CAP-PACKAGE",
+                                     "description":  "The generic package is tested, valid, idempotently installable, and isolated from project-specific behavior.",
+                                     "required":  true
+                                 },
+                                 {
+                                     "id":  "CAP-PUBLISH",
+                                     "description":  "The exact verified standalone source is merged on GitHub and published as the repository latest release.",
+                                     "required":  true
+                                 }
+                             ],
+    "identity_requirements":  [
+                                  {
+                                      "id":  "ENTITY-STANDALONE-SKILL",
+                                      "description":  "The standalone outcome-integrity skill repository and installed skill copy.",
+                                      "substitutable":  false
+                                  }
+                              ],
+    "current_slice_requirement_id":  "REQ-PUBLISH",
+    "requirements":  [
+                         {
+                             "id":  "REQ-CONTRACT",
+                             "description":  "The reusable instructions preserve full outcomes, exact identity, and contradictory evidence without project-specific names.",
+                             "required":  true,
+                             "capability_ids":  [
+                                                    "CAP-OUTCOME-PROOF",
+                                                    "CAP-IDENTITY",
+                                                    "CAP-CONFLICT"
+                                                ],
+                             "identity_ids":  [
+                                                  "ENTITY-STANDALONE-SKILL"
+                                              ],
+                             "proof_scope":  "Source inspection and regression assertions verify the generic instruction contract.",
+                             "proof_limits":  "Text inspection does not prove behavior from every probabilistic model.",
+                             "status":  "passing",
+                             "minimum_evidence_level":  "focused-test",
+                             "acceptance_steps":  [
+                                                      {
+                                                          "id":  "STEP-CONTRACT-SKILL",
+                                                          "description":  "Assert generic product-versus-proof, exact-identity, and evidence-conflict rules in the skill."
+                                                      },
+                                                      {
+                                                          "id":  "STEP-CONTRACT-GLOBAL",
+                                                          "description":  "Assert concise matching invariants in the global rules without provider or plugin names."
+                                                      }
+                                                  ],
+                             "evidence":  [
+                                              {
+                                                  "level":  "focused-test",
+                                                  "ref":  "tests/test_package.py::test_product_proof_identity_and_conflict_rules_are_generic",
+                                                  "summary":  "The regression asserts all three reusable invariants and rejects named provider examples in the standalone sources.",
+                                                  "verified_utc":  "2026-07-29T19:06:43Z",
+                                                  "step_ids":  [
+                                                                   "STEP-CONTRACT-SKILL",
+                                                                   "STEP-CONTRACT-GLOBAL"
+                                                               ],
+                                                  "identity_ids":  [
+                                                                       "ENTITY-STANDALONE-SKILL"
+                                                                   ]
+                                              }
+                                          ],
+                             "counterevidence":  [
+                                                     {
+                                                         "ref":  "post-release Codex usage audit after f331bfd",
+                                                         "summary":  "The prior release could pass structural checks while a proof method replaced the full outcome, same-label resources were conflated, and contradictory evidence was routed around.",
+                                                         "observed_utc":  "2026-07-29T18:53:50Z",
+                                                         "status":  "resolved",
+                                                         "resolution":  "Schema-v2 capability, identity, step-evidence, and counterevidence invariants plus generic instruction regressions now cover the observed failure class."
+                                                     }
+                                                 ],
+                             "blocker":  null
+                         },
+                         {
+                             "id":  "REQ-VALIDATOR",
+                             "description":  "Schema version 2 mechanically enforces project identity, capability coverage, exact step evidence, and counterevidence resolution.",
+                             "required":  true,
+                             "capability_ids":  [
+                                                    "CAP-OUTCOME-PROOF",
+                                                    "CAP-IDENTITY",
+                                                    "CAP-CONFLICT",
+                                                    "CAP-PROJECT-ROOT"
+                                                ],
+                             "identity_ids":  [
+                                                  "ENTITY-STANDALONE-SKILL"
+                                              ],
+                             "proof_scope":  "Adversarial fixtures exercise each declared validator invariant.",
+                             "proof_limits":  "The validator proves declared state consistency, not the truth of external evidence content.",
+                             "status":  "passing",
+                             "minimum_evidence_level":  "focused-test",
+                             "acceptance_steps":  [
+                                                      {
+                                                          "id":  "STEP-VALIDATOR-LEGACY",
+                                                          "description":  "Keep schema version 1 readable for validation and resume while rejecting version 1 completion."
+                                                      },
+                                                      {
+                                                          "id":  "STEP-VALIDATOR-COVERAGE",
+                                                          "description":  "Reject completion when a required product capability or acceptance step lacks sufficient mapped evidence."
+                                                      },
+                                                      {
+                                                          "id":  "STEP-VALIDATOR-CONFLICT",
+                                                          "description":  "Reject passing state with unresolved counterevidence or missing exact identity evidence."
+                                                      },
+                                                      {
+                                                          "id":  "STEP-VALIDATOR-ROOT",
+                                                          "description":  "Reject schema version 2 state when the selected root lacks its safe declared markers."
+                                                      }
+                                                  ],
+                             "evidence":  [
+                                              {
+                                                  "level":  "focused-test",
+                                                  "ref":  "TEMP/TMP=C:\\tmp python -m unittest discover -s tests -v",
+                                                  "summary":  "Twenty-three deterministic tests passed, including legacy recovery, required capability coverage, alternate-identity rejection, step and identity evidence, unresolved counterevidence, and project-root markers.",
+                                                  "verified_utc":  "2026-07-29T19:10:35Z",
+                                                  "step_ids":  [
+                                                                   "STEP-VALIDATOR-LEGACY",
+                                                                   "STEP-VALIDATOR-COVERAGE",
+                                                                   "STEP-VALIDATOR-CONFLICT",
+                                                                   "STEP-VALIDATOR-ROOT"
+                                                               ],
+                                                  "identity_ids":  [
+                                                                       "ENTITY-STANDALONE-SKILL"
+                                                                   ]
+                                              }
+                                          ],
+                             "counterevidence":  [
+
+                                                 ],
+                             "blocker":  null
+                         },
+                         {
+                             "id":  "REQ-PACKAGE",
+                             "description":  "The standalone package passes deterministic validation and installs exactly without changing a plugin or application project.",
+                             "required":  true,
+                             "capability_ids":  [
+                                                    "CAP-PACKAGE"
+                                                ],
+                             "identity_ids":  [
+                                                  "ENTITY-STANDALONE-SKILL"
+                                              ],
+                             "proof_scope":  "Local tests, official skill validation, isolated idempotent installation, active installation, and exact source comparison.",
+                             "proof_limits":  "Local verification does not prove behavior in every future Codex task.",
+                             "status":  "passing",
+                             "minimum_evidence_level":  "integration",
+                             "acceptance_steps":  [
+                                                      {
+                                                          "id":  "STEP-PACKAGE-TEST",
+                                                          "description":  "Pass the full repository test suite and official Codex skill validator."
+                                                      },
+                                                      {
+                                                          "id":  "STEP-PACKAGE-INSTALL",
+                                                          "description":  "Install twice in isolation, install the active standalone skill, and verify exact source equivalence."
+                                                      },
+                                                      {
+                                                          "id":  "STEP-PACKAGE-ISOLATION",
+                                                          "description":  "Verify the changes contain no provider-specific or plugin-specific correction."
+                                                      }
+                                                  ],
+                             "evidence":  [
+                                              {
+                                                  "level":  "integration",
+                                                  "ref":  "23 deterministic tests; quick_validate.py; compileall; project validate/resume; isolated double install; active install; exact five-file SHA256 and managed-rule comparison; generic-source scan",
+                                                  "summary":  "The standalone package passed all local gates, installed idempotently, matched all five installed source files exactly, preserved one exact managed global block, and contained no special-case provider correction.",
+                                                  "verified_utc":  "2026-07-29T19:10:35Z",
+                                                  "step_ids":  [
+                                                                   "STEP-PACKAGE-TEST",
+                                                                   "STEP-PACKAGE-INSTALL",
+                                                                   "STEP-PACKAGE-ISOLATION"
+                                                               ],
+                                                  "identity_ids":  [
+                                                                       "ENTITY-STANDALONE-SKILL"
+                                                                   ]
+                                              }
+                                          ],
+                             "counterevidence":  [
+
+                                                 ],
+                             "blocker":  null
+                         },
+                         {
+                             "id":  "REQ-PUBLISH",
+                             "description":  "GitHub main, public CI, the v2.0.0 tag, and the latest GitHub Release identify the verified standalone implementation.",
+                             "required":  true,
+                             "capability_ids":  [
+                                                    "CAP-PUBLISH"
+                                                ],
+                             "identity_ids":  [
+                                                  "ENTITY-STANDALONE-SKILL"
+                                              ],
+                             "proof_scope":  "GitHub repository, pull request, Actions run, tag, and release metadata prove public publication of the verified source.",
+                             "proof_limits":  "Publication proves repository and release state, not behavior in every future Codex task.",
+                             "status":  "failing",
+                             "minimum_evidence_level":  "user-visible",
+                             "acceptance_steps":  [
+                                                      {
+                                                          "id":  "STEP-PUBLISH-MERGE",
+                                                          "description":  "Commit the scoped standalone changes, push a publication branch, and merge its pull request into main."
+                                                      },
+                                                      {
+                                                          "id":  "STEP-PUBLISH-CI",
+                                                          "description":  "Confirm the public validation workflow succeeds for the merged implementation."
+                                                      },
+                                                      {
+                                                          "id":  "STEP-PUBLISH-RELEASE",
+                                                          "description":  "Create tag and GitHub Release v2.0.0 for the implementation revision and verify it is the latest release."
+                                                      }
+                                                  ],
+                             "evidence":  [
+
+                                          ],
+                             "counterevidence":  [
+
+                                                 ],
+                             "blocker":  null
+                         }
+                     ]
 }

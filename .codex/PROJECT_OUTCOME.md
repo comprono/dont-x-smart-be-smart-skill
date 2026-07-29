@@ -1,97 +1,98 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-07-21T11:40:28Z
-State: complete
+Updated: 2026-07-29T19:22:03Z
+State: active
 
 ## North Star
 
-- Outcome: Upgrade and publish Outcome Integrity so Codex continuously owns the active project across questions and corrections, continues already-authorized work without repeated prompting, preserves context, prevents confusing loops, and proves real outcomes.
-- User-visible proof: In a future long project, a question or correction updates the active project without ending it; Codex answers briefly, resumes the next safe authorized action in the same turn, and does not require repeated "do it", "continue", context, or next-step instructions.
-- Methods, not outcomes: Review, planning, testing, delegation, installation, and publication.
-- Why it matters: A sound recovery system can still fail if it formalizes the wrong task before recovery begins.
+- Product outcome: Improve and publicly release the standalone Outcome Integrity skill so Codex preserves the user's full outcome, distinguishes it from a proof slice, preserves exact named-entity identity, reconciles contradictory evidence, resumes from the correct project root, and communicates and executes with less wasted work.
+- User-visible proof: Generic state validation and regression tests reject invalid completion, the exact verified source is merged into GitHub main, public CI succeeds, and GitHub shows v2.0.0 as the latest release for that implementation revision.
+- Active proof slice: Publish the verified standalone changes through a GitHub pull request, confirm CI, and create the first GitHub Release as v2.0.0.
+- Proof limits: The release proves public source, CI, tag, and release alignment; it does not guarantee perfect behavior from every probabilistic model in every future project.
+- Methods, not outcomes: Auditing prior tasks, editing instructions, changing schemas, testing, installation, and reporting.
+- Why it matters: Efficient execution is impossible when a convenient test, similarly named resource, stale state file, or unresolved contradiction is allowed to replace the user's real objective.
 
 ## Done Means
 
 - Authority: .codex/ACCEPTANCE.json
-- Summary: Intent, acceptance evidence, recovery, delegation, installation, publication, and active local installation are verified through reproducible checks.
+- Summary: Every required capability has mapped evidence, the standalone package passes locally and in public CI, the verified source is merged to main, and GitHub v2.0.0 is published as the latest release.
 
 ## User Intent
 
-- Priorities: Apply researched solutions without adding another orchestration system.
-- Working preferences: Implement, test, install, publish, and report verified results concisely; preserve continuous project ownership; do not make the user repeatedly manage the next obvious action.
-- Explicit corrections: This is a global project-relevance skill, not plugin-specific; short replies alone are insufficient; Codex must keep building the authorized outcome across questions, corrections, and imperfect voice-transcribed prompts.
-- Non-negotiables: Stay token-efficient, globally reusable, and honest about guarantee boundaries.
+- Priorities: Improve the reusable skill from real post-release behavior, not from hypothetical examples or one plugin.
+- Working preferences: Make the safeguards mechanical, concise, globally reusable, token-efficient, and honest about proof boundaries.
+- Explicit corrections: The skill is separate from every plugin and project; publish this verified standalone upgrade to GitHub and update the repository's latest release.
+- Non-negotiables: Do not edit the plugin, encode provider-specific names, or claim success from phrase-presence tests alone.
 
 ## Work Map
 
 ### Critical Path
 
-- Add a pre-work outcome frame and stale-contract correction gate.
-- Add a proportional bounded-autonomy gate for recurring, unattended, scheduled, retrying, and resource-producing work.
-- Preserve the machine-verifiable acceptance registry and mature recovery/delegation gates.
-- Add and verify direct-answer-first and confusing-reply-loop rules for simple status, meaning, alignment, ownership, and next-action questions.
-- Add and verify continuous project ownership, message classification, noisy-prompt inference, and same-turn continuation rules.
-- Test deterministic behavior and fresh-agent behavior, then publish and install the exact release.
+- Separate product capabilities from active proof slices and their limits.
+- Bind evidence to exact acceptance steps and reject unresolved counterevidence.
+- Preserve explicitly named identity and validate the selected project root.
+- Add generic behavioral regression fixtures, validate the package, and install the verified standalone skill.
+- Merge the exact verified source to GitHub main and publish v2.0.0 as the latest release.
 
 ### Add-ons
 
-- Improve public documentation only where required to explain the upgraded contract.
+- Clarify public documentation only where needed to explain the stronger reusable contract.
 
 ### Non-goals
 
-- Building a workflow engine, model router, manager loop, or project-specific integration.
+- Changing any plugin, provider integration, application project, model router, or resource orchestrator.
+
+## Operational Envelope
+
+- Applies to: This bounded local skill upgrade; no recurring or unattended process is authorized.
+- Progress signal and side-effect key: A named acceptance step changes from failing to evidence-backed passing; installation remains idempotent.
+- Cadence and retry eligibility: Run deterministic validation after coherent edits; diagnose failed invariants before retrying.
+- Resource budget, reserve, and retention: One local repository, one installed skill copy, no worker fan-out, no generated activity logs.
+- No-progress stop, restart, cancellation, and recovery: Stop repeated edits after two failures of the same acceptance outcome; resume from these two state files and the current diff.
 
 ## Verified State
 
-- Public repository main matches local commit d38bd09 | Evidence: clean git status and origin/main | Verified: 2026-07-16T00:31:42Z
-- Current release has one Markdown ledger validator and a two-failure rule | Evidence: source inspection | Verified: 2026-07-16T00:31:42Z
-- Existing package tests and GitHub CI passed before this upgrade | Evidence: prior local and GitHub Actions results | Verified: 2026-07-16T00:31:42Z
-- Dual-file state validation passes eight deterministic tests | Evidence: python -m unittest discover -s tests -v | Verified: 2026-07-16T00:38:55Z
-- Failure classification and delegation admission pass three fresh-agent scenarios on GPT-5.6 Luna low | Evidence: agent results recorded in ACCEPTANCE.json | Verified: 2026-07-16T00:41:04Z
-- Public CI passed commit 2c85453 and the installed local skill matches every repository file hash | Evidence: GitHub Actions run 29462178379 and local SHA256 comparison | Verified: 2026-07-16T00:43:15Z
-- Outcome-framing rules, stale-contract invalidation, and method-rejection replanning passed local and public validation at commit 143d005 | Evidence: 10 package tests, Codex skill validator, GitHub Actions run 29534222570, installed SHA256 comparison | Verified: 2026-07-16T21:01:02Z
-- Bounded-autonomy rules and operational-envelope template passed local and public validation at commit c0c46d2 | Evidence: 11 package tests, Codex skill validator, GitHub Actions run 29536198974, privacy scan, exact installed SHA256 comparison | Verified: 2026-07-16T21:30:51Z
-- Direct-answer-first behavior passes 12 local deterministic tests and the active state validates and resumes | Evidence: python -m unittest discover -s tests -v; project_outcome.py validate and resume | Verified: 2026-07-18T22:01:07Z
-- Confusing-reply-loop and layer-separated-status behavior passes 13 local deterministic tests and the active state validates and resumes | Evidence: TEMP/TMP=C:\tmp python -m unittest discover -s tests -v; project_outcome.py validate and resume | Verified: 2026-07-18T22:30:19Z
-- Communication-loop release commit 84ffb77 passed public CI and active local installation hash verification | Evidence: GitHub Actions run 29664026459; installed skill SHA256 comparison; active AGENTS.md managed block inspection | Verified: 2026-07-18T22:46:54Z
-- Continuous-project-ownership release f331bfd passed 14 deterministic tests, official skill validation, public CI, active installation hash verification, and one managed global rule block | Evidence: GitHub Actions run 29826933922; exact five-file SHA256 comparison; active AGENTS.md continuity-rule inspection | Verified: 2026-07-21T11:40:28Z
+- The prior release passes structural tests but post-release task evidence shows outcome-to-proof collapse, same-name identity substitution, unreconciled contradictory evidence, premature stopping, and excessive coordination | Evidence: closed-window audit of Codex task records after f331bfd | Verified: 2026-07-29T18:53:50Z
+- The repository was clean at commit 056d1a9 before this upgrade | Evidence: git status, branch, and log inspection | Verified: 2026-07-29T18:53:50Z
+- Twenty-three deterministic tests pass for schema-v2 mechanics and existing behavior | Evidence: TEMP/TMP=C:\tmp python -m unittest discover -s tests -v | Verified: 2026-07-29T19:10:35Z
+- The official skill validator, Python compilation, project validate/resume gates, isolated double-install test, active installation, exact five-file SHA256 comparison, and one normalized managed global rule block pass | Evidence: local command outputs and installed-source comparison | Verified: 2026-07-29T19:10:35Z
+- Generic-source scanning found no names from the motivating provider/plugin case in the skill, validator, templates, tests, global rules, or README | Evidence: case-insensitive repository scan | Verified: 2026-07-29T19:10:35Z
 
 ## Context Pointers
 
 - Architecture or project map: README.md and skills/outcome-integrity/SKILL.md
 - Active specification: .codex/PROJECT_OUTCOME.md and .codex/ACCEPTANCE.json
-- Verification commands: python -m unittest discover -s tests -v
-- Evidence roots: tests, Git history, and GitHub Actions
+- Verification commands: python -m unittest discover -s tests -v; project_outcome.py validate, resume, and completion; quick_validate.py
+- Evidence roots: tests, current diff, isolated installer output, and installed-source hash comparison
 
 ## Assumptions To Test
 
-- A two-file contract remains simpler and more reliable than a larger runtime | Falsifier: validation or behavioral tests require orchestration state | Next check: implement and forward-test
-- JSON acceptance status resists silent completion drift | Falsifier: invalid evidence can pass deterministic validation | Next check: adversarial unit fixtures
+- Capability mapping plus step-bound evidence prevents a narrow proof slice from completing a broader outcome | Falsifier: a fixture completes while a required capability or step is uncovered | Next check: adversarial completion tests
+- Explicit identity constraints prevent same-label substitution without encoding project-specific names | Falsifier: an unknown or substitutable identity can satisfy a non-substitutable requirement | Next check: schema validation tests
 
 ## Decisions
 
-- Keep Markdown for human intent and JSON for acceptance state | Why: readability and mechanical enforcement have different needs | Revisit when: either source duplicates authority
-- Use Git for history and keep project files current | Why: append-only progress logs create context growth | Revisit when: resume tests cannot reconstruct state
+- Upgrade to acceptance schema version 2 while keeping legacy state readable for resume | Why: existing projects need recovery, but new completion claims need stronger proof | Revisit when: migration burden exceeds the integrity gain
+- Put reusable invariants in the skill and global rules, and enforcement details in the validator | Why: keep prompting concise while making completion mechanical | Revisit when: a rule cannot be tested mechanically
+- Use v2.0.0 for the first GitHub Release | Why: schema version 2 introduces a deliberately stronger completion contract while keeping schema-v1 recovery compatibility | Revisit when: a future breaking contract change is released
 
 ## Failure Memory
 
-- Instruction-only continuity | Root cause: no machine-verifiable acceptance registry | Invariant: completion requires validated evidence-bearing acceptance items | Do not repeat: treating Markdown checkboxes as proof
-- Blanket retry handling | Root cause: transient and semantic failures were conflated | Invariant: classify before retry | Do not repeat: identical semantic retry
-- Method promoted to outcome | Root cause: the task contract formed before the real result was distinguished from review, testing, or orchestration | Invariant: frame outcome and proof before substantive work | Do not repeat: completing an intermediate method as though it solved the problem
-- Recurring side effect without progress | Root cause: observation cadence directly triggered mutation with no resource envelope | Invariant: recurring work requires idempotency, budget, retention, no-progress stop, and restart-safe recovery | Do not repeat: unlimited retries under broad authorization
-- Buried/confusing reply loop | Root cause: communication presented process detail or mixed project/tooling/model/restart layers before the plain conclusion, forcing repeated clarification | Invariant: answer conclusion first, name the layer, and stop expansion when the user is confused | Do not repeat: leading with hashes, paths, process narration, or long architecture/status history
+- Proof slice promoted to product outcome | Class: semantic | Evidence: post-release project audit | Invariant: required product capabilities remain authoritative across demos, tests, pilots, and other proof methods | Do not repeat: rewriting the outcome to match the convenient test
+- Same-label entity substitution | Class: semantic | Evidence: post-release project audit | Invariant: explicitly named entities are non-substitutable until equivalence is proven | Do not repeat: treating a matching display name or capability as identity proof
+- Contradictory evidence routed around | Class: evidence conflict | Evidence: observed state conflicted with an explicit user assertion | Invariant: reconcile the exact entity, surface, session, and principal or retain counterevidence | Do not repeat: treating a fallback as resolution
 
 ## Current Slice
 
-- Acceptance ID: none
-- Objective: Publish and verify continuous project ownership across questions, corrections, and noisy prompts.
-- Acceptance evidence: Fourteen deterministic tests, official validation, GitHub Actions, exact installed-source hashes, and active global-rule inspection.
-- Protect: Explicit pause and diagnosis-only requests, genuine authorization boundaries, concise answers, and unrelated user changes.
-- Status: complete
+- Acceptance ID: REQ-PUBLISH
+- Objective: Merge the verified standalone source, pass public CI, and publish GitHub release v2.0.0.
+- Acceptance evidence: Local package evidence passes; GitHub merge, public CI, tag, and latest-release evidence are pending.
+- Protect: Standalone packaging, token efficiency, backward-readable project state, unrelated projects, and user-owned changes.
+- Status: active
 
 ## Next
 
-- Action: None; the continuity release is tested, published, installed, and aligned.
-- Why now: The requested project-ownership behavior is active for newly loaded Codex tasks.
+- Action: Commit the scoped changes on a publication branch, open and merge the GitHub pull request after CI, then create and verify v2.0.0.
+- Why now: The user explicitly extended the completed local upgrade to public GitHub publication.
 - Blocker and recovery: None.

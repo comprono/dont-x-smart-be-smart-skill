@@ -1,19 +1,43 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "updated_utc": "REPLACE_ME_UTC",
   "project_state": "active",
+  "project_identity": {
+    "id": "REPLACE_ME_STABLE_PROJECT_ID",
+    "root_markers": [
+      "REPLACE_ME_RELATIVE_PROJECT_MARKER"
+    ]
+  },
+  "outcome_capabilities": [
+    {
+      "id": "CAP-001",
+      "description": "REPLACE_ME_WITH_ONE_REQUIRED_PRODUCT_CAPABILITY",
+      "required": true
+    }
+  ],
+  "identity_requirements": [],
   "current_slice_requirement_id": "REQ-001",
   "requirements": [
     {
       "id": "REQ-001",
       "description": "REPLACE_ME_WITH_ONE_OBSERVABLE_REQUIREMENT",
       "required": true,
+      "capability_ids": [
+        "CAP-001"
+      ],
+      "identity_ids": [],
+      "proof_scope": "REPLACE_ME_WITH_WHAT_THIS_PROOF_ESTABLISHES",
+      "proof_limits": "REPLACE_ME_WITH_WHAT_THIS_PROOF_DOES_NOT_ESTABLISH",
       "status": "failing",
       "minimum_evidence_level": "end-to-end",
       "acceptance_steps": [
-        "REPLACE_ME_WITH_A_REPRODUCIBLE_ACCEPTANCE_STEP"
+        {
+          "id": "STEP-001",
+          "description": "REPLACE_ME_WITH_A_REPRODUCIBLE_ACCEPTANCE_STEP"
+        }
       ],
       "evidence": [],
+      "counterevidence": [],
       "blocker": null
     }
   ]

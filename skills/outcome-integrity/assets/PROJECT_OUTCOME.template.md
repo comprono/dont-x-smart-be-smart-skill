@@ -6,8 +6,10 @@ State: active
 
 ## North Star
 
-- Outcome: REPLACE_ME
+- Product outcome: REPLACE_ME
 - User-visible proof: REPLACE_ME
+- Active proof slice: REPLACE_ME
+- Proof limits: REPLACE_ME
 - Methods, not outcomes: REPLACE_ME
 - Why it matters: REPLACE_ME
 

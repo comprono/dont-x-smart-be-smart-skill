@@ -36,6 +36,8 @@ REQUIRED_HEADINGS = (
 )
 STATE_VALUES = {"active", "blocked", "complete"}
 REQUIREMENT_STATES = {"failing", "blocked", "passing"}
+COUNTEREVIDENCE_STATES = {"unresolved", "resolved"}
+SUPPORTED_SCHEMA_VERSIONS = {1, 2}
 EVIDENCE_RANKS = {
     "activity": 0,
     "process-health": 1,
@@ -46,10 +48,14 @@ EVIDENCE_RANKS = {
 }
 UTC_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 REQUIREMENT_ID_PATTERN = re.compile(r"^[A-Z][A-Z0-9_-]{2,63}$")
+PROJECT_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$")
 PROJECT_STATE_PATTERN = re.compile(r"^State: (active|blocked|complete)$", re.MULTILINE)
 PROJECT_UPDATED_PATTERN = re.compile(r"^Updated: (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)$", re.MULTILINE)
 CURRENT_SLICE_PATTERN = re.compile(r"^- Acceptance ID: ([A-Z][A-Z0-9_-]{2,63}|none)$", re.MULTILINE)
 ACCEPTANCE_AUTHORITY_LINE = "- Authority: .codex/ACCEPTANCE.json"
+PRODUCT_OUTCOME_PREFIX = "- Product outcome:"
+ACTIVE_PROOF_SLICE_PREFIX = "- Active proof slice:"
+PROOF_LIMITS_PREFIX = "- Proof limits:"
 
 
 def project_paths(root: str | Path) -> tuple[Path, Path]:
@@ -92,9 +98,12 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
     errors: list[str] = []
     warnings: list[str] = []
     project = validate_project_file(project_path, errors, warnings)
-    acceptance = validate_acceptance_file(acceptance_path, errors, warnings)
+    acceptance = validate_acceptance_file(
+        acceptance_path, project_path.parent.parent, errors, warnings
+    )
 
     if project and acceptance:
+        schema_version = acceptance["schema_version"]
         if project["state"] != acceptance["project_state"]:
             errors.append(
                 "project state mismatch: PROJECT_OUTCOME.md="
@@ -115,6 +124,17 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
             else:
                 warnings.append(message)
 
+        if schema_version == 2:
+            for field, present in (
+                (PRODUCT_OUTCOME_PREFIX, project["has_product_outcome"]),
+                (ACTIVE_PROOF_SLICE_PREFIX, project["has_active_proof_slice"]),
+                (PROOF_LIMITS_PREFIX, project["has_proof_limits"]),
+            ):
+                if not present:
+                    errors.append(
+                        f"schema version 2 requires a non-empty PROJECT_OUTCOME.md line: {field}"
+                    )
+
         if mode == "resume":
             if acceptance["project_state"] == "active" and current_id is None:
                 errors.append("active work requires current_slice_requirement_id")
@@ -126,6 +146,10 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
                 errors.append("current slice already passes; select a remaining requirement or complete the project")
 
         if mode == "completion":
+            if schema_version != 2:
+                errors.append(
+                    "completion requires ACCEPTANCE.json schema_version 2; migrate legacy state first"
+                )
             if project["state"] != "complete" or acceptance["project_state"] != "complete":
                 errors.append("completion requires both project states to be complete")
             if current_id is not None:
@@ -137,6 +161,31 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
             ]
             if incomplete:
                 errors.append("required acceptance items are not passing: " + ", ".join(incomplete))
+            if schema_version == 2:
+                covered_capabilities = {
+                    capability_id
+                    for item in acceptance["requirements"]
+                    if item["required"] and item["status"] == "passing"
+                    for capability_id in item["capability_ids"]
+                }
+                uncovered = [
+                    item["id"]
+                    for item in acceptance["outcome_capabilities"]
+                    if item["required"] and item["id"] not in covered_capabilities
+                ]
+                if uncovered:
+                    errors.append(
+                        "required outcome capabilities lack passing coverage: "
+                        + ", ".join(uncovered)
+                    )
+                unresolved = sum(
+                    item["unresolved_counterevidence"]
+                    for item in acceptance["requirements"]
+                )
+                if unresolved:
+                    errors.append(
+                        f"completion has {unresolved} unresolved counterevidence item(s)"
+                    )
 
     counts = acceptance["counts"] if acceptance else {}
     return {
@@ -199,11 +248,18 @@ def validate_project_file(
         "state": state_match.group(1),
         "updated": parse_utc(updated_match.group(1)),
         "current_slice_id": current_match.group(1),
+        "has_product_outcome": has_nonempty_prefixed_line(
+            lines, PRODUCT_OUTCOME_PREFIX
+        ),
+        "has_active_proof_slice": has_nonempty_prefixed_line(
+            lines, ACTIVE_PROOF_SLICE_PREFIX
+        ),
+        "has_proof_limits": has_nonempty_prefixed_line(lines, PROOF_LIMITS_PREFIX),
     }
 
 
 def validate_acceptance_file(
-    path: Path, errors: list[str], warnings: list[str]
+    path: Path, root: Path, errors: list[str], warnings: list[str]
 ) -> dict[str, Any] | None:
     if not path.is_file():
         errors.append(f"acceptance registry missing: {path}")
@@ -221,13 +277,38 @@ def validate_acceptance_file(
         errors.append("ACCEPTANCE.json root must be an object")
         return None
 
-    if data.get("schema_version") != 1:
-        errors.append("ACCEPTANCE.json schema_version must be 1")
+    schema_version = data.get("schema_version")
+    if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
+        errors.append("ACCEPTANCE.json schema_version must be 1 or 2")
+        return None
+    if schema_version == 1:
+        warnings.append(
+            "legacy ACCEPTANCE.json schema_version 1 is readable for recovery but cannot prove completion"
+        )
+
     updated_value = data.get("updated_utc")
     updated = validate_utc(updated_value, "updated_utc", errors)
     project_state = data.get("project_state")
     if project_state not in STATE_VALUES:
         errors.append("ACCEPTANCE.json project_state must be active, blocked, or complete")
+
+    if schema_version == 2:
+        project_identity = validate_project_identity(
+            data.get("project_identity"), root, errors
+        )
+        outcome_capabilities = validate_outcome_capabilities(
+            data.get("outcome_capabilities"), errors
+        )
+        identity_requirements = validate_identity_requirements(
+            data.get("identity_requirements"), errors
+        )
+    else:
+        project_identity = None
+        outcome_capabilities = []
+        identity_requirements = []
+
+    capability_ids = {item["id"] for item in outcome_capabilities}
+    identity_ids = {item["id"] for item in identity_requirements}
 
     current_id = data.get("current_slice_requirement_id")
     if current_id is not None and not valid_requirement_id(current_id):
@@ -242,7 +323,14 @@ def validate_acceptance_file(
     normalized: list[dict[str, Any]] = []
     for index, item in enumerate(requirements):
         prefix = f"requirements[{index}]"
-        normalized_item = validate_requirement(item, prefix, errors)
+        normalized_item = validate_requirement(
+            item,
+            prefix,
+            errors,
+            schema_version=schema_version,
+            known_capability_ids=capability_ids,
+            known_identity_ids=identity_ids,
+        )
         if not normalized_item:
             continue
         requirement_id = normalized_item["id"]
@@ -255,14 +343,28 @@ def validate_acceptance_file(
     if current_id is not None and current_id not in requirements_by_id:
         errors.append(f"current_slice_requirement_id does not exist: {current_id}")
 
-    counts = {state: sum(item["status"] == state for item in normalized) for state in REQUIREMENT_STATES}
+    counts = {
+        state: sum(item["status"] == state for item in normalized)
+        for state in REQUIREMENT_STATES
+    }
     counts["required"] = sum(item["required"] for item in normalized)
+    if schema_version == 2:
+        counts["required_capabilities"] = sum(
+            item["required"] for item in outcome_capabilities
+        )
+        counts["unresolved_counterevidence"] = sum(
+            item["unresolved_counterevidence"] for item in normalized
+        )
 
     if updated is None or project_state not in STATE_VALUES:
         return None
     return {
+        "schema_version": schema_version,
         "updated": updated,
         "project_state": project_state,
+        "project_identity": project_identity,
+        "outcome_capabilities": outcome_capabilities,
+        "identity_requirements": identity_requirements,
         "current_slice_requirement_id": current_id,
         "requirements": normalized,
         "requirements_by_id": requirements_by_id,
@@ -270,8 +372,123 @@ def validate_acceptance_file(
     }
 
 
+def validate_project_identity(
+    item: object, root: Path, errors: list[str]
+) -> dict[str, Any] | None:
+    prefix = "project_identity"
+    if not isinstance(item, dict):
+        errors.append(f"{prefix} must be an object for schema version 2")
+        return None
+    project_id = item.get("id")
+    if not isinstance(project_id, str) or not PROJECT_ID_PATTERN.fullmatch(project_id):
+        errors.append(f"{prefix}.id must match {PROJECT_ID_PATTERN.pattern}")
+    markers = item.get("root_markers")
+    if not isinstance(markers, list) or not markers:
+        errors.append(f"{prefix}.root_markers must be a non-empty array")
+        return None
+
+    normalized_markers: list[str] = []
+    resolved_root = root.resolve()
+    for index, marker in enumerate(markers):
+        field = f"{prefix}.root_markers[{index}]"
+        if not nonempty(marker):
+            errors.append(f"{field} must be a non-empty relative path")
+            continue
+        marker_path = Path(marker)
+        if marker_path.is_absolute() or marker in {".", ".."} or ".." in marker_path.parts:
+            errors.append(f"{field} must stay within the project root")
+            continue
+        target = (resolved_root / marker_path).resolve()
+        try:
+            target.relative_to(resolved_root)
+        except ValueError:
+            errors.append(f"{field} resolves outside the project root")
+            continue
+        if not target.exists():
+            errors.append(f"{field} does not exist under the selected project root: {marker}")
+        normalized_markers.append(marker)
+
+    return {"id": project_id, "root_markers": normalized_markers}
+
+
+def validate_outcome_capabilities(
+    items: object, errors: list[str]
+) -> list[dict[str, Any]]:
+    if not isinstance(items, list) or not items:
+        errors.append("outcome_capabilities must be a non-empty array for schema version 2")
+        return []
+    normalized: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for index, item in enumerate(items):
+        prefix = f"outcome_capabilities[{index}]"
+        if not isinstance(item, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        item_id = item.get("id")
+        if not valid_requirement_id(item_id):
+            errors.append(f"{prefix}.id must match {REQUIREMENT_ID_PATTERN.pattern}")
+            continue
+        if item_id in seen:
+            errors.append(f"duplicate outcome capability id: {item_id}")
+        seen.add(item_id)
+        if not nonempty(item.get("description")):
+            errors.append(f"{prefix}.description must be non-empty")
+        if not isinstance(item.get("required"), bool):
+            errors.append(f"{prefix}.required must be boolean")
+            continue
+        normalized.append(
+            {
+                "id": item_id,
+                "description": item.get("description"),
+                "required": item["required"],
+            }
+        )
+    return normalized
+
+
+def validate_identity_requirements(
+    items: object, errors: list[str]
+) -> list[dict[str, Any]]:
+    if not isinstance(items, list):
+        errors.append("identity_requirements must be an array for schema version 2")
+        return []
+    normalized: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for index, item in enumerate(items):
+        prefix = f"identity_requirements[{index}]"
+        if not isinstance(item, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        item_id = item.get("id")
+        if not valid_requirement_id(item_id):
+            errors.append(f"{prefix}.id must match {REQUIREMENT_ID_PATTERN.pattern}")
+            continue
+        if item_id in seen:
+            errors.append(f"duplicate identity requirement id: {item_id}")
+        seen.add(item_id)
+        if not nonempty(item.get("description")):
+            errors.append(f"{prefix}.description must be non-empty")
+        if not isinstance(item.get("substitutable"), bool):
+            errors.append(f"{prefix}.substitutable must be boolean")
+            continue
+        normalized.append(
+            {
+                "id": item_id,
+                "description": item.get("description"),
+                "substitutable": item["substitutable"],
+            }
+        )
+    return normalized
+
+
 def validate_requirement(
-    item: object, prefix: str, errors: list[str]
+    item: object,
+    prefix: str,
+    errors: list[str],
+    *,
+    schema_version: int,
+    known_capability_ids: set[str],
+    known_identity_ids: set[str],
 ) -> dict[str, Any] | None:
     if not isinstance(item, dict):
         errors.append(f"{prefix} must be an object")
@@ -297,24 +514,95 @@ def validate_requirement(
         errors.append(f"{prefix}.status must be failing, blocked, or passing")
     if minimum not in EVIDENCE_RANKS:
         errors.append(f"{prefix}.minimum_evidence_level is invalid")
-    if not isinstance(steps, list) or not steps or not all(nonempty(step) for step in steps):
-        errors.append(f"{prefix}.acceptance_steps must contain non-empty strings")
+
+    if schema_version == 2:
+        capability_ids = validate_id_references(
+            item.get("capability_ids"),
+            f"{prefix}.capability_ids",
+            known_capability_ids,
+            errors,
+            require_nonempty=True,
+        )
+        identity_ids = validate_id_references(
+            item.get("identity_ids"),
+            f"{prefix}.identity_ids",
+            known_identity_ids,
+            errors,
+            require_nonempty=False,
+        )
+        if not nonempty(item.get("proof_scope")):
+            errors.append(f"{prefix}.proof_scope must be non-empty")
+        if not nonempty(item.get("proof_limits")):
+            errors.append(f"{prefix}.proof_limits must be non-empty")
+        step_ids = validate_acceptance_steps(steps, prefix, errors)
+        unresolved_counterevidence = validate_counterevidence(
+            item.get("counterevidence"), f"{prefix}.counterevidence", errors
+        )
+    else:
+        capability_ids = []
+        identity_ids = []
+        step_ids = []
+        unresolved_counterevidence = 0
+        if not isinstance(steps, list) or not steps or not all(nonempty(step) for step in steps):
+            errors.append(f"{prefix}.acceptance_steps must contain non-empty strings")
+
     if not isinstance(evidence, list):
         errors.append(f"{prefix}.evidence must be an array")
         evidence = []
 
-    evidence_levels: list[int] = []
+    normalized_evidence: list[dict[str, Any]] = []
     for evidence_index, entry in enumerate(evidence):
-        rank = validate_evidence(entry, f"{prefix}.evidence[{evidence_index}]", errors)
-        if rank is not None:
-            evidence_levels.append(rank)
+        normalized_entry = validate_evidence(
+            entry,
+            f"{prefix}.evidence[{evidence_index}]",
+            errors,
+            schema_version=schema_version,
+            known_step_ids=set(step_ids),
+            known_identity_ids=set(identity_ids),
+        )
+        if normalized_entry is not None:
+            normalized_evidence.append(normalized_entry)
 
     if status == "passing":
         if blocker is not None:
             errors.append(f"{prefix}.blocker must be null when passing")
         minimum_rank = EVIDENCE_RANKS.get(minimum, 999)
-        if not evidence_levels or max(evidence_levels) < minimum_rank:
-            errors.append(f"{prefix} cannot pass without evidence at level {minimum} or higher")
+        sufficient = [
+            entry for entry in normalized_evidence if entry["rank"] >= minimum_rank
+        ]
+        if not sufficient:
+            errors.append(
+                f"{prefix} cannot pass without evidence at level {minimum} or higher"
+            )
+        if schema_version == 2:
+            covered_steps = {
+                step_id for entry in sufficient for step_id in entry["step_ids"]
+            }
+            missing_steps = [step_id for step_id in step_ids if step_id not in covered_steps]
+            if missing_steps:
+                errors.append(
+                    f"{prefix} cannot pass without sufficient evidence for steps: "
+                    + ", ".join(missing_steps)
+                )
+            covered_identities = {
+                identity_id
+                for entry in sufficient
+                for identity_id in entry["identity_ids"]
+            }
+            missing_identities = [
+                identity_id
+                for identity_id in identity_ids
+                if identity_id not in covered_identities
+            ]
+            if missing_identities:
+                errors.append(
+                    f"{prefix} cannot pass without exact identity evidence for: "
+                    + ", ".join(missing_identities)
+                )
+            if unresolved_counterevidence:
+                errors.append(
+                    f"{prefix} cannot pass with unresolved counterevidence"
+                )
     elif status == "blocked":
         validate_blocker(blocker, f"{prefix}.blocker", errors)
     elif status == "failing" and blocker is not None:
@@ -327,10 +615,76 @@ def validate_requirement(
         "description": description,
         "required": required,
         "status": status,
+        "capability_ids": capability_ids,
+        "identity_ids": identity_ids,
+        "acceptance_step_ids": step_ids,
+        "unresolved_counterevidence": unresolved_counterevidence,
     }
 
 
-def validate_evidence(entry: object, prefix: str, errors: list[str]) -> int | None:
+def validate_id_references(
+    values: object,
+    prefix: str,
+    known_ids: set[str],
+    errors: list[str],
+    *,
+    require_nonempty: bool,
+) -> list[str]:
+    if not isinstance(values, list) or (require_nonempty and not values):
+        qualifier = "a non-empty array" if require_nonempty else "an array"
+        errors.append(f"{prefix} must be {qualifier}")
+        return []
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        if not valid_requirement_id(value):
+            errors.append(f"{prefix} contains an invalid ID")
+            continue
+        if value in seen:
+            errors.append(f"{prefix} contains duplicate ID: {value}")
+            continue
+        seen.add(value)
+        if value not in known_ids:
+            errors.append(f"{prefix} references unknown ID: {value}")
+        normalized.append(value)
+    return normalized
+
+
+def validate_acceptance_steps(
+    steps: object, prefix: str, errors: list[str]
+) -> list[str]:
+    if not isinstance(steps, list) or not steps:
+        errors.append(f"{prefix}.acceptance_steps must be a non-empty array")
+        return []
+    step_ids: list[str] = []
+    seen: set[str] = set()
+    for index, step in enumerate(steps):
+        field = f"{prefix}.acceptance_steps[{index}]"
+        if not isinstance(step, dict):
+            errors.append(f"{field} must be an object for schema version 2")
+            continue
+        step_id = step.get("id")
+        if not valid_requirement_id(step_id):
+            errors.append(f"{field}.id must match {REQUIREMENT_ID_PATTERN.pattern}")
+            continue
+        if step_id in seen:
+            errors.append(f"duplicate acceptance step id in {prefix}: {step_id}")
+        seen.add(step_id)
+        if not nonempty(step.get("description")):
+            errors.append(f"{field}.description must be non-empty")
+        step_ids.append(step_id)
+    return step_ids
+
+
+def validate_evidence(
+    entry: object,
+    prefix: str,
+    errors: list[str],
+    *,
+    schema_version: int,
+    known_step_ids: set[str],
+    known_identity_ids: set[str],
+) -> dict[str, Any] | None:
     if not isinstance(entry, dict):
         errors.append(f"{prefix} must be an object")
         return None
@@ -343,8 +697,59 @@ def validate_evidence(entry: object, prefix: str, errors: list[str]) -> int | No
     if not nonempty(entry.get("summary")):
         errors.append(f"{prefix}.summary must be non-empty")
     validate_utc(entry.get("verified_utc"), f"{prefix}.verified_utc", errors)
-    return EVIDENCE_RANKS[level]
 
+    if schema_version == 2:
+        step_ids = validate_id_references(
+            entry.get("step_ids"),
+            f"{prefix}.step_ids",
+            known_step_ids,
+            errors,
+            require_nonempty=True,
+        )
+        identity_ids = validate_id_references(
+            entry.get("identity_ids"),
+            f"{prefix}.identity_ids",
+            known_identity_ids,
+            errors,
+            require_nonempty=False,
+        )
+    else:
+        step_ids = []
+        identity_ids = []
+    return {
+        "rank": EVIDENCE_RANKS[level],
+        "step_ids": step_ids,
+        "identity_ids": identity_ids,
+    }
+
+
+def validate_counterevidence(
+    entries: object, prefix: str, errors: list[str]
+) -> int:
+    if not isinstance(entries, list):
+        errors.append(f"{prefix} must be an array")
+        return 0
+    unresolved = 0
+    for index, entry in enumerate(entries):
+        field = f"{prefix}[{index}]"
+        if not isinstance(entry, dict):
+            errors.append(f"{field} must be an object")
+            continue
+        if not nonempty(entry.get("ref")):
+            errors.append(f"{field}.ref must be non-empty")
+        if not nonempty(entry.get("summary")):
+            errors.append(f"{field}.summary must be non-empty")
+        validate_utc(entry.get("observed_utc"), f"{field}.observed_utc", errors)
+        status = entry.get("status")
+        if status not in COUNTEREVIDENCE_STATES:
+            errors.append(f"{field}.status must be unresolved or resolved")
+        elif status == "unresolved":
+            unresolved += 1
+            if entry.get("resolution") is not None:
+                errors.append(f"{field}.resolution must be null while unresolved")
+        elif not nonempty(entry.get("resolution")):
+            errors.append(f"{field}.resolution must be non-empty when resolved")
+    return unresolved
 
 def validate_blocker(blocker: object, prefix: str, errors: list[str]) -> None:
     if not isinstance(blocker, dict):
@@ -372,6 +777,10 @@ def valid_requirement_id(value: object) -> bool:
 
 def nonempty(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip()) and "REPLACE_ME" not in value
+
+
+def has_nonempty_prefixed_line(lines: list[str], prefix: str) -> bool:
+    return any(line.startswith(prefix) and bool(line[len(prefix) :].strip()) for line in lines)
 
 
 def section_bullets(lines: list[str], start: str, end: str) -> list[str]:
