@@ -221,9 +221,9 @@ class PackageTests(unittest.TestCase):
             self.assertIn(phrase, skill)
 
         for phrase in (
-            "Before the first substantive tool call or durable task contract",
-            "A correction that changes the outcome invalidates",
-            "After a worker or method is rejected",
+            "Separate the full product outcome and required capabilities",
+            "A user correction immediately supersedes",
+            "Replan from the outcome",
         ):
             self.assertIn(phrase, global_rules)
 
@@ -241,14 +241,14 @@ class PackageTests(unittest.TestCase):
         openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
 
         for phrase in (
-            "Answer The Immediate Question First",
+            "Communicate For Productive Understanding",
             "plain-language conclusion in the first sentence",
-            "Do not make the user translate a technical distinction",
+            "truthfully, usefully, proportionately, and without unnecessary agitation",
             "Never answer \"yes, exactly\"",
         ):
             self.assertIn(phrase, skill)
 
-        self.assertIn("Do not bury the conclusion behind investigation detail", global_rules)
+        self.assertIn("plain conclusion first", global_rules)
         self.assertIn("direct plain-language conclusion first", readme)
         self.assertIn("Use $outcome-integrity", openai_yaml)
 
@@ -263,22 +263,22 @@ class PackageTests(unittest.TestCase):
             "A correction updates the active contract; a question does not cancel authorized work",
             "Interpret noisy, voice-transcribed, or imprecise wording",
             "continue the next safe authorized project action in the same turn",
-            'Do not make the user repeatedly say "do it", "continue", "what next"',
+            'Do not make the user repeatedly say "do it", "continue", or "what next"',
             "am I leaving the user to manage the next obvious action",
         ):
             self.assertIn(phrase, skill)
 
         for phrase in (
-            "Treat each message in an active project as an update",
-            "Maintain a compact control frame",
-            "a question does not cancel authorized work",
-            "continue the next safe authorized action in the same turn",
+            "Treat each message as an update to the active objective",
+            "Maintain one compact control frame",
+            "After answering an interruption, apply that discernment gate",
+            "do not make the user repeatedly say",
         ):
             self.assertIn(phrase, global_rules)
 
         self.assertIn("Questions and corrections update that project", readme)
         self.assertIn('instead of waiting for another "do it" instruction', readme)
-        self.assertIn("continuous ownership", openai_yaml)
+        self.assertIn("advance the next accountable authorized slice", openai_yaml)
 
     def test_confusing_reply_loops_are_stopped_and_status_layers_are_separated(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -287,21 +287,21 @@ class PackageTests(unittest.TestCase):
         openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
 
         for phrase in (
-            "Prevent Confusing Reply Loops",
+            "Communicate For Productive Understanding",
             "Real outcome:",
             "Layer status:",
             "Next owned action:",
-            "Never let `Done`, `working`, `complete`, `blocked`, `restart`, `plugin`, `local`, or `installed` refer to multiple layers",
-            "If the user says they are confused",
+            "Never let `Done`, `working`, `complete`, `blocked`, `restart`, `plugin`, `local`, or `installed` refer to multiple layers in one sentence",
+            "If the user says the answer is confusing",
             "`Next` means an agent-owned action",
         ):
             self.assertIn(phrase, skill)
 
-        self.assertIn("Keep status language layer-separated", global_rules)
-        self.assertIn("restate the conclusion, distinction, and next owned action", global_rules)
-        self.assertIn("repeated clarification loops", readme)
+        self.assertIn("Separate product outcome, tooling or plugin state", global_rules)
+        self.assertIn("conclusion, material distinction, and next owned action", global_rules)
+        self.assertIn("Continuing an explanation loop", readme)
         self.assertIn("short conclusion, distinction, and next-action frame", readme)
-        self.assertIn("exact identities", openai_yaml)
+        self.assertIn("preserve the full outcome", openai_yaml)
 
     def test_recurring_work_has_a_bounded_operational_envelope(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -319,9 +319,9 @@ class PackageTests(unittest.TestCase):
             self.assertIn(phrase, skill)
 
         for phrase in (
-            "Before enabling recurring, unattended, scheduled, retrying, or automatic recovery work",
-            "Observed state may be checked frequently",
-            "Stop and fail closed when resources grow",
+            "Before recurring, unattended, retrying, or automatic work",
+            "idempotency identity",
+            "Stop producers when resources grow",
         ):
             self.assertIn(phrase, global_rules)
 
@@ -334,7 +334,7 @@ class PackageTests(unittest.TestCase):
             self.assertIn(phrase, template)
 
         self.assertIn("unattended loops consume storage", readme)
-        self.assertIn("next verified authorized slice", openai_yaml)
+        self.assertIn("return attention to the verified gap", openai_yaml)
 
     def test_product_proof_identity_and_conflict_rules_are_generic(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -349,13 +349,45 @@ class PackageTests(unittest.TestCase):
             self.assertIn(phrase, skill)
 
         for phrase in (
-            "full product outcome and its required capabilities",
-            "A passing slice proves only the capabilities it actually covers",
-            "matching name, interface, capability, output, or family is not equivalence",
+            "full product outcome and required capabilities",
+            "A passing slice proves only what it covers",
+            "Treat named people, accounts, tools, providers",
             "preserve unresolved counterevidence",
             "project_identity.root_markers",
         ):
             self.assertIn(phrase, global_rules)
+
+    def test_steady_action_contract_is_generic_and_token_bounded(self) -> None:
+        skill = SKILL.read_text(encoding="utf-8")
+        global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
+
+        for phrase in (
+            "Discern Before Persisting",
+            "Do not confuse momentum with focus",
+            "This never reduces responsibility, acceptance, or evidence quality",
+            "return to the current acceptance gap",
+            "Analytical fixation",
+            "Restless activity",
+            "Avoidant inaction",
+            "environment, acting agent, tools and access, distinct efforts, and external conditions",
+            "remaining uncertainty is tolerable and visible",
+        ):
+            self.assertIn(phrase, skill)
+
+        for phrase in (
+            "Discern before persisting",
+            "Non-attachment to a preferred result or method never weakens outcome accountability",
+            "Return wandering attention",
+            "truthfully, usefully, proportionately, and without unnecessary agitation",
+            "do not assign total credit or blame to one agent without evidence",
+        ):
+            self.assertIn(phrase, global_rules)
+
+        self.assertLessEqual(len(skill.split()), 3186)
+        self.assertLessEqual(len(global_rules.split()), 700)
+        for project_specific in ("Bhagavad", "Krishna", "Arjuna", "Claude", "Antigravity"):
+            self.assertNotIn(project_specific.casefold(), skill.casefold())
+            self.assertNotIn(project_specific.casefold(), global_rules.casefold())
 
 
     def test_schema_v2_template_declares_mechanical_proof_fields(self) -> None:

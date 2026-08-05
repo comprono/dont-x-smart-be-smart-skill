@@ -1,7 +1,7 @@
 {
     "schema_version":  2,
-    "updated_utc":  "2026-07-29T19:26:24Z",
-    "project_state":  "complete",
+    "updated_utc":  "2026-08-05T03:12:56Z",
+    "project_state":  "active",
     "project_identity":  {
                              "id":  "outcome-integrity-skill",
                              "root_markers":  [
@@ -31,6 +31,11 @@
                                      "required":  true
                                  },
                                  {
+                                     "id":  "CAP-STEADY-ACTION",
+                                     "description":  "Codex discerns before persisting, returns attention to the verified gap, remains accountable without method attachment, communicates productively, and attributes outcomes without ego or single-cause distortion.",
+                                     "required":  true
+                                 },
+                                 {
                                      "id":  "CAP-PACKAGE",
                                      "description":  "The generic package is tested, valid, idempotently installable, and isolated from project-specific behavior.",
                                      "required":  true
@@ -48,7 +53,7 @@
                                       "substitutable":  false
                                   }
                               ],
-    "current_slice_requirement_id":  null,
+    "current_slice_requirement_id":  "REQ-PUBLISH",
     "requirements":  [
                          {
                              "id":  "REQ-CONTRACT",
@@ -160,6 +165,65 @@
                              "blocker":  null
                          },
                          {
+                             "id":  "REQ-STEADY-ACTION",
+                             "description":  "The reusable instruction contract governs focused, discerning, non-reactive, accountable action without importing religious or project-specific language.",
+                             "required":  true,
+                             "capability_ids":  [
+                                                    "CAP-STEADY-ACTION"
+                                                ],
+                             "identity_ids":  [
+                                                  "ENTITY-STANDALONE-SKILL"
+                                              ],
+                             "proof_scope":  "Source assertions and bounded scenario-contract fixtures verify the generic steady-action rules and their presence in the correct prompt layer.",
+                             "proof_limits":  "Instruction and scenario-contract tests reduce known failure risk but cannot guarantee every probabilistic model response.",
+                             "status":  "passing",
+                             "minimum_evidence_level":  "focused-test",
+                             "acceptance_steps":  [
+                                                      {
+                                                          "id":  "STEP-STEADY-DISCERN",
+                                                          "description":  "Require discernment before persistence when duties, evidence, authority, or irreversible consequences conflict."
+                                                      },
+                                                      {
+                                                          "id":  "STEP-STEADY-ATTENTION",
+                                                          "description":  "Return wandering attention to the current verified gap and distinguish analytical fixation, restless activity, and avoidant inaction."
+                                                      },
+                                                      {
+                                                          "id":  "STEP-STEADY-ACCOUNTABILITY",
+                                                          "description":  "Detach judgment from preferred methods or praise without weakening outcome accountability or evidence thresholds."
+                                                      },
+                                                      {
+                                                          "id":  "STEP-STEADY-COMMUNICATION",
+                                                          "description":  "Require truthful, useful, proportionate, non-agitating communication and multi-causal attribution."
+                                                      },
+                                                      {
+                                                          "id":  "STEP-STEADY-EFFICIENCY",
+                                                          "description":  "Keep the standalone skill secular and generic while reducing duplicated always-loaded instruction cost."
+                                                      }
+                                                  ],
+                             "evidence":  [
+                                              {
+                                                  "level":  "focused-test",
+                                                  "ref":  "tests/test_package.py::test_steady_action_contract_is_generic_and_token_bounded; three independent read-only forward-test scenarios",
+                                                  "summary":  "The 24-test suite asserts the generic discernment, attention-return, accountability, communication, causal-attribution, secular-isolation, and token-bound contract. Independent evaluations refused an identity-conflicted production write, returned from add-on drift to the sole acceptance gap, and reported an unreleased product plainly without blaming an unrelated worker.",
+                                                  "verified_utc":  "2026-08-05T03:12:56Z",
+                                                  "step_ids":  [
+                                                                   "STEP-STEADY-DISCERN",
+                                                                   "STEP-STEADY-ATTENTION",
+                                                                   "STEP-STEADY-ACCOUNTABILITY",
+                                                                   "STEP-STEADY-COMMUNICATION",
+                                                                   "STEP-STEADY-EFFICIENCY"
+                                                               ],
+                                                  "identity_ids":  [
+                                                                       "ENTITY-STANDALONE-SKILL"
+                                                                   ]
+                                              }
+                                          ],
+                             "counterevidence":  [
+
+                                                 ],
+                             "blocker":  null
+                         },
+                         {
                              "id":  "REQ-PACKAGE",
                              "description":  "The standalone package passes deterministic validation and installs exactly without changing a plugin or application project.",
                              "required":  true,
@@ -190,9 +254,9 @@
                              "evidence":  [
                                               {
                                                   "level":  "integration",
-                                                  "ref":  "23 deterministic tests; quick_validate.py; compileall; project validate/resume; isolated double install; active install; exact five-file SHA256 and managed-rule comparison; generic-source scan",
-                                                  "summary":  "The standalone package passed all local gates, installed idempotently, matched all five installed source files exactly, preserved one exact managed global block, and contained no special-case provider correction.",
-                                                  "verified_utc":  "2026-07-29T19:10:35Z",
+                                                  "ref":  "24 deterministic tests; quick_validate.py; compileall; project validate; isolated installer test; active double install; exact five-file SHA256 comparison; one managed global block",
+                                                  "summary":  "The standalone package passed every local gate, installed idempotently, matched all five installed source files exactly, retained one managed global rule block, and kept project-specific names out of the runtime skill and global rules.",
+                                                  "verified_utc":  "2026-08-05T03:12:56Z",
                                                   "step_ids":  [
                                                                    "STEP-PACKAGE-TEST",
                                                                    "STEP-PACKAGE-INSTALL",
@@ -210,7 +274,7 @@
                          },
                          {
                              "id":  "REQ-PUBLISH",
-                             "description":  "GitHub main, public CI, the v2.0.0 tag, and the latest GitHub Release identify the verified standalone implementation.",
+                             "description":  "GitHub main, public CI, the v2.1.0 tag, and the latest GitHub Release identify the verified standalone implementation.",
                              "required":  true,
                              "capability_ids":  [
                                                     "CAP-PUBLISH"
@@ -220,7 +284,7 @@
                                               ],
                              "proof_scope":  "GitHub repository, pull request, Actions run, tag, and release metadata prove public publication of the verified source.",
                              "proof_limits":  "Publication proves repository and release state, not behavior in every future Codex task.",
-                             "status":  "passing",
+                             "status":  "failing",
                              "minimum_evidence_level":  "user-visible",
                              "acceptance_steps":  [
                                                       {
@@ -233,24 +297,11 @@
                                                       },
                                                       {
                                                           "id":  "STEP-PUBLISH-RELEASE",
-                                                          "description":  "Create tag and GitHub Release v2.0.0 for the implementation revision and verify it is the latest release."
+                                                          "description":  "Create tag and GitHub Release v2.1.0 for the implementation revision and verify it is the latest release."
                                                       }
                                                   ],
                              "evidence":  [
-                                              {
-                                                  "level":  "user-visible",
-                                                  "ref":  "PR https://github.com/comprono/dont-x-smart-be-smart-skill/pull/1; CI https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/30484327986; release https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v2.0.0; tag refs/tags/v2.0.0",
-                                                  "summary":  "Pull request 1 merged the verified implementation at 17b07e81ecb654071ff49087be4d120e90c4d3f1, its main validation run passed, and GitHub reports public latest release v2.0.0 with a tag pointing exactly to that commit.",
-                                                  "verified_utc":  "2026-07-29T19:26:24Z",
-                                                  "step_ids":  [
-                                                                   "STEP-PUBLISH-MERGE",
-                                                                   "STEP-PUBLISH-CI",
-                                                                   "STEP-PUBLISH-RELEASE"
-                                                               ],
-                                                  "identity_ids":  [
-                                                                       "ENTITY-STANDALONE-SKILL"
-                                                                   ]
-                                              }
+
                                           ],
                              "counterevidence":  [
 

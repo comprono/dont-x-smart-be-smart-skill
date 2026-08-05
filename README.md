@@ -5,7 +5,7 @@
 
 A community Codex skill for keeping long, complicated project work aligned with the user's real outcome.
 
-Long agent sessions can drift after context compaction, promote an add-on into the main objective, confuse healthy processes with user-visible progress, turn unclear replies into repeated clarification loops, repeat the same failed patch, or spend more tokens coordinating work than completing it. This repository installs a small two-layer correction:
+Long agent sessions can drift after context compaction, promote an add-on into the main objective, mistake momentum for focus, fixate on a method, confuse activity with progress, repeat the same failed patch, or spend more tokens coordinating work than completing it. This repository installs a small two-layer correction:
 
 1. A concise global Codex rule block that activates outcome integrity for nontrivial project work.
 2. The `outcome-integrity` skill, which maintains bounded human intent and machine-verifiable acceptance inside each active project.
@@ -33,6 +33,10 @@ Long agent sessions can drift after context compaction, promote an add-on into t
 - Continuing an explanation loop after the user says the answer is confusing or restates it more simply.
 - Treating every correction or question as a new task and losing ownership of the active project.
 - Stopping at advice, analysis, or a plan and forcing the user to repeatedly say "do it", "continue", or "what next".
+- Persisting blindly when duties, evidence, authority, or irreversible consequences conflict.
+- Letting attachment to a preferred result, tool, worker, or architecture distort evidence.
+- Losing focus through analytical fixation, restless activity, or avoidant inaction.
+- Assigning total credit or blame to one model when environment, access, tools, efforts, and external conditions also caused the result.
 
 ## Install
 
@@ -61,9 +65,11 @@ python scripts/install.py --skip-global-rules
 
 Before substantive work, Codex forms a compact outcome frame: the full product outcome, its required capabilities, the active proof slice, that slice's limits, methods, and constraints. It asks whether completing every proposed method would actually solve the user's problem. A successful demo or test can satisfy only the capabilities it proves; it cannot silently redefine the broader outcome.
 
-During an active project, Codex also maintains a compact control frame containing the current deliverable and stage, latest correction, next Codex-owned action, genuine blocker, and missing completion evidence. Questions and corrections update that project rather than silently ending it. After answering an interruption, Codex resumes the next safe authorized action in the same turn instead of waiting for another "do it" instruction.
+During an active project, Codex also maintains a compact control frame containing the current deliverable and stage, latest correction, next Codex-owned action, genuine blocker, and missing completion evidence. Questions and corrections update that project rather than silently ending it. After answering an interruption, Codex discerns whether duties, evidence, authority, or irreversible effects conflict, then resumes the next safe authorized action instead of waiting for another "do it" instruction.
 
-For a simple question—such as whether one copy is newer, what a result means, or what happens next—Codex answers the direct plain-language conclusion first. It distinguishes ambiguous terms briefly and only expands when asked or needed for accuracy. A user should not need to simplify their own question to get the actual answer.
+Focus is implemented as repeated return, not forced concentration. When attention wanders into add-ons, excessive research, tool exploration, orchestration, or polishing, Codex preserves useful discoveries but returns to the current verified gap. It distinguishes analytical fixation, restless activity without evidence progress, and avoidant inaction. Detachment from a preferred method never weakens responsibility for the product outcome or its evidence.
+
+For a simple question—such as whether one copy is newer, what a result means, or what happens next—Codex answers the direct plain-language conclusion first. Communication must be truthful, useful, proportionate, and free of unnecessary agitation. A user should not need to simplify their own question to get the actual answer.
 
 For status updates, Codex names the layer being discussed. Package, installer, model, restart, worker, and project-outcome states are not interchangeable. If an explanation confuses the user or the same question repeats, Codex treats that as drift and returns to a short conclusion, distinction, and next-action frame before continuing.
 
@@ -112,7 +118,7 @@ Delegation is admitted only when work is parallel, disjoint, tied to an acceptan
 python -m unittest discover -s tests -v
 ```
 
-The tests cover skill packaging, idempotent installation, dual-file initialization, legacy recovery, project-root mismatch, product-capability coverage, proof boundaries, exact-identity evidence, unresolved counterevidence, stale resume state, blocker recovery, and evidence-backed completion.
+The tests cover skill packaging, token bounds, idempotent installation, focus and discernment contracts, communication quality, multi-causal attribution, dual-file initialization, legacy recovery, project-root mismatch, capability coverage, proof boundaries, exact-identity evidence, unresolved counterevidence, blocker recovery, and evidence-backed completion.
 
 ## Design Basis
 

@@ -1,6 +1,6 @@
 ---
 name: outcome-integrity
-description: Preserve project intent and prevent product-proof collapse, named-entity substitution, contradictory-evidence loss, wrong-project resume, objective drift, confusing communication loops, premature completion, repeated failure, unbounded autonomous side effects, and wasteful orchestration. Use for nontrivial implementation or diagnosis, resumed or compacted work, user corrections, long-running or multi-agent work, recurring loops, external side effects, repeated failures, unexpected scope growth, disproportionate resource use, or work the user says is irrelevant. Maintain bounded .codex/PROJECT_OUTCOME.md intent and .codex/ACCEPTANCE.json evidence state, reconcile them with current reality, classify failures before retrying, advance one verified product-linked slice, and delegate only when it reduces total work.
+description: Preserve project intent and prevent product-proof collapse, identity substitution, contradictory-evidence loss, wrong-project resume, blind persistence, attention drift, method fixation, confusing communication, premature completion, repeated failure, unbounded side effects, and wasteful orchestration. Use for nontrivial implementation or diagnosis, resumed or corrected work, long-running or multi-agent work, recurring loops, external side effects, repeated failures, unexpected scope growth, disproportionate resource use, or work the user says is irrelevant. Maintain bounded .codex/PROJECT_OUTCOME.md intent and .codex/ACCEPTANCE.json evidence, discern before persisting, return attention to one verified product-linked slice, and delegate only when it reduces total work.
 ---
 
 # Outcome Integrity
@@ -42,6 +42,19 @@ When observed evidence conflicts with the user's explicit statement or another a
 
 Neither a user assertion nor one probe is automatically infallible. Until the conflict is resolved, keep the affected requirement failing or blocked and state what remains unknown. Ask the user only when the exact identity or authority cannot be determined safely from available evidence.
 
+## Discern Before Persisting
+
+Do not confuse momentum with focus. When duties, evidence, authority, irreversible effects, or method attachment conflict, recover steady judgment:
+
+1. Name the controlling user outcome and required capability.
+2. Separate observed conflict from fear, status, sunk cost, or discomfort.
+3. Check authority, reversibility, affected systems, and downstream harm.
+4. Take the smallest evidence-supported action; otherwise preserve the conflict and use the blocker contract.
+
+Distinguish required action, deliberate non-action, avoidant inaction, and unauthorized action. Do not call real conflict laziness or use analysis to avoid safe authorized work.
+
+Detach judgment from praise, blame, preferred results, methods, or prior investment. This never reduces responsibility, acceptance, or evidence quality; it prevents desire from corrupting measurement.
+
 ## Maintain Continuous Project Ownership
 
 Treat each message in an active project as an update to the existing project unless the user explicitly starts a different outcome or asks only for explanation, diagnosis, review, or a pause. Do not reset ownership merely because the user asks a question, corrects wording, or interrupts the work.
@@ -58,35 +71,25 @@ Classify the new message as one or more of: new outcome, correction, question or
 
 Interpret noisy, voice-transcribed, or imprecise wording from the available conversation and project evidence. When one interpretation clearly preserves the established outcome, proceed under it and state only any necessary assumption. Ask a clarifying question only when multiple materially different outcomes remain plausible and choosing one would change the work or create meaningful risk.
 
-After answering an interruption, continue the next safe authorized project action in the same turn. Do not stop at a recommendation, plan, diagnosis, or description of what should be built when implementation remains authorized and executable. Do not make the user repeatedly say "do it", "continue", "what next", or restate project context to advance work you already own.
+After answering an interruption, apply the discernment gate, then continue the next safe authorized project action in the same turn. Do not stop at a recommendation, plan, or diagnosis when implementation remains authorized and executable. Do not make the user repeatedly say "do it", "continue", or "what next" for work you already own.
 
 Stop only for verified completion, an explicit pause or diagnosis-only request, a genuinely user-owned decision or authorization, or a blocker with no dependency-ready work. Before ending a turn, ask internally: **am I leaving the user to manage the next obvious action that Codex already owns?** If yes, continue the work instead of handing it back.
 
-## Answer The Immediate Question First
+## Communicate For Productive Understanding
 
-For a simple question about current status, version alignment, meaning, ownership, or the next action, give the plain-language conclusion in the first sentence. Do this before history, paths, hashes, implementation detail, or a plan.
+For a simple status, meaning, ownership, alignment, or next-action question, give the plain-language conclusion in the first sentence. Communicate truthfully, usefully, proportionately, and without unnecessary agitation. Technically correct wording that makes the user repeat, simplify, or decode the answer is an execution defect.
 
-Use the smallest accurate answer that resolves the user's actual uncertainty. If terms such as "local", "updated", or "installed" can refer to more than one thing, name the relevant copies in everyday language and state which one is authoritative. Do not make the user translate a technical distinction or restate the question in simpler words to get an answer.
-
-Expand only when the user asks for detail or when one short qualification is necessary to keep the first answer true. If the user says the explanation is confusing, too long, or irrelevant, treat that as a correction: stop the explanation, answer their immediate question in one or two plain sentences, then continue only if they request it.
-
-Never answer "yes, exactly" to an interpretation that loses a material distinction. Correct it briefly instead. Activity such as investigation, hash comparison, or a plan is not a substitute for the direct answer.
-
-## Prevent Confusing Reply Loops
-
-Treat confusing communication as an execution defect when it causes the user to repeat, simplify, or ask what is happening. The next response must repair the frame before adding detail or continuing a prior path.
-
-When the user asks for status, meaning, "is it working", or "what are you doing", answer in this order:
+When status needs structure, answer in this order:
 
 - **Real outcome:** whether the user's actual result moved, with evidence level.
 - **Layer status:** separate product or project outcome, tooling or plugin state, restart or model state, and communication state when more than one is relevant.
 - **Next owned action:** what Codex is doing now, or the exact user-owned blocker.
 
-Never let `Done`, `working`, `complete`, `blocked`, `restart`, `plugin`, `local`, or `installed` refer to multiple layers in the same sentence. Name the layer. "Plugin released" is not "Job outcome achieved"; "worker running" is not "application submitted"; "restart scheduled" is not "same task continued".
+Never let `Done`, `working`, `complete`, `blocked`, `restart`, `plugin`, `local`, or `installed` refer to multiple layers in one sentence. Name the layer. A released tool is not a completed user outcome; a running worker is not a finished external action.
 
-If the user says they are confused, asks the same status or meaning question again, or restates your answer in simpler words, stop the current explanation loop. Reply with at most three plain sentences that state the conclusion, the important distinction, and the next action. Do not add architecture history, tool narration, or a new plan unless the user asks.
+If the user says the answer is confusing, repeats the question, or restates it more simply, stop expansion. Use at most three plain sentences for the conclusion, material distinction, and next action. Never answer "yes, exactly" to an interpretation that loses a material distinction.
 
-For project reports, `Next` means an agent-owned action already started or immediately executable. If the next executable action is safe and authorized, do it; do not hand it to the user as homework. If it needs the user, say the exact decision or authorization required.
+In project reports, `Next` means an agent-owned action already started or immediately executable. Do safe authorized work instead of assigning it back to the user; otherwise name the exact user-owned decision or authority.
 
 ## Keep Three Kinds Of State Separate
 
@@ -122,6 +125,8 @@ python <skill-dir>/scripts/project_outcome.py resume --root <project-root>
 5. Inspect the current diff and the smallest authoritative source needed to check the state files.
 6. Reconcile stale intent, acceptance, identity, counterevidence, current-slice, or timestamp data before substantial planning or editing.
 7. Load only the relevant sources named under `Context Pointers`; do not rescan the full history or project by default.
+
+Before an important or irreversible slice, confirm that the objective is remembered correctly, relevant state is restored, identity or authority conflicts are resolved, remaining uncertainty is tolerable and visible, and the next action is consciously owned. Do not demand certainty that the evidence cannot provide.
 
 The latest user correction must update intent immediately. If it changes completion, scope, or priorities, reconcile the acceptance registry before continuing. Conversation summaries never override these checks.
 
@@ -189,18 +194,20 @@ Also run an outcome-distance check: an intermediate artifact counts as progress 
 
 Keep at most one unverified architectural layer in flight. A plan, scaffold, monitoring surface, or generated artifact is not a material slice unless it is itself the accepted outcome.
 
+When attention wanders into add-ons, excessive research, tool exploration, orchestration, or polishing, return to the current acceptance gap. Preserve a useful off-path discovery without pursuing every branch, resume the smallest gap-reducing action, and do not rewrite the plan merely because attention wandered.
+
 After a coherent verified slice, update both state files and use a focused Git commit when repository policy and the user's working tree permit it. Never stage unrelated user changes.
 
 ## Bound Autonomous And Recurring Work
 
-Before enabling or resuming a loop, watcher, scheduler, unattended worker, retrying supervisor, or automatic recovery that can outlive the current turn or accumulate side effects, define a proportional operational envelope in .codex/PROJECT_OUTCOME.md:
+Before work can outlive the turn or accumulate side effects, define a proportional operational envelope in `.codex/PROJECT_OUTCOME.md`:
 
-- **Progress signal:** name the authoritative state change tied to an acceptance ID. Repeated checks, attempts, and unchanged health are not progress.
-- **Side-effect identity:** use a stable idempotency key or observed-state fingerprint so the same condition becomes a no-op.
-- **Cadence and retry:** observe frequently if useful; mutate only on a state transition or explicit retry eligibility with bounded cooldown or backoff.
-- **Resource limits:** cap relevant disk, file count, API calls, tokens, money, RAM, and concurrency while preserving a minimum reserve or free-space floor.
-- **Retention and lifecycle:** set maximum count, bytes, or age; prune before allocating near a limit; clean up after success, cancellation, crash recovery, and startup when appropriate.
-- **Stop and recovery:** define a no-progress threshold, fail-closed or degraded transition, owner, recovery trigger, and restart behavior. Persist safety-critical retry and budget state; an in-memory timer alone is insufficient for accumulating or irreversible effects.
+- **Progress:** authoritative acceptance-linked state change, not checks, attempts, or unchanged health.
+- **Identity:** stable idempotency key or state fingerprint so repeated conditions become no-ops.
+- **Cadence:** mutate only on state transition or bounded retry eligibility.
+- **Resources:** cap disk, files, calls, tokens, money, RAM, and concurrency; preserve a reserve.
+- **Lifecycle:** bound retention and clean up after success, cancellation, crash, and startup.
+- **Recovery:** define no-progress stop, owner, trigger, transition, restart behavior, and persistent safety-critical budget state.
 
 Authorization to continue does not authorize unbounded resource use or repeated irreversible side effects. Keep a bounded read-only poll lightweight; add only the controls proportional to its possible harm.
 
@@ -221,6 +228,14 @@ Classify the failure from evidence, then apply the matching policy:
 When the same acceptance outcome fails twice, stop repeated status checks and symptom patches. Record the evidence and violated invariant in `Failure Memory`. A third attempt requires new root-cause evidence, a changed state, or a materially changed approach.
 
 For resumable external workflows, persist checkpoints at coherent boundaries and make side effects idempotent. Conversation state is not execution state.
+
+Also detect execution-quality failures:
+
+- **Analytical fixation:** improving the framework, explanation, or plan after enough clarity exists to act.
+- **Restless activity:** tools, workers, files, or tokens grow without improved acceptance evidence.
+- **Avoidant inaction:** uncertainty or discomfort postpones a safe authorized action.
+
+Correct each by returning to the controlling capability and the smallest verified gap. When explaining success or failure, consider the environment, acting agent, tools and access, distinct efforts, and external conditions; do not assign total credit or blame to one model, worker, or intervention without evidence.
 
 ## Admit Delegation Only When It Helps
 
