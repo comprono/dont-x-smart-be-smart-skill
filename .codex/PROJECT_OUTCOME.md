@@ -1,8 +1,8 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-08-05T03:12:56Z
-State: active
+Updated: 2026-08-05T03:15:59Z
+State: complete
 
 ## North Star
 
@@ -65,6 +65,7 @@ State: active
 - The v2.0.0 repository baseline is clean, main matches origin/main, all 23 deterministic tests pass, the completion gate reports 4/4 requirements and 6/6 capabilities passing, and GitHub authentication plus release access are available | Evidence: git, unittest, completion gate, gh auth status, and gh release list | Verified: 2026-08-05T03:04:37Z
 - The v2.1 steady-action contract passes 24 deterministic tests and three independent read-only forward scenarios; the invoked skill shrank from 3,186 to 3,159 words and the always-loaded global block from 976 to 661 words | Evidence: unittest output, word counts, and forward-test responses | Verified: 2026-08-05T03:12:56Z
 - The official validator, compilation, project validation, isolated idempotent installer test, active double installation, exact five-file SHA256 comparison, and one managed global block pass | Evidence: local command outputs and installed-source comparison | Verified: 2026-08-05T03:12:56Z
+- Pull request 3 merged the exact verified implementation to main at e6302399c2f76483cdddaef138305ed13358eab0, public main CI run 30971715333 passed, and GitHub reports public latest release v2.1.0 with its tag pointing exactly to that revision | Evidence: https://github.com/comprono/dont-x-smart-be-smart-skill/pull/3, https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/30971715333, and https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v2.1.0 | Verified: 2026-08-05T03:15:59Z
 
 ## Context Pointers
 
@@ -94,14 +95,14 @@ State: active
 
 ## Current Slice
 
-- Acceptance ID: REQ-PUBLISH
-- Objective: Commit and push the exact verified standalone source, confirm public CI, and publish v2.1.0 as the latest GitHub release.
-- Acceptance evidence: The steady-action and package requirements pass locally; GitHub publication is pending.
+- Acceptance ID: none
+- Objective: Publish and verify the standalone Outcome Integrity v2.1.0 release.
+- Acceptance evidence: Pull request 3 merged at e630239, public main CI run 30971715333 passed, and the latest public release v2.1.0 points exactly to that revision.
 - Protect: Standalone packaging, token efficiency, backward-readable project state, unrelated projects, and user-owned changes.
-- Status: active
+- Status: complete
 
 ## Next
 
-- Action: Review the exact diff, commit it to main, push, verify public CI, and publish v2.1.0.
-- Why now: The verified implementation and active installation are complete; publication is the only remaining acceptance gap.
+- Action: None; the verified standalone implementation is merged, public CI passed, and v2.1.0 is the latest GitHub release.
+- Why now: All local, installation, repository, CI, tag, and public-release acceptance evidence is verified.
 - Blocker and recovery: None.

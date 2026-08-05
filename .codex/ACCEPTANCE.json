@@ -1,7 +1,7 @@
 {
     "schema_version":  2,
-    "updated_utc":  "2026-08-05T03:12:56Z",
-    "project_state":  "active",
+    "updated_utc":  "2026-08-05T03:15:59Z",
+    "project_state":  "complete",
     "project_identity":  {
                              "id":  "outcome-integrity-skill",
                              "root_markers":  [
@@ -53,7 +53,7 @@
                                       "substitutable":  false
                                   }
                               ],
-    "current_slice_requirement_id":  "REQ-PUBLISH",
+    "current_slice_requirement_id":  null,
     "requirements":  [
                          {
                              "id":  "REQ-CONTRACT",
@@ -284,7 +284,7 @@
                                               ],
                              "proof_scope":  "GitHub repository, pull request, Actions run, tag, and release metadata prove public publication of the verified source.",
                              "proof_limits":  "Publication proves repository and release state, not behavior in every future Codex task.",
-                             "status":  "failing",
+                             "status":  "passing",
                              "minimum_evidence_level":  "user-visible",
                              "acceptance_steps":  [
                                                       {
@@ -301,7 +301,20 @@
                                                       }
                                                   ],
                              "evidence":  [
-
+                                              {
+                                                  "level":  "user-visible",
+                                                  "ref":  "PR https://github.com/comprono/dont-x-smart-be-smart-skill/pull/3; CI https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/30971715333; release https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v2.1.0; tag refs/tags/v2.1.0",
+                                                  "summary":  "Pull request 3 merged the verified implementation to main at e6302399c2f76483cdddaef138305ed13358eab0, the main validation run passed, and GitHub reports public latest release v2.1.0 with its tag pointing exactly to that merge revision.",
+                                                  "verified_utc":  "2026-08-05T03:15:59Z",
+                                                  "step_ids":  [
+                                                                   "STEP-PUBLISH-MERGE",
+                                                                   "STEP-PUBLISH-CI",
+                                                                   "STEP-PUBLISH-RELEASE"
+                                                               ],
+                                                  "identity_ids":  [
+                                                                       "ENTITY-STANDALONE-SKILL"
+                                                                   ]
+                                              }
                                           ],
                              "counterevidence":  [
 
