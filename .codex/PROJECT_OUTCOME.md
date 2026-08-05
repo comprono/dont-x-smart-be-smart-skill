@@ -1,14 +1,14 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-07-29T19:26:24Z
-State: complete
+Updated: 2026-08-05T03:12:56Z
+State: active
 
 ## North Star
 
-- Product outcome: Improve and publicly release the standalone Outcome Integrity skill so Codex preserves the user's full outcome, distinguishes it from a proof slice, preserves exact named-entity identity, reconciles contradictory evidence, resumes from the correct project root, and communicates and executes with less wasted work.
-- User-visible proof: Generic state validation and regression tests reject invalid completion, the exact verified source is merged into GitHub main, public CI succeeds, and GitHub shows v2.0.0 as the latest release for that implementation revision.
-- Active proof slice: Verify and record the merged implementation, successful public CI, exact release tag, and latest GitHub Release.
+- Product outcome: Improve and publicly release the standalone Outcome Integrity skill so Codex preserves the user's full outcome while acting with focused discernment, returning attention from drift, remaining accountable without attachment to a preferred method, communicating productively, attributing outcomes honestly, and wasting fewer tokens.
+- User-visible proof: Generic contract tests cover the new steady-action behavior, the standalone package passes all validation and installation checks, the exact verified source is pushed to GitHub, and GitHub shows v2.1.0 as the latest release for that revision.
+- Active proof slice: Implement and verify the concise steady-action contract, then publish the exact passing revision as v2.1.0.
 - Proof limits: The release proves public source, CI, tag, and release alignment; it does not guarantee perfect behavior from every probabilistic model in every future project.
 - Methods, not outcomes: Auditing prior tasks, editing instructions, changing schemas, testing, installation, and reporting.
 - Why it matters: Efficient execution is impossible when a convenient test, similarly named resource, stale state file, or unresolved contradiction is allowed to replace the user's real objective.
@@ -16,13 +16,13 @@ State: complete
 ## Done Means
 
 - Authority: .codex/ACCEPTANCE.json
-- Summary: Every required capability has mapped evidence, the standalone package passes locally and in public CI, the verified source is merged to main, and GitHub v2.0.0 is published as the latest release.
+- Summary: The v2.1.0 contract, package, installation, GitHub revision, and latest release all pass their mapped evidence steps.
 
 ## User Intent
 
-- Priorities: Improve the reusable skill from real post-release behavior, not from hypothetical examples or one plugin.
+- Priorities: Add the transferable focus and complex-goal lessons established by the full Sanskrit Bhagavadgita audit while keeping the runtime skill secular, concise, and independent of every plugin.
 - Working preferences: Make the safeguards mechanical, concise, globally reusable, token-efficient, and honest about proof boundaries.
-- Explicit corrections: The skill is separate from every plugin and project; publish this verified standalone upgrade to GitHub and update the repository's latest release.
+- Explicit corrections: Treat "scale" as the clearly intended "skill"; update, commit, push, and publish the standalone skill as the new GitHub release without changing any plugin or application project.
 - Non-negotiables: Do not edit the plugin, encode provider-specific names, or claim success from phrase-presence tests alone.
 
 ## Work Map
@@ -32,8 +32,8 @@ State: complete
 - Separate product capabilities from active proof slices and their limits.
 - Bind evidence to exact acceptance steps and reject unresolved counterevidence.
 - Preserve explicitly named identity and validate the selected project root.
-- Add generic behavioral regression fixtures, validate the package, and install the verified standalone skill.
-- Merge the exact verified source to GitHub main and publish v2.0.0 as the latest release.
+- Add generic contract coverage for discernment, attention return, method-detachment with accountability, execution-drift modes, productive communication, and causal humility.
+- Compress duplicated always-loaded rules, validate the package, install the verified standalone skill, and publish v2.1.0 as the latest GitHub release.
 
 ### Add-ons
 
@@ -61,6 +61,10 @@ State: complete
 - Pull request 1 merged the verified standalone implementation to main at commit 17b07e81ecb654071ff49087be4d120e90c4d3f1 | Evidence: https://github.com/comprono/dont-x-smart-be-smart-skill/pull/1 | Verified: 2026-07-29T19:26:24Z
 - Public main-branch validation passed the merged implementation | Evidence: https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/30484327986 | Verified: 2026-07-29T19:26:24Z
 - GitHub Release v2.0.0 is public, non-draft, non-prerelease, marked latest, and its tag points exactly to implementation commit 17b07e81ecb654071ff49087be4d120e90c4d3f1 | Evidence: https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v2.0.0 and GitHub release/ref API responses | Verified: 2026-07-29T19:26:24Z
+- A complete 700-verse Sanskrit audit identified missing reusable execution controls: discernment before persistence, repeated attention return, detachment from method without abandoning outcome evidence, analytical/restless/avoidant drift modes, truthful beneficial non-agitating communication, multi-causal attribution, and readiness to act | Evidence: critical-edition Bhagavadgita audit against Mahabharata Bhishmaparvan sections 23-40 and current skill/test inspection | Verified: 2026-08-05T03:04:37Z
+- The v2.0.0 repository baseline is clean, main matches origin/main, all 23 deterministic tests pass, the completion gate reports 4/4 requirements and 6/6 capabilities passing, and GitHub authentication plus release access are available | Evidence: git, unittest, completion gate, gh auth status, and gh release list | Verified: 2026-08-05T03:04:37Z
+- The v2.1 steady-action contract passes 24 deterministic tests and three independent read-only forward scenarios; the invoked skill shrank from 3,186 to 3,159 words and the always-loaded global block from 976 to 661 words | Evidence: unittest output, word counts, and forward-test responses | Verified: 2026-08-05T03:12:56Z
+- The official validator, compilation, project validation, isolated idempotent installer test, active double installation, exact five-file SHA256 comparison, and one managed global block pass | Evidence: local command outputs and installed-source comparison | Verified: 2026-08-05T03:12:56Z
 
 ## Context Pointers
 
@@ -79,6 +83,8 @@ State: complete
 - Upgrade to acceptance schema version 2 while keeping legacy state readable for resume | Why: existing projects need recovery, but new completion claims need stronger proof | Revisit when: migration burden exceeds the integrity gain
 - Put reusable invariants in the skill and global rules, and enforcement details in the validator | Why: keep prompting concise while making completion mechanical | Revisit when: a rule cannot be tested mechanically
 - Use v2.0.0 for the first GitHub Release | Why: schema version 2 introduces a deliberately stronger completion contract while keeping schema-v1 recovery compatibility | Revisit when: a future breaking contract change is released
+- Release the focused execution upgrade as v2.1.0 without changing the acceptance schema | Why: it adds backward-compatible behavioral guidance and tests rather than a breaking state format | Revisit when: a future schema change is required
+- Translate the source audit into secular operational rules and replace duplication instead of adding a philosophical layer | Why: the skill must remain globally reusable and token-efficient | Revisit when: scenario evidence shows a missing instruction
 
 ## Failure Memory
 
@@ -88,14 +94,14 @@ State: complete
 
 ## Current Slice
 
-- Acceptance ID: none
-- Objective: Publish and verify the standalone Outcome Integrity v2 release.
-- Acceptance evidence: Pull request 1 merged at 17b07e8, main validation run 30484327986 passed, and public latest release v2.0.0 points exactly to that implementation commit.
+- Acceptance ID: REQ-PUBLISH
+- Objective: Commit and push the exact verified standalone source, confirm public CI, and publish v2.1.0 as the latest GitHub release.
+- Acceptance evidence: The steady-action and package requirements pass locally; GitHub publication is pending.
 - Protect: Standalone packaging, token efficiency, backward-readable project state, unrelated projects, and user-owned changes.
-- Status: complete
+- Status: active
 
 ## Next
 
-- Action: None; the verified standalone implementation is merged, public CI passed, and v2.0.0 is the latest GitHub Release.
-- Why now: All local, repository, CI, tag, and public-release acceptance evidence is verified.
+- Action: Review the exact diff, commit it to main, push, verify public CI, and publish v2.1.0.
+- Why now: The verified implementation and active installation are complete; publication is the only remaining acceptance gap.
 - Blocker and recovery: None.

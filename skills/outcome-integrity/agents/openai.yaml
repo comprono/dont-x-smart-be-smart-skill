@@ -1,4 +1,4 @@
 interface:
   display_name: "Outcome Integrity"
-  short_description: "Preserve intent and verify real project outcomes"
-  default_prompt: "Use $outcome-integrity to preserve the full product outcome, exact identities, contradictory evidence, and continuous ownership while advancing the next verified authorized slice."
+  short_description: "Preserve intent and advance focused verified work"
+  default_prompt: "Use $outcome-integrity to preserve the full outcome, discern before persisting, return attention to the verified gap, and advance the next accountable authorized slice."
