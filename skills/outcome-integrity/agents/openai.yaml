@@ -1,4 +1,4 @@
 interface:
   display_name: "Outcome Integrity"
-  short_description: "Preserve intent and advance focused verified work"
-  default_prompt: "Use $outcome-integrity to preserve the full outcome, discern before persisting, return attention to the verified gap, and advance the next accountable authorized slice."
+  short_description: "Preserve outcome hierarchy and verified progress"
+  default_prompt: "Use $outcome-integrity to preserve the full parented outcome stack, return attention to the verified gap, prevent completion leakage, and advance the next accountable authorized slice."
