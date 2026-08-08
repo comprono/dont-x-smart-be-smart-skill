@@ -1,8 +1,8 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-08-08T00:47:51Z
-State: active
+Updated: 2026-08-08T00:49:42Z
+State: complete
 
 ## North Star
 
@@ -10,8 +10,8 @@ State: active
 - Current delivery stage: Release the schema-v3 outcome-stack contract as a backward-readable major upgrade of the standalone skill.
 - Stage completion boundary: Generic instructions, schema enforcement, adversarial tests, local installation, GitHub main, passing public CI, and the latest v3.0.0 release all identify the exact verified source; behavior from every future probabilistic model remains outside this stage's guarantee.
 - User-visible proof: New projects initialize the parent chain; v1/v2 projects resume; invalid cross-stage mappings and premature completion fail; the installed copy matches source; GitHub publishes the passing revision as v3.0.0.
-- Active acceptance slice: Publish the exact locally verified schema-v3 source through GitHub main, public CI, and the v3.0.0 release.
-- Slice proof limits: Publication proves repository and release identity, not behavior in every future task.
+- Active acceptance slice: None; the v3.0.0 delivery stage and north-star release outcome are complete.
+- Slice proof limits: The release proves source, installation, CI, tag, and release identity, not behavior in every future probabilistic task.
 - Methods, not outcomes: Plugin-task auditing, editing instructions, schema migration, tests, installation, commits, CI, and release operations.
 - Why it matters: Without explicit parent levels, an immediate success can silently replace a milestone or the larger user outcome.
 
@@ -57,6 +57,7 @@ State: active
 - The audit isolated goal-horizon aliasing and untyped completion propagation as a generic failure class | Evidence: repeated product, stage, proof, release, and next-action substitutions in task history | Verified: 2026-08-08T00:30:00Z
 - The schema-v3 implementation passes 29 deterministic tests and keeps the invoked skill at 3,157 words and global rules at 650 words | Evidence: python -m unittest discover -s tests -v and local word counts | Verified: 2026-08-08T00:46:01Z
 - Official skill validation, compilation, project validation/resume, isolated double-install, active double-install, exact five-file SHA-256 parity, one managed global block, and generic-source isolation pass | Evidence: local validation and installation outputs | Verified: 2026-08-08T00:47:51Z
+- Pull request 4 merged the exact verified implementation to main at 52e66b0, public main CI run 31231115164 passed, and GitHub reports v3.0.0 as the latest non-draft release with its tag resolving exactly to that revision | Evidence: https://github.com/comprono/dont-x-smart-be-smart-skill/pull/4; https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/31231115164; https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v3.0.0 | Verified: 2026-08-08T00:49:42Z
 
 ## Context Pointers
 
@@ -83,15 +84,15 @@ State: active
 
 ## Current Slice
 
-- Delivery Stage ID: STAGE-V3-RELEASE
-- Acceptance ID: REQ-V3-PUBLISH
-- Objective: Commit, merge, verify public CI, and publish the exact passing schema-v3 source as GitHub's latest v3.0.0 release.
-- Acceptance evidence: The local source and active installed copy pass every package gate and match exactly; GitHub publication remains.
+- Delivery Stage ID: none
+- Acceptance ID: none
+- Objective: Publish and verify the standalone Outcome Integrity v3.0.0 release.
+- Acceptance evidence: Local installation, GitHub main, public CI, tag v3.0.0, and the latest release all identify the exact verified implementation.
 - Protect: Backward recovery, token bounds, generic wording, unrelated repositories, and the plugin boundary.
-- Status: active
+- Status: complete
 
 ## Next
 
-- Action: Create the focused release branch and commit, push it, merge a pull request after CI, then create and verify v3.0.0.
-- Why now: Local package identity is proven; external publication is the only remaining acceptance slice.
+- Action: None; the verified schema-v3 implementation is installed locally and published as GitHub's latest release.
+- Why now: Every required capability, stage, and publication step is evidence-backed.
 - Blocker and recovery: None.

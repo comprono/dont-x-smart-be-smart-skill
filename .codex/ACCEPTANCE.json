@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "updated_utc": "2026-08-08T00:47:51Z",
-  "project_state": "active",
+  "updated_utc": "2026-08-08T00:49:42Z",
+  "project_state": "complete",
   "project_identity": {
     "id": "outcome-integrity-skill",
     "root_markers": [
@@ -13,7 +13,7 @@
     "north_star": {
       "id": "OUTCOME-INTEGRITY",
       "description": "Publish a concise standalone skill that preserves a parented outcome stack and prevents completion leakage.",
-      "status": "active"
+      "status": "achieved"
     },
     "delivery_stages": [
       {
@@ -21,10 +21,10 @@
         "parent_outcome_id": "OUTCOME-INTEGRITY",
         "description": "Release the backward-readable schema-v3 outcome-stack contract locally and on GitHub.",
         "required": true,
-        "status": "active"
+        "status": "complete"
       }
     ],
-    "current_stage_id": "STAGE-V3-RELEASE"
+    "current_stage_id": null
   },
   "outcome_capabilities": [
     {
@@ -65,7 +65,7 @@
       "substitutable": false
     }
   ],
-  "current_slice_requirement_id": "REQ-V3-PUBLISH",
+  "current_slice_requirement_id": null,
   "requirements": [
     {
       "id": "REQ-V3-CONTRACT",
@@ -140,14 +140,23 @@
       "identity_ids": ["ENTITY-STANDALONE-SKILL"],
       "proof_scope": "GitHub commit, Actions, tag, and release metadata prove publication of the verified source.",
       "proof_limits": "Publication does not guarantee behavior in every future task.",
-      "status": "failing",
+      "status": "passing",
       "minimum_evidence_level": "user-visible",
       "acceptance_steps": [
         {"id": "STEP-PUBLISH-MAIN", "description": "Commit and merge the exact verified standalone source to GitHub main."},
         {"id": "STEP-PUBLISH-CI", "description": "Confirm public validation passes for the merged implementation."},
         {"id": "STEP-PUBLISH-RELEASE", "description": "Publish v3.0.0 at the implementation revision and verify it is the latest release."}
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "level": "user-visible",
+          "ref": "PR https://github.com/comprono/dont-x-smart-be-smart-skill/pull/4; CI https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/31231115164; release https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v3.0.0; refs/tags/v3.0.0",
+          "summary": "PR 4 merged the verified implementation to main at 52e66b0393dc044554ac6d4a44668653a3a861da, public main CI passed, and GitHub reports the non-draft v3.0.0 release as latest with its tag resolving exactly to that commit.",
+          "verified_utc": "2026-08-08T00:49:42Z",
+          "step_ids": ["STEP-PUBLISH-MAIN", "STEP-PUBLISH-CI", "STEP-PUBLISH-RELEASE"],
+          "identity_ids": ["ENTITY-STANDALONE-SKILL"]
+        }
+      ],
       "counterevidence": [],
       "blocker": null
     }
