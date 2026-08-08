@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "updated_utc": "REPLACE_ME_UTC",
   "project_state": "active",
   "project_identity": {
@@ -8,11 +8,29 @@
       "REPLACE_ME_RELATIVE_PROJECT_MARKER"
     ]
   },
+  "outcome_hierarchy": {
+    "north_star": {
+      "id": "OUTCOME-001",
+      "description": "REPLACE_ME_WITH_THE_ENDURING_USER_VISIBLE_OUTCOME",
+      "status": "active"
+    },
+    "delivery_stages": [
+      {
+        "id": "STAGE-001",
+        "parent_outcome_id": "OUTCOME-001",
+        "description": "REPLACE_ME_WITH_THE_CURRENT_COHERENT_DELIVERY_STATE",
+        "required": true,
+        "status": "active"
+      }
+    ],
+    "current_stage_id": "STAGE-001"
+  },
   "outcome_capabilities": [
     {
       "id": "CAP-001",
       "description": "REPLACE_ME_WITH_ONE_REQUIRED_PRODUCT_CAPABILITY",
-      "required": true
+      "required": true,
+      "stage_id": "STAGE-001"
     }
   ],
   "identity_requirements": [],
@@ -22,6 +40,7 @@
       "id": "REQ-001",
       "description": "REPLACE_ME_WITH_ONE_OBSERVABLE_REQUIREMENT",
       "required": true,
+      "stage_id": "STAGE-001",
       "capability_ids": [
         "CAP-001"
       ],

@@ -36,8 +36,10 @@ REQUIRED_HEADINGS = (
 )
 STATE_VALUES = {"active", "blocked", "complete"}
 REQUIREMENT_STATES = {"failing", "blocked", "passing"}
+NORTH_STAR_STATES = {"active", "achieved"}
+DELIVERY_STAGE_STATES = {"planned", "active", "blocked", "complete"}
 COUNTEREVIDENCE_STATES = {"unresolved", "resolved"}
-SUPPORTED_SCHEMA_VERSIONS = {1, 2}
+SUPPORTED_SCHEMA_VERSIONS = {1, 2, 3}
 EVIDENCE_RANKS = {
     "activity": 0,
     "process-health": 1,
@@ -52,10 +54,16 @@ PROJECT_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$")
 PROJECT_STATE_PATTERN = re.compile(r"^State: (active|blocked|complete)$", re.MULTILINE)
 PROJECT_UPDATED_PATTERN = re.compile(r"^Updated: (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)$", re.MULTILINE)
 CURRENT_SLICE_PATTERN = re.compile(r"^- Acceptance ID: ([A-Z][A-Z0-9_-]{2,63}|none)$", re.MULTILINE)
+CURRENT_STAGE_PATTERN = re.compile(r"^- Delivery Stage ID: ([A-Z][A-Z0-9_-]{2,63}|none)$", re.MULTILINE)
 ACCEPTANCE_AUTHORITY_LINE = "- Authority: .codex/ACCEPTANCE.json"
 PRODUCT_OUTCOME_PREFIX = "- Product outcome:"
 ACTIVE_PROOF_SLICE_PREFIX = "- Active proof slice:"
 PROOF_LIMITS_PREFIX = "- Proof limits:"
+NORTH_STAR_OUTCOME_PREFIX = "- North-star outcome:"
+CURRENT_DELIVERY_STAGE_PREFIX = "- Current delivery stage:"
+STAGE_COMPLETION_BOUNDARY_PREFIX = "- Stage completion boundary:"
+ACTIVE_ACCEPTANCE_SLICE_PREFIX = "- Active acceptance slice:"
+SLICE_PROOF_LIMITS_PREFIX = "- Slice proof limits:"
 
 
 def project_paths(root: str | Path) -> tuple[Path, Path]:
@@ -117,6 +125,14 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
                 f"{project['current_slice_id']} ACCEPTANCE.json={current_id or 'none'}"
             )
 
+        if schema_version == 3 and acceptance["outcome_hierarchy"]:
+            current_stage_id = acceptance["outcome_hierarchy"]["current_stage_id"]
+            if project["current_stage_id"] != (current_stage_id or "none"):
+                errors.append(
+                    "current delivery stage mismatch: PROJECT_OUTCOME.md="
+                    f"{project['current_stage_id']} ACCEPTANCE.json={current_stage_id or 'none'}"
+                )
+
         if acceptance["updated"] < project["updated"]:
             message = "ACCEPTANCE.json is older than PROJECT_OUTCOME.md; reconcile acceptance state"
             if mode in {"resume", "completion"}:
@@ -135,6 +151,19 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
                         f"schema version 2 requires a non-empty PROJECT_OUTCOME.md line: {field}"
                     )
 
+        if schema_version == 3:
+            for field, present in (
+                (NORTH_STAR_OUTCOME_PREFIX, project["has_north_star_outcome"]),
+                (CURRENT_DELIVERY_STAGE_PREFIX, project["has_current_delivery_stage"]),
+                (STAGE_COMPLETION_BOUNDARY_PREFIX, project["has_stage_completion_boundary"]),
+                (ACTIVE_ACCEPTANCE_SLICE_PREFIX, project["has_active_acceptance_slice"]),
+                (SLICE_PROOF_LIMITS_PREFIX, project["has_slice_proof_limits"]),
+            ):
+                if not present:
+                    errors.append(
+                        f"schema version 3 requires a non-empty PROJECT_OUTCOME.md line: {field}"
+                    )
+
         if mode == "resume":
             if acceptance["project_state"] == "active" and current_id is None:
                 errors.append("active work requires current_slice_requirement_id")
@@ -144,11 +173,15 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
                 and acceptance["requirements_by_id"][current_id]["status"] == "passing"
             ):
                 errors.append("current slice already passes; select a remaining requirement or complete the project")
+            if schema_version == 3 and acceptance["outcome_hierarchy"] and acceptance["project_state"] == "active":
+                hierarchy = acceptance["outcome_hierarchy"]
+                if hierarchy["current_stage_id"] is None:
+                    errors.append("active work requires outcome_hierarchy.current_stage_id")
 
         if mode == "completion":
-            if schema_version != 2:
+            if schema_version != 3:
                 errors.append(
-                    "completion requires ACCEPTANCE.json schema_version 2; migrate legacy state first"
+                    "completion requires ACCEPTANCE.json schema_version 3; migrate legacy state first"
                 )
             if project["state"] != "complete" or acceptance["project_state"] != "complete":
                 errors.append("completion requires both project states to be complete")
@@ -161,7 +194,7 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
             ]
             if incomplete:
                 errors.append("required acceptance items are not passing: " + ", ".join(incomplete))
-            if schema_version == 2:
+            if schema_version >= 2:
                 covered_capabilities = {
                     capability_id
                     for item in acceptance["requirements"]
@@ -185,6 +218,22 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
                 if unresolved:
                     errors.append(
                         f"completion has {unresolved} unresolved counterevidence item(s)"
+                    )
+            if schema_version == 3 and acceptance["outcome_hierarchy"]:
+                hierarchy = acceptance["outcome_hierarchy"]
+                if hierarchy["north_star"]["status"] != "achieved":
+                    errors.append("completion requires the north star status to be achieved")
+                if hierarchy["current_stage_id"] is not None:
+                    errors.append("completion requires outcome_hierarchy.current_stage_id to be null")
+                incomplete_stages = [
+                    stage["id"]
+                    for stage in hierarchy["delivery_stages"]
+                    if stage["required"] and stage["status"] != "complete"
+                ]
+                if incomplete_stages:
+                    errors.append(
+                        "required delivery stages are not complete: "
+                        + ", ".join(incomplete_stages)
                     )
 
     counts = acceptance["counts"] if acceptance else {}
@@ -228,6 +277,7 @@ def validate_project_file(
     state_match = PROJECT_STATE_PATTERN.search(text)
     updated_match = PROJECT_UPDATED_PATTERN.search(text)
     current_match = CURRENT_SLICE_PATTERN.search(text)
+    current_stage_match = CURRENT_STAGE_PATTERN.search(text)
     if not state_match:
         errors.append("PROJECT_OUTCOME.md State must be active, blocked, or complete")
     if not updated_match:
@@ -248,6 +298,7 @@ def validate_project_file(
         "state": state_match.group(1),
         "updated": parse_utc(updated_match.group(1)),
         "current_slice_id": current_match.group(1),
+        "current_stage_id": current_stage_match.group(1) if current_stage_match else "none",
         "has_product_outcome": has_nonempty_prefixed_line(
             lines, PRODUCT_OUTCOME_PREFIX
         ),
@@ -255,6 +306,11 @@ def validate_project_file(
             lines, ACTIVE_PROOF_SLICE_PREFIX
         ),
         "has_proof_limits": has_nonempty_prefixed_line(lines, PROOF_LIMITS_PREFIX),
+        "has_north_star_outcome": has_nonempty_prefixed_line(lines, NORTH_STAR_OUTCOME_PREFIX),
+        "has_current_delivery_stage": has_nonempty_prefixed_line(lines, CURRENT_DELIVERY_STAGE_PREFIX),
+        "has_stage_completion_boundary": has_nonempty_prefixed_line(lines, STAGE_COMPLETION_BOUNDARY_PREFIX),
+        "has_active_acceptance_slice": has_nonempty_prefixed_line(lines, ACTIVE_ACCEPTANCE_SLICE_PREFIX),
+        "has_slice_proof_limits": has_nonempty_prefixed_line(lines, SLICE_PROOF_LIMITS_PREFIX),
     }
 
 
@@ -279,11 +335,11 @@ def validate_acceptance_file(
 
     schema_version = data.get("schema_version")
     if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
-        errors.append("ACCEPTANCE.json schema_version must be 1 or 2")
+        errors.append("ACCEPTANCE.json schema_version must be 1, 2, or 3")
         return None
-    if schema_version == 1:
+    if schema_version in {1, 2}:
         warnings.append(
-            "legacy ACCEPTANCE.json schema_version 1 is readable for recovery but cannot prove completion"
+            f"legacy ACCEPTANCE.json schema_version {schema_version} is readable for recovery but cannot prove new completion"
         )
 
     updated_value = data.get("updated_utc")
@@ -292,18 +348,28 @@ def validate_acceptance_file(
     if project_state not in STATE_VALUES:
         errors.append("ACCEPTANCE.json project_state must be active, blocked, or complete")
 
-    if schema_version == 2:
+    if schema_version >= 2:
         project_identity = validate_project_identity(
             data.get("project_identity"), root, errors
         )
+        outcome_hierarchy = (
+            validate_outcome_hierarchy(data.get("outcome_hierarchy"), errors)
+            if schema_version == 3
+            else None
+        )
+        known_stage_ids = {
+            stage["id"] for stage in outcome_hierarchy["delivery_stages"]
+        } if outcome_hierarchy else set()
         outcome_capabilities = validate_outcome_capabilities(
-            data.get("outcome_capabilities"), errors
+            data.get("outcome_capabilities"), errors,
+            schema_version=schema_version, known_stage_ids=known_stage_ids
         )
         identity_requirements = validate_identity_requirements(
             data.get("identity_requirements"), errors
         )
     else:
         project_identity = None
+        outcome_hierarchy = None
         outcome_capabilities = []
         identity_requirements = []
 
@@ -330,6 +396,8 @@ def validate_acceptance_file(
             schema_version=schema_version,
             known_capability_ids=capability_ids,
             known_identity_ids=identity_ids,
+            known_stage_ids=known_stage_ids if schema_version == 3 else set(),
+            capability_stage_ids={item["id"]: item.get("stage_id") for item in outcome_capabilities},
         )
         if not normalized_item:
             continue
@@ -343,12 +411,23 @@ def validate_acceptance_file(
     if current_id is not None and current_id not in requirements_by_id:
         errors.append(f"current_slice_requirement_id does not exist: {current_id}")
 
+    if schema_version == 3 and outcome_hierarchy:
+        current_stage_id = outcome_hierarchy["current_stage_id"]
+        if current_id in requirements_by_id and current_stage_id is not None:
+            if requirements_by_id[current_id]["stage_id"] != current_stage_id:
+                errors.append(
+                    "current slice must belong to outcome_hierarchy.current_stage_id"
+                )
+        validate_hierarchy_coverage(
+            outcome_hierarchy, outcome_capabilities, normalized, errors
+        )
+
     counts = {
         state: sum(item["status"] == state for item in normalized)
         for state in REQUIREMENT_STATES
     }
     counts["required"] = sum(item["required"] for item in normalized)
-    if schema_version == 2:
+    if schema_version >= 2:
         counts["required_capabilities"] = sum(
             item["required"] for item in outcome_capabilities
         )
@@ -363,6 +442,7 @@ def validate_acceptance_file(
         "updated": updated,
         "project_state": project_state,
         "project_identity": project_identity,
+        "outcome_hierarchy": outcome_hierarchy,
         "outcome_capabilities": outcome_capabilities,
         "identity_requirements": identity_requirements,
         "current_slice_requirement_id": current_id,
@@ -377,7 +457,7 @@ def validate_project_identity(
 ) -> dict[str, Any] | None:
     prefix = "project_identity"
     if not isinstance(item, dict):
-        errors.append(f"{prefix} must be an object for schema version 2")
+        errors.append(f"{prefix} must be an object for schema version 2 or 3")
         return None
     project_id = item.get("id")
     if not isinstance(project_id, str) or not PROJECT_ID_PATTERN.fullmatch(project_id):
@@ -411,11 +491,98 @@ def validate_project_identity(
     return {"id": project_id, "root_markers": normalized_markers}
 
 
+def validate_outcome_hierarchy(
+    item: object, errors: list[str]
+) -> dict[str, Any] | None:
+    prefix = "outcome_hierarchy"
+    if not isinstance(item, dict):
+        errors.append(f"{prefix} must be an object for schema version 3")
+        return None
+
+    north_star = item.get("north_star")
+    if not isinstance(north_star, dict):
+        errors.append(f"{prefix}.north_star must be an object")
+        return None
+    north_star_id = north_star.get("id")
+    if not valid_requirement_id(north_star_id):
+        errors.append(f"{prefix}.north_star.id must match {REQUIREMENT_ID_PATTERN.pattern}")
+    if not nonempty(north_star.get("description")):
+        errors.append(f"{prefix}.north_star.description must be non-empty")
+    if north_star.get("status") not in NORTH_STAR_STATES:
+        errors.append(f"{prefix}.north_star.status must be active or achieved")
+
+    stages = item.get("delivery_stages")
+    if not isinstance(stages, list) or not stages:
+        errors.append(f"{prefix}.delivery_stages must be a non-empty array")
+        return None
+    normalized_stages: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for index, stage in enumerate(stages):
+        stage_prefix = f"{prefix}.delivery_stages[{index}]"
+        if not isinstance(stage, dict):
+            errors.append(f"{stage_prefix} must be an object")
+            continue
+        stage_id = stage.get("id")
+        if not valid_requirement_id(stage_id):
+            errors.append(f"{stage_prefix}.id must match {REQUIREMENT_ID_PATTERN.pattern}")
+            continue
+        if stage_id in seen:
+            errors.append(f"duplicate delivery stage id: {stage_id}")
+        seen.add(stage_id)
+        if stage.get("parent_outcome_id") != north_star_id:
+            errors.append(f"{stage_prefix}.parent_outcome_id must equal the north star id")
+        if not nonempty(stage.get("description")):
+            errors.append(f"{stage_prefix}.description must be non-empty")
+        if not isinstance(stage.get("required"), bool):
+            errors.append(f"{stage_prefix}.required must be boolean")
+            continue
+        if stage.get("status") not in DELIVERY_STAGE_STATES:
+            errors.append(f"{stage_prefix}.status must be planned, active, blocked, or complete")
+            continue
+        normalized_stages.append({
+            "id": stage_id,
+            "parent_outcome_id": stage.get("parent_outcome_id"),
+            "description": stage.get("description"),
+            "required": stage["required"],
+            "status": stage.get("status"),
+        })
+
+    current_stage_id = item.get("current_stage_id")
+    if current_stage_id is not None and current_stage_id not in seen:
+        errors.append(f"{prefix}.current_stage_id does not identify a declared delivery stage")
+    current_stage = next(
+        (stage for stage in normalized_stages if stage["id"] == current_stage_id), None
+    )
+    if current_stage and current_stage["status"] not in {"active", "blocked"}:
+        errors.append(f"{prefix}.current_stage_id must identify an active or blocked stage")
+    if north_star.get("status") == "achieved":
+        incomplete = [
+            stage["id"] for stage in normalized_stages
+            if stage["required"] and stage["status"] != "complete"
+        ]
+        if incomplete:
+            errors.append(
+                "north star cannot be achieved while required delivery stages are incomplete: "
+                + ", ".join(incomplete)
+            )
+
+    return {
+        "north_star": {
+            "id": north_star_id,
+            "description": north_star.get("description"),
+            "status": north_star.get("status"),
+        },
+        "delivery_stages": normalized_stages,
+        "current_stage_id": current_stage_id,
+    }
+
+
 def validate_outcome_capabilities(
-    items: object, errors: list[str]
+    items: object, errors: list[str], *, schema_version: int,
+    known_stage_ids: set[str]
 ) -> list[dict[str, Any]]:
     if not isinstance(items, list) or not items:
-        errors.append("outcome_capabilities must be a non-empty array for schema version 2")
+        errors.append("outcome_capabilities must be a non-empty array for schema version 2 or 3")
         return []
     normalized: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -436,21 +603,60 @@ def validate_outcome_capabilities(
         if not isinstance(item.get("required"), bool):
             errors.append(f"{prefix}.required must be boolean")
             continue
+        stage_id = item.get("stage_id") if schema_version == 3 else None
+        if schema_version == 3 and stage_id not in known_stage_ids:
+            errors.append(f"{prefix}.stage_id must identify a declared delivery stage")
         normalized.append(
             {
                 "id": item_id,
                 "description": item.get("description"),
                 "required": item["required"],
+                "stage_id": stage_id,
             }
         )
     return normalized
+
+
+def validate_hierarchy_coverage(
+    hierarchy: dict[str, Any], capabilities: list[dict[str, Any]],
+    requirements: list[dict[str, Any]], errors: list[str]
+) -> None:
+    for stage in hierarchy["delivery_stages"]:
+        if stage["status"] != "complete":
+            continue
+        required_capabilities = {
+            item["id"] for item in capabilities
+            if item["required"] and item["stage_id"] == stage["id"]
+        }
+        passing_coverage = {
+            capability_id
+            for item in requirements
+            if item["stage_id"] == stage["id"] and item["status"] == "passing"
+            for capability_id in item["capability_ids"]
+        }
+        missing_capabilities = sorted(required_capabilities - passing_coverage)
+        if missing_capabilities:
+            errors.append(
+                f"delivery stage {stage['id']} cannot be complete without passing capability coverage: "
+                + ", ".join(missing_capabilities)
+            )
+        incomplete_requirements = [
+            item["id"] for item in requirements
+            if item["stage_id"] == stage["id"]
+            and item["required"] and item["status"] != "passing"
+        ]
+        if incomplete_requirements:
+            errors.append(
+                f"delivery stage {stage['id']} cannot be complete while required slices are not passing: "
+                + ", ".join(incomplete_requirements)
+            )
 
 
 def validate_identity_requirements(
     items: object, errors: list[str]
 ) -> list[dict[str, Any]]:
     if not isinstance(items, list):
-        errors.append("identity_requirements must be an array for schema version 2")
+        errors.append("identity_requirements must be an array for schema version 2 or 3")
         return []
     normalized: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -489,6 +695,8 @@ def validate_requirement(
     schema_version: int,
     known_capability_ids: set[str],
     known_identity_ids: set[str],
+    known_stage_ids: set[str],
+    capability_stage_ids: dict[str, str | None],
 ) -> dict[str, Any] | None:
     if not isinstance(item, dict):
         errors.append(f"{prefix} must be an object")
@@ -515,7 +723,7 @@ def validate_requirement(
     if minimum not in EVIDENCE_RANKS:
         errors.append(f"{prefix}.minimum_evidence_level is invalid")
 
-    if schema_version == 2:
+    if schema_version >= 2:
         capability_ids = validate_id_references(
             item.get("capability_ids"),
             f"{prefix}.capability_ids",
@@ -538,11 +746,25 @@ def validate_requirement(
         unresolved_counterevidence = validate_counterevidence(
             item.get("counterevidence"), f"{prefix}.counterevidence", errors
         )
+        stage_id = item.get("stage_id") if schema_version == 3 else None
+        if schema_version == 3:
+            if stage_id not in known_stage_ids:
+                errors.append(f"{prefix}.stage_id must identify a declared delivery stage")
+            cross_stage = [
+                capability_id for capability_id in capability_ids
+                if capability_stage_ids.get(capability_id) != stage_id
+            ]
+            if cross_stage:
+                errors.append(
+                    f"{prefix}.capability_ids must belong to its delivery stage: "
+                    + ", ".join(cross_stage)
+                )
     else:
         capability_ids = []
         identity_ids = []
         step_ids = []
         unresolved_counterevidence = 0
+        stage_id = None
         if not isinstance(steps, list) or not steps or not all(nonempty(step) for step in steps):
             errors.append(f"{prefix}.acceptance_steps must contain non-empty strings")
 
@@ -574,7 +796,7 @@ def validate_requirement(
             errors.append(
                 f"{prefix} cannot pass without evidence at level {minimum} or higher"
             )
-        if schema_version == 2:
+        if schema_version >= 2:
             covered_steps = {
                 step_id for entry in sufficient for step_id in entry["step_ids"]
             }
@@ -615,6 +837,7 @@ def validate_requirement(
         "description": description,
         "required": required,
         "status": status,
+        "stage_id": stage_id,
         "capability_ids": capability_ids,
         "identity_ids": identity_ids,
         "acceptance_step_ids": step_ids,
@@ -661,7 +884,7 @@ def validate_acceptance_steps(
     for index, step in enumerate(steps):
         field = f"{prefix}.acceptance_steps[{index}]"
         if not isinstance(step, dict):
-            errors.append(f"{field} must be an object for schema version 2")
+            errors.append(f"{field} must be an object for schema version 2 or 3")
             continue
         step_id = step.get("id")
         if not valid_requirement_id(step_id):
@@ -698,7 +921,7 @@ def validate_evidence(
         errors.append(f"{prefix}.summary must be non-empty")
     validate_utc(entry.get("verified_utc"), f"{prefix}.verified_utc", errors)
 
-    if schema_version == 2:
+    if schema_version >= 2:
         step_ids = validate_id_references(
             entry.get("step_ids"),
             f"{prefix}.step_ids",

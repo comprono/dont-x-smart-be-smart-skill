@@ -1,6 +1,6 @@
 ---
 name: outcome-integrity
-description: Preserve project intent and prevent product-proof collapse, identity substitution, contradictory-evidence loss, wrong-project resume, blind persistence, attention drift, method fixation, confusing communication, premature completion, repeated failure, unbounded side effects, and wasteful orchestration. Use for nontrivial implementation or diagnosis, resumed or corrected work, long-running or multi-agent work, recurring loops, external side effects, repeated failures, unexpected scope growth, disproportionate resource use, or work the user says is irrelevant. Maintain bounded .codex/PROJECT_OUTCOME.md intent and .codex/ACCEPTANCE.json evidence, discern before persisting, return attention to one verified product-linked slice, and delegate only when it reduces total work.
+description: Preserve a parented outcome stack and prevent goal-horizon collapse, identity substitution, evidence loss, wrong-project resume, blind persistence, attention drift, premature completion, repeated failure, unbounded effects, and wasteful orchestration. Use for nontrivial, resumed, corrected, long-running, multi-agent, side-effecting, repeatedly failing, or unexpectedly growing work. Maintain bounded .codex evidence, return attention to one verified slice, and delegate only when it reduces total work.
 ---
 
 # Outcome Integrity
@@ -18,21 +18,23 @@ Resolve conflicts in this order:
 
 Never let an old plan, inferred preference, add-on, safety mechanism, or worker result silently replace the north-star outcome. Preserve independently verified work and invalidate only conclusions that depended on stale assumptions.
 
-## Frame The Outcome Before The Method
+## Build A Parented Outcome Stack
 
-Before the first substantive tool call, edit, delegation, or durable task contract, form a compact internal outcome frame:
+Before substantive work, form this internal stack:
 
-- **Product outcome:** the complete user-visible or external state ultimately wanted.
-- **Required capabilities:** the independent properties that must all be true for that outcome.
-- **Proof slice:** the bounded demonstration, test, pilot, artifact, or path being used to establish some capabilities now.
-- **Proof limits:** what that slice does not establish.
-- **Methods and constraints:** actions and boundaries that shape the work without replacing the outcome.
+- **North-star outcome:** the enduring user-visible state ultimately wanted.
+- **Delivery stage:** the coherent useful product state being delivered now; it advances but does not replace the north star.
+- **Capability milestone:** one independently necessary property of that stage.
+- **Acceptance slice:** a bounded end-to-end proof of part of one milestone, with explicit limits.
+- **Next action:** the immediate operation closing a named slice gap; methods and constraints are not outcomes.
 
-Treat review, test, inspect, analyze, plan, coordinate, monitor, document, demo, pilot, baseline, and set up as methods or proof slices when the existing product outcome is broader, unless the user explicitly asks for that artifact as the final deliverable. Apply this counterfactual: **if every proposed method completed successfully, would the user's actual problem be solved?** If not, the frame is too narrow.
+These are authority levels, not durations. Every action must answer: **if it succeeds, which slice closes, which parent advances, and what remains unchanged?** Reviews, tests, plans, demos, setup, and orchestration are methods or slices when the outcome is broader. If every method succeeded but the user's problem remained, the stack is too narrow.
 
-Never rewrite the product outcome to match a convenient proof slice. A successful slice can satisfy only the required capabilities it actually covers, within its recorded proof limits. Do not narrow the outcome to fit a tool, skill, worker, available model, or convenient action. For continuation work, read the nearest authoritative project outcome before creating a task contract. If intent is discoverable, reconcile it directly; ask only when materially different outcomes remain plausible.
+Require `action -> acceptance slice -> capability milestone -> delivery stage -> north star`. Orphan work is drift until mapped. Never rewrite a parent to match a convenient child, tool, worker, or model.
 
-When the user corrects the outcome or interpretation, immediately invalidate or revise every dependent plan, worker assignment, Goal, orchestration contract, acceptance item, and current slice. If a tool cannot update stale work, cancel or replace it safely rather than continuing under the old contract.
+Prevent upward completion leakage, downward objective replacement, horizontal substitution, and stage inversion. Type completion as `action complete`, `slice passing`, `stage complete`, or `north star achieved`; never use unqualified status when levels could be confused.
+
+Scope corrections before propagation: method replaces action; contrary evidence reopens slice; capability or stage revises descendants; north-star correction invalidates incompatible descendants. Child failure does not rewrite a parent without evidence; parent corrections flow down immediately.
 
 ## Preserve Exact Identity And Contradictory Evidence
 
@@ -61,8 +63,8 @@ Treat each message in an active project as an update to the existing project unl
 
 Before responding, recover one compact control frame from the latest instruction, current evidence, and project state:
 
-- **Outcome:** the final result still being pursued.
-- **Current deliverable and stage:** what is being built or verified now.
+- **North star and current delivery stage:** the enduring result and coherent product state being pursued now.
+- **Capability and acceptance slice:** the controlling stage gap and bounded proof in flight.
 - **Latest correction:** the newest change to meaning, scope, or working preference.
 - **Next Codex-owned action:** the next safe action already authorized by the project.
 - **Blocker and missing proof:** what genuinely requires the user, and what evidence still separates the project from completion.
@@ -81,8 +83,8 @@ For a simple status, meaning, ownership, alignment, or next-action question, giv
 
 When status needs structure, answer in this order:
 
-- **Real outcome:** whether the user's actual result moved, with evidence level.
-- **Layer status:** separate product or project outcome, tooling or plugin state, restart or model state, and communication state when more than one is relevant.
+- **Material transition:** what evidence changed.
+- **Typed status:** slice, stage, and north-star state; include tooling or runtime state only when relevant.
 - **Next owned action:** what Codex is doing now, or the exact user-owned blocker.
 
 Never let `Done`, `working`, `complete`, `blocked`, `restart`, `plugin`, `local`, or `installed` refer to multiple layers in one sentence. Name the layer. A released tool is not a completed user outcome; a running worker is not a finished external action.
@@ -96,7 +98,7 @@ In project reports, `Next` means an agent-owned action already started or immedi
 For nontrivial project work, use:
 
 - `.codex/PROJECT_OUTCOME.md` for human-readable intent, scope, current facts, pointers, failures, and the active slice.
-- `.codex/ACCEPTANCE.json` for project identity, required product capabilities, exact identity constraints, proof scope and limits, stable acceptance steps, mapped evidence, counterevidence, statuses, and recoverable blockers.
+- `.codex/ACCEPTANCE.json` for project identity, north star, delivery stages, stage-parented capabilities and slices, exact identities, proof limits, evidence, counterevidence, statuses, and blockers.
 - Git history for chronology and recovery. Do not grow an append-only activity transcript.
 
 Do not create these files for a trivial question, one-off command, or work outside a project.
@@ -145,10 +147,11 @@ Do not record routine tool calls, unchanged status, worker chatter, token counts
 
 ## Make Acceptance Mechanical
 
-`ACCEPTANCE.json` is authoritative for completion. Use schema version 2 for new work and completion claims. It must declare:
+`ACCEPTANCE.json` is authoritative for completion. Use schema version 3 for new work and completion claims. Versions 1 and 2 remain readable for recovery. It must declare:
 
 - a stable project identity plus relative root markers;
-- the required product capabilities that collectively define the outcome;
+- one north star, its delivery stages, the current stage, and explicit parent IDs;
+- stage-parented capabilities and acceptance requirements;
 - exact identity requirements, with substitution allowed only when explicit;
 - requirements mapped to capability IDs and any identity IDs;
 - a proof scope and proof limits for every requirement;
@@ -157,7 +160,7 @@ Do not record routine tool calls, unchanged status, worker chatter, token counts
 - counterevidence retained as `unresolved` or with a specific resolution;
 - owner, reason, recovery trigger, and recovery action when blocked.
 
-Every passing requirement needs sufficient evidence for each of its steps and each identity it claims to cover. Completion also needs passing coverage for every required product capability and no unresolved counterevidence. Schema version 1 remains readable for recovery, but migrate it before claiming completion.
+Every passing slice needs sufficient evidence for each step and identity it covers. A stage can complete only when its required capabilities have passing coverage and its required slices pass. The north star can be achieved only when every required stage completes. Evidence moves upward only through declared coverage; activity never propagates completion. Migrate legacy state before a new completion claim.
 
 Never delete or weaken a capability or required item merely to make completion possible. Change acceptance only when the latest user instruction changes the outcome or current evidence disproves the requirement. A previously passing item must return to failing when its evidence is invalidated or contradicted.
 
@@ -180,12 +183,12 @@ python <skill-dir>/scripts/project_outcome.py validate --root <project-root>
 
 ## Advance One Material Slice
 
-Select one non-passing required acceptance ID and record it as the current slice in both files. Choose the smallest end-to-end change or diagnostic that materially reduces that requirement's verified gap.
+Select the incomplete stage representing the largest verified constraint, then one non-passing acceptance ID within it. Record both IDs in both files. Choose the smallest end-to-end change or diagnostic that materially reduces that slice's gap.
 
 Before expanding scope, answer internally:
 
 1. Which acceptance ID does this action advance?
-2. Is it critical-path work, an add-on, or a non-goal?
+2. Which capability, delivery stage, and north star parent it?
 3. What evidence makes it necessary now?
 4. What result would disprove the approach?
 5. What existing behavior must remain intact?
@@ -261,6 +264,8 @@ Stop and reconcile before spending more when:
 - project state was loaded from a root whose declared markers do not match;
 - the plan relies on stale summaries or assumptions;
 - lower-level evidence is being reported as completion;
+- a current action, slice, capability, or stage lacks an explicit parent;
+- an action completes but its status leaks upward, or a child failure silently rewrites its parent;
 - status language mixes product outcome, tooling state, model or restart state, and communication state;
 - coordination costs more than its likely contribution;
 - a user correction conflicts with the active slice;
@@ -277,7 +282,7 @@ Before claiming completion, run:
 python <skill-dir>/scripts/project_outcome.py completion --root <project-root>
 ```
 
-Completion requires schema version 2, both project states `complete`, no current slice, every required product capability covered by passing requirements, sufficient evidence for every acceptance step and declared identity, and no unresolved counterevidence. Do not redefine success downward to match what was built or substitute a successful proof slice for the product outcome.
+Completion requires schema version 3, both project states `complete`, no current stage or slice, the north star `achieved`, every required stage `complete`, every required capability covered by passing slices, sufficient step and identity evidence, and no unresolved counterevidence. Slice completion does not mean stage completion; stage completion does not mean north-star achievement.
 
 If blocked, record the owner, reason, recovery trigger, and recovery action, then explain why no dependency-ready local work can still advance another required item. Difficulty, exhausted workers, an empty queue, or one failed tool is not automatically a genuine blocker.
 

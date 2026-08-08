@@ -6,10 +6,12 @@ State: active
 
 ## North Star
 
-- Product outcome: REPLACE_ME
+- North-star outcome: REPLACE_ME_WITH_THE_ENDURING_USER_VISIBLE_OUTCOME
+- Current delivery stage: REPLACE_ME_WITH_THE_COHERENT_PRODUCT_STATE_BEING_DELIVERED_NOW
+- Stage completion boundary: REPLACE_ME_WITH_WHAT_MAKES_THIS_STAGE_COMPLETE_AND_WHAT_REMAINS_OUTSIDE_IT
 - User-visible proof: REPLACE_ME
-- Active proof slice: REPLACE_ME
-- Proof limits: REPLACE_ME
+- Active acceptance slice: REPLACE_ME
+- Slice proof limits: REPLACE_ME
 - Methods, not outcomes: REPLACE_ME
 - Why it matters: REPLACE_ME
 
@@ -72,6 +74,7 @@ State: active
 
 ## Current Slice
 
+- Delivery Stage ID: STAGE-001
 - Acceptance ID: REQ-001
 - Objective: REPLACE_ME
 - Acceptance evidence: REPLACE_ME

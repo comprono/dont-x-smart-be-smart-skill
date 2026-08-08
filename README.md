@@ -10,7 +10,7 @@ Long agent sessions can drift after context compaction, promote an add-on into t
 1. A concise global Codex rule block that activates outcome integrity for nontrivial project work.
 2. The `outcome-integrity` skill, which maintains bounded human intent and machine-verifiable acceptance inside each active project.
 
-`PROJECT_OUTCOME.md` preserves the product outcome, active proof slice and limits, user intent, scope, current facts, failure invariants, and next owned action. Schema-v2 `ACCEPTANCE.json` owns project-root identity, required product capabilities, exact named-entity constraints, reproducible acceptance steps, step-bound evidence, counterevidence, status, and blocker recovery. Git owns history; neither project file is an activity transcript.
+`PROJECT_OUTCOME.md` preserves the north star, current delivery stage, active acceptance slice and limits, user intent, facts, failure invariants, and next action. Schema-v3 `ACCEPTANCE.json` owns the parent chain from north star through stages, capabilities, and slices, plus project identity, exact named entities, evidence, counterevidence, status, and recovery. Git owns history; neither project file is an activity transcript.
 
 ## What It Prevents
 
@@ -63,7 +63,7 @@ python scripts/install.py --skip-global-rules
 
 ## How It Works
 
-Before substantive work, Codex forms a compact outcome frame: the full product outcome, its required capabilities, the active proof slice, that slice's limits, methods, and constraints. It asks whether completing every proposed method would actually solve the user's problem. A successful demo or test can satisfy only the capabilities it proves; it cannot silently redefine the broader outcome.
+Before substantive work, Codex forms a parented outcome stack: enduring north star, current delivery stage, capability milestone, acceptance slice, and next action. Every action must close a named descendant gap. A passing slice cannot complete its stage, and a complete stage cannot achieve the north star without declared coverage.
 
 During an active project, Codex also maintains a compact control frame containing the current deliverable and stage, latest correction, next Codex-owned action, genuine blocker, and missing completion evidence. Questions and corrections update that project rather than silently ending it. After answering an interruption, Codex discerns whether duties, evidence, authority, or irreversible effects conflict, then resumes the next safe authorized action instead of waiting for another "do it" instruction.
 
@@ -118,7 +118,7 @@ Delegation is admitted only when work is parallel, disjoint, tied to an acceptan
 python -m unittest discover -s tests -v
 ```
 
-The tests cover skill packaging, token bounds, idempotent installation, focus and discernment contracts, communication quality, multi-causal attribution, dual-file initialization, legacy recovery, project-root mismatch, capability coverage, proof boundaries, exact-identity evidence, unresolved counterevidence, blocker recovery, and evidence-backed completion.
+The tests cover packaging, token bounds, installation, focus and communication, legacy recovery, project identity, parent integrity, cross-stage rejection, completion isolation, capability coverage, exact-identity evidence, counterevidence, blocker recovery, and evidence-backed completion.
 
 ## Design Basis
 
@@ -126,7 +126,7 @@ The design incorporates published patterns from [Anthropic's long-running agent 
 
 ## Guarantee Boundary
 
-No prompt or skill can guarantee that every probabilistic model response will be perfect. This project instead makes the process enforceable and auditable: project intent survives compaction, product capabilities remain above proof slices, exact identities remain explicit, contradictory evidence cannot silently disappear, repeated failures trigger a stop condition, and completion requires mapped evidence.
+No prompt or skill can guarantee every probabilistic response. This project makes the process auditable: intent survives compaction, actions remain parented to slices, capabilities, stages, and the north star, completion cannot leak upward, identities remain exact, contradictions stay visible, and completion requires mapped evidence.
 
 The skill runs locally, uses no network service, and does not transmit project ledger contents.
 

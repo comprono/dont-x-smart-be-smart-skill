@@ -48,10 +48,12 @@ Updated: {updated}
 State: {state}
 
 ## North Star
-- Product outcome: Produce the complete requested verified result.
+- North-star outcome: Produce the complete requested verified result.
+- Current delivery stage: Deliver the first coherent useful release.
+- Stage completion boundary: All declared stage capabilities pass; later stages remain outside it.
 - User-visible proof: The real user path passes.
-- Active proof slice: Exercise one bounded real path.
-- Proof limits: This path does not prove unrelated capabilities.
+- Active acceptance slice: Exercise one bounded real path.
+- Slice proof limits: This path does not prove unrelated capabilities.
 - Methods, not outcomes: Testing and inspection.
 - Why it matters: The user needs the real outcome, not proxy activity.
 
@@ -92,6 +94,7 @@ State: {state}
 - Symptom patch | Class: semantic | Evidence: reproduction | Invariant: trace state | Do not repeat: blind retry
 
 ## Current Slice
+- Delivery Stage ID: {'none' if state == 'complete' else 'STAGE-001'}
 - Acceptance ID: {current_id}
 - Objective: Reproduce the invalid transition.
 - Acceptance evidence: Deterministic failure at one boundary.
@@ -114,7 +117,7 @@ def acceptance_data(
     minimum_level: str = "end-to-end",
     evidence_level: str | None = None,
     blocker: dict[str, str] | None = None,
-    schema_version: int = 2,
+    schema_version: int = 3,
 ) -> dict[str, object]:
     evidence = []
     if evidence_level:
@@ -124,7 +127,7 @@ def acceptance_data(
             "summary": "The reproducible path produced the expected result.",
             "verified_utc": updated,
         }
-        if schema_version == 2:
+        if schema_version >= 2:
             evidence_entry["step_ids"] = ["STEP-001"]
             evidence_entry["identity_ids"] = ["ENTITY-001"]
         evidence.append(evidence_entry)
@@ -146,7 +149,7 @@ def acceptance_data(
         "current_slice_requirement_id": current_id,
         "requirements": [requirement],
     }
-    if schema_version == 2:
+    if schema_version >= 2:
         data["project_identity"] = {
             "id": "test-project",
             "root_markers": ["project.marker"],
@@ -176,6 +179,26 @@ def acceptance_data(
             }
         ]
         requirement["counterevidence"] = []
+    if schema_version == 3:
+        data["outcome_hierarchy"] = {
+            "north_star": {
+                "id": "OUTCOME-001",
+                "description": "Produce the complete requested verified result.",
+                "status": "active" if project_state != "complete" else "achieved",
+            },
+            "delivery_stages": [
+                {
+                    "id": "STAGE-001",
+                    "parent_outcome_id": "OUTCOME-001",
+                    "description": "Deliver the first coherent useful release.",
+                    "required": True,
+                    "status": "complete" if project_state == "complete" else "active",
+                }
+            ],
+            "current_stage_id": None if project_state == "complete" else "STAGE-001",
+        }
+        data["outcome_capabilities"][0]["stage_id"] = "STAGE-001"
+        requirement["stage_id"] = "STAGE-001"
     return data
 
 def write_state(root: Path, project: str, acceptance: dict[str, object]) -> None:
@@ -212,25 +235,27 @@ class PackageTests(unittest.TestCase):
         openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
 
         for phrase in (
-            "Frame The Outcome Before The Method",
-            "if every proposed method completed successfully",
-            "Never rewrite the product outcome to match a convenient proof slice",
-            "cancel or replace it safely",
+            "Build A Parented Outcome Stack",
+            "If every method succeeded",
+            "Never rewrite a parent to match a convenient child",
+            "parent corrections flow down immediately",
             "replan from the outcome",
         ):
             self.assertIn(phrase, skill)
 
         for phrase in (
-            "Separate the full product outcome and required capabilities",
-            "A user correction immediately supersedes",
-            "Replan from the outcome",
+            "parented stack",
+            "A passing slice does not complete its stage",
+            "propagate them through dependent descendants",
         ):
             self.assertIn(phrase, global_rules)
 
-        self.assertIn("- Product outcome:", template)
+        self.assertIn("- North-star outcome:", template)
+        self.assertIn("- Current delivery stage:", template)
+        self.assertIn("- Stage completion boundary:", template)
         self.assertIn("- User-visible proof:", template)
-        self.assertIn("- Active proof slice:", template)
-        self.assertIn("- Proof limits:", template)
+        self.assertIn("- Active acceptance slice:", template)
+        self.assertIn("- Slice proof limits:", template)
         self.assertIn("- Methods, not outcomes:", template)
         self.assertIn("Use $outcome-integrity", openai_yaml)
 
@@ -270,7 +295,7 @@ class PackageTests(unittest.TestCase):
 
         for phrase in (
             "Treat each message as an update to the active objective",
-            "Maintain one compact control frame",
+            "Maintain one compact parented stack",
             "After answering an interruption, apply that discernment gate",
             "do not make the user repeatedly say",
         ):
@@ -288,8 +313,8 @@ class PackageTests(unittest.TestCase):
 
         for phrase in (
             "Communicate For Productive Understanding",
-            "Real outcome:",
-            "Layer status:",
+            "Material transition:",
+            "Typed status:",
             "Next owned action:",
             "Never let `Done`, `working`, `complete`, `blocked`, `restart`, `plugin`, `local`, or `installed` refer to multiple layers in one sentence",
             "If the user says the answer is confusing",
@@ -301,7 +326,7 @@ class PackageTests(unittest.TestCase):
         self.assertIn("conclusion, material distinction, and next owned action", global_rules)
         self.assertIn("Continuing an explanation loop", readme)
         self.assertIn("short conclusion, distinction, and next-action frame", readme)
-        self.assertIn("preserve the full outcome", openai_yaml)
+        self.assertIn("preserve the full parented outcome stack", openai_yaml)
 
     def test_recurring_work_has_a_bounded_operational_envelope(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -349,11 +374,11 @@ class PackageTests(unittest.TestCase):
             self.assertIn(phrase, skill)
 
         for phrase in (
-            "full product outcome and required capabilities",
-            "A passing slice proves only what it covers",
+            "parented stack",
+            "A passing slice does not complete its stage",
             "Treat named people, accounts, tools, providers",
             "preserve unresolved counterevidence",
-            "project_identity.root_markers",
+            "Verify root markers",
         ):
             self.assertIn(phrase, global_rules)
 
@@ -390,7 +415,7 @@ class PackageTests(unittest.TestCase):
             self.assertNotIn(project_specific.casefold(), global_rules.casefold())
 
 
-    def test_schema_v2_template_declares_mechanical_proof_fields(self) -> None:
+    def test_schema_v3_template_declares_parented_proof_fields(self) -> None:
         acceptance_template = (
             REPOSITORY_ROOT
             / "skills"
@@ -399,8 +424,13 @@ class PackageTests(unittest.TestCase):
             / "ACCEPTANCE.template.json"
         ).read_text(encoding="utf-8")
         for phrase in (
-            '"schema_version": 2',
+            '"schema_version": 3',
             '"project_identity"',
+            '"outcome_hierarchy"',
+            '"delivery_stages"',
+            '"parent_outcome_id"',
+            '"current_stage_id"',
+            '"stage_id"',
             '"outcome_capabilities"',
             '"identity_requirements"',
             '"capability_ids"',
@@ -504,7 +534,7 @@ class PackageTests(unittest.TestCase):
             write_state(root, project_text(state="complete", current_id="none"), completed)
             result = self.state.validate(root, mode="completion")
             self.assertFalse(result["ok"])
-            self.assertTrue(any("schema_version 2" in error for error in result["errors"]))
+            self.assertTrue(any("schema_version 3" in error for error in result["errors"]))
 
     def test_completion_requires_every_product_capability(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -595,16 +625,108 @@ class PackageTests(unittest.TestCase):
             self.assertFalse(result["ok"])
             self.assertTrue(any("does not exist" in error for error in result["errors"]))
 
-    def test_schema_v2_requires_product_outcome_and_proof_boundaries(self) -> None:
+    def test_schema_v3_requires_outcome_stack_and_proof_boundaries(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             incomplete_project = project_text().replace(
-                "- Proof limits: This path does not prove unrelated capabilities.\n", ""
+                "- Slice proof limits: This path does not prove unrelated capabilities.\n", ""
             )
             write_state(root, incomplete_project, acceptance_data())
             result = self.state.validate(root)
             self.assertFalse(result["ok"])
-            self.assertTrue(any("Proof limits" in error for error in result["errors"]))
+            self.assertTrue(any("Slice proof limits" in error for error in result["errors"]))
+
+    def test_schema_v2_resumes_but_cannot_prove_new_completion(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            legacy = acceptance_data(schema_version=2)
+            legacy_project = project_text().replace(
+                "- North-star outcome:", "- Product outcome:"
+            ).replace(
+                "- Active acceptance slice:", "- Active proof slice:"
+            ).replace(
+                "- Slice proof limits:", "- Proof limits:"
+            )
+            write_state(root, legacy_project, legacy)
+            self.assertTrue(self.state.validate(root, mode="resume")["ok"])
+
+            completed = acceptance_data(
+                schema_version=2, project_state="complete", current_id=None,
+                status="passing", evidence_level="end-to-end"
+            )
+            write_state(
+                root,
+                legacy_project.replace("State: active", "State: complete")
+                .replace("- Acceptance ID: REQ-001", "- Acceptance ID: none")
+                .replace("- Delivery Stage ID: STAGE-001", "- Delivery Stage ID: none"),
+                completed,
+            )
+            result = self.state.validate(root, mode="completion")
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("schema_version 3" in error for error in result["errors"]))
+
+    def test_cross_stage_capability_substitution_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["outcome_hierarchy"]["delivery_stages"].append({
+                "id": "STAGE-002",
+                "parent_outcome_id": "OUTCOME-001",
+                "description": "A later coherent delivery state.",
+                "required": True,
+                "status": "planned",
+            })
+            state["outcome_capabilities"].append({
+                "id": "CAP-002", "description": "A later-stage capability.",
+                "required": True, "stage_id": "STAGE-002"
+            })
+            state["requirements"][0]["capability_ids"] = ["CAP-002"]
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("must belong to its delivery stage" in error for error in result["errors"]))
+
+    def test_stage_completion_does_not_leak_from_one_passing_slice(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data(status="passing", evidence_level="end-to-end")
+            state["outcome_capabilities"].append({
+                "id": "CAP-002", "description": "Another required stage capability.",
+                "required": True, "stage_id": "STAGE-001"
+            })
+            state["outcome_hierarchy"]["delivery_stages"][0]["status"] = "complete"
+            state["outcome_hierarchy"]["current_stage_id"] = None
+            write_state(root, project_text().replace(
+                "- Delivery Stage ID: STAGE-001", "- Delivery Stage ID: none"
+            ), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("CAP-002" in error for error in result["errors"]))
+
+    def test_north_star_cannot_be_achieved_through_incomplete_stage(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["outcome_hierarchy"]["north_star"]["status"] = "achieved"
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("north star cannot be achieved" in error for error in result["errors"]))
+
+    def test_current_slice_must_belong_to_current_stage(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["outcome_hierarchy"]["delivery_stages"].append({
+                "id": "STAGE-002", "parent_outcome_id": "OUTCOME-001",
+                "description": "Another stage.", "required": True, "status": "planned"
+            })
+            state["requirements"][0]["stage_id"] = "STAGE-002"
+            state["outcome_capabilities"][0]["stage_id"] = "STAGE-002"
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("current slice must belong" in error for error in result["errors"]))
     def test_completion_rejects_incomplete_and_accepts_evidence_backed_state(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
