@@ -2,16 +2,16 @@
 # Project Outcome
 
 Updated: 2026-08-13T18:04:27Z
-State: complete
+State: active
 
 ## North Star
 
 - North-star outcome: Maintain a concise standalone skill that makes Codex preserve the user's real outcome, proven capabilities, productivity, efficiency, and safety across later evolution.
-- Current delivery stage: Install and verify schema v4 capability-floor preservation locally without changing any motivating project.
-- Stage completion boundary: The generic contract, validator, adversarial tests, independent forward scenarios, official validation, idempotent installation, and exact installed-source parity pass; GitHub publication is outside the current request.
+- Current delivery stage: Publish the verified schema-v4 capability-floor release to the authoritative GitHub repository.
+- Stage completion boundary: The verified commit is merged to the authoritative default branch and published as the non-prerelease v4.0.0 GitHub release.
 - User-visible proof: New state mechanically rejects lost permanent capabilities, unbalanced fitness, over-expensive change gates, missing clean-state proofs, and releases without a whole-system gate.
-- Active acceptance slice: None; the local schema-v4 capability-floor stage is complete.
-- Slice proof limits: Local tests and installation do not guarantee every future probabilistic response or publish a GitHub release.
+- Active acceptance slice: REQ-V4-PUBLISH; publish the exact verified source without weakening its local proof.
+- Slice proof limits: Publication does not guarantee every future probabilistic response.
 - Methods, not outcomes: The motivating report, schema edits, tests, forward scenarios, installation, and status reporting.
 - Why it matters: Historical success must become an inherited executable constraint, not a completed chapter later work may silently regress.
 - Balanced fitness: Useful verified progress, quality and clarity, time/resource efficiency, and proportional safety.
@@ -38,7 +38,7 @@ State: complete
 
 ### Add-ons
 
-- GitHub commit or release only if separately requested.
+- None.
 
 ### Non-goals
 
@@ -85,15 +85,15 @@ State: complete
 
 ## Current Slice
 
-- Delivery Stage ID: none
-- Acceptance ID: none
-- Objective: Install and verify the generic schema-v4 capability-floor contract locally.
-- Acceptance evidence: Contract, independent forward behavior, official validation, installation, and exact source parity all pass.
+- Delivery Stage ID: STAGE-V4-LOCAL
+- Acceptance ID: REQ-V4-PUBLISH
+- Objective: Publish the exact verified schema-v4 source as GitHub release v4.0.0.
+- Acceptance evidence: Pending authoritative merge, tag, and published release.
 - Protect: Skill clarity, token efficiency, backward recovery, installed-user state, and unrelated projects.
-- Status: complete
+- Status: active
 
 ## Next
 
-- Action: None; the locally requested skill upgrade and its evidence are complete.
-- Why now: Every permanent floor and proof tier required by this delivery stage passes.
+- Action: Push the verified branch, merge it to the authoritative default branch, and publish v4.0.0 from the merged commit.
+- Why now: The user explicitly authorized repository update and release after local verification completed.
 - Blocker and recovery: None.
