@@ -117,7 +117,7 @@ def acceptance_data(
     minimum_level: str = "end-to-end",
     evidence_level: str | None = None,
     blocker: dict[str, str] | None = None,
-    schema_version: int = 3,
+    schema_version: int = 4,
 ) -> dict[str, object]:
     evidence = []
     if evidence_level:
@@ -179,7 +179,7 @@ def acceptance_data(
             }
         ]
         requirement["counterevidence"] = []
-    if schema_version == 3:
+    if schema_version >= 3:
         data["outcome_hierarchy"] = {
             "north_star": {
                 "id": "OUTCOME-001",
@@ -199,6 +199,49 @@ def acceptance_data(
         }
         data["outcome_capabilities"][0]["stage_id"] = "STAGE-001"
         requirement["stage_id"] = "STAGE-001"
+    if schema_version == 4:
+        data["outcome_hierarchy"]["north_star"]["fitness_dimensions"] = [
+            {"id": "FIT-UTILITY", "description": "Useful verified output advances."},
+            {"id": "FIT-EFFICIENCY", "description": "Resources and time remain proportionate."},
+        ]
+        data["outcome_hierarchy"]["delivery_stages"][0]["preserves_capability_ids"] = ["CAP-001"]
+        data["outcome_capabilities"][0]["preservation"] = "permanent"
+        requirement["gate_tiers"] = ["change"]
+        requirement["system_scope"] = "component"
+        requirement["minimum_evidence_level"] = "focused-test"
+        pre_release = json.loads(json.dumps(requirement))
+        pre_release["id"] = "REQ-PRE-RELEASE"
+        pre_release["description"] = "The representative interaction path passes."
+        pre_release["gate_tiers"] = ["pre-release"]
+        pre_release["system_scope"] = "interaction"
+        pre_release["minimum_evidence_level"] = "integration"
+        pre_release["acceptance_steps"] = [{"id": "STEP-PRE-RELEASE", "description": "Exercise the interaction path."}]
+        release = json.loads(json.dumps(requirement))
+        release["id"] = "REQ-RELEASE"
+        release["description"] = "The complete user flow passes."
+        release["gate_tiers"] = ["release"]
+        release["system_scope"] = "end-to-end"
+        release["minimum_evidence_level"] = "end-to-end"
+        release["acceptance_steps"] = [{"id": "STEP-RELEASE", "description": "Exercise the complete user flow."}]
+        if evidence_level:
+            pre_release["evidence"][0]["step_ids"] = ["STEP-PRE-RELEASE"]
+            release["evidence"][0]["step_ids"] = ["STEP-RELEASE"]
+        data["requirements"].extend([pre_release, release])
+        data["capability_floors"] = [
+            {
+                "id": "FLOOR-001",
+                "capability_id": "CAP-001",
+                "invariant": "The complete real path keeps working.",
+                "fitness_dimension_ids": ["FIT-UTILITY", "FIT-EFFICIENCY"],
+                "proof_ladder": {
+                    "change": ["REQ-001"],
+                    "pre-release": ["REQ-PRE-RELEASE"],
+                    "release": ["REQ-RELEASE"],
+                },
+                "optional_supporting_state": [],
+                "independence_requirement_ids": [],
+            }
+        ]
     return data
 
 def write_state(root: Path, project: str, acceptance: dict[str, object]) -> None:
@@ -285,11 +328,11 @@ class PackageTests(unittest.TestCase):
 
         for phrase in (
             "Maintain Continuous Project Ownership",
-            "A correction updates the active contract; a question does not cancel authorized work",
-            "Interpret noisy, voice-transcribed, or imprecise wording",
+            "Corrections update the contract; questions do not cancel authorized work",
+            "Interpret noisy wording from context",
             "continue the next safe authorized project action in the same turn",
             'Do not make the user repeatedly say "do it", "continue", or "what next"',
-            "am I leaving the user to manage the next obvious action",
+            "am I leaving the user to manage the next obvious action Codex owns",
         ):
             self.assertIn(phrase, skill)
 
@@ -303,7 +346,7 @@ class PackageTests(unittest.TestCase):
 
         self.assertIn("Questions and corrections update that project", readme)
         self.assertIn('instead of waiting for another "do it" instruction', readme)
-        self.assertIn("advance the next accountable authorized slice", openai_yaml)
+        self.assertIn("advance the next efficient accountable authorized slice", openai_yaml)
 
     def test_confusing_reply_loops_are_stopped_and_status_layers_are_separated(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -337,9 +380,9 @@ class PackageTests(unittest.TestCase):
 
         for phrase in (
             "Bound Autonomous And Recurring Work",
-            "Authorization to continue does not authorize unbounded resource use",
-            "Observe frequently; mutate only on state change",
-            "resource usage grows while the acceptance state does not improve",
+            "Continuation never authorizes unbounded resources",
+            "Observe often; mutate only on state change",
+            "resources grow without acceptance progress",
         ):
             self.assertIn(phrase, skill)
 
@@ -369,7 +412,7 @@ class PackageTests(unittest.TestCase):
             "Preserve Exact Identity And Contradictory Evidence",
             "A matching display name, interface, capability, output, or family is not proof of equivalence",
             "preserve both observations as counterevidence",
-            "A fallback is progress only for requirements it independently satisfies",
+            "A fallback advances only requirements it independently satisfies",
         ):
             self.assertIn(phrase, skill)
 
@@ -415,7 +458,7 @@ class PackageTests(unittest.TestCase):
             self.assertNotIn(project_specific.casefold(), global_rules.casefold())
 
 
-    def test_schema_v3_template_declares_parented_proof_fields(self) -> None:
+    def test_schema_v4_template_declares_capability_preservation_fields(self) -> None:
         acceptance_template = (
             REPOSITORY_ROOT
             / "skills"
@@ -424,13 +467,20 @@ class PackageTests(unittest.TestCase):
             / "ACCEPTANCE.template.json"
         ).read_text(encoding="utf-8")
         for phrase in (
-            '"schema_version": 3',
+            '"schema_version": 4',
             '"project_identity"',
             '"outcome_hierarchy"',
             '"delivery_stages"',
             '"parent_outcome_id"',
             '"current_stage_id"',
             '"stage_id"',
+            '"fitness_dimensions"',
+            '"preserves_capability_ids"',
+            '"preservation": "permanent"',
+            '"capability_floors"',
+            '"proof_ladder"',
+            '"gate_tiers"',
+            '"system_scope"',
             '"outcome_capabilities"',
             '"identity_requirements"',
             '"capability_ids"',
@@ -534,7 +584,7 @@ class PackageTests(unittest.TestCase):
             write_state(root, project_text(state="complete", current_id="none"), completed)
             result = self.state.validate(root, mode="completion")
             self.assertFalse(result["ok"])
-            self.assertTrue(any("schema_version 3" in error for error in result["errors"]))
+            self.assertTrue(any("schema_version 4" in error for error in result["errors"]))
 
     def test_completion_requires_every_product_capability(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -663,7 +713,7 @@ class PackageTests(unittest.TestCase):
             )
             result = self.state.validate(root, mode="completion")
             self.assertFalse(result["ok"])
-            self.assertTrue(any("schema_version 3" in error for error in result["errors"]))
+            self.assertTrue(any("schema_version 4" in error for error in result["errors"]))
 
     def test_cross_stage_capability_substitution_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -727,6 +777,82 @@ class PackageTests(unittest.TestCase):
             result = self.state.validate(root)
             self.assertFalse(result["ok"])
             self.assertTrue(any("current slice must belong" in error for error in result["errors"]))
+
+    def test_later_stage_must_preserve_every_permanent_capability(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["outcome_hierarchy"]["delivery_stages"][0]["preserves_capability_ids"] = []
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("does not preserve permanent capabilities" in error for error in result["errors"]))
+
+    def test_permanent_capability_requires_all_three_distinct_proof_tiers(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["capability_floors"][0]["proof_ladder"]["pre-release"] = ["REQ-001"]
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("tiers must use distinct requirements" in error for error in result["errors"]))
+
+    def test_proof_ladder_keeps_change_cheap_and_release_end_to_end(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["requirements"][0]["minimum_evidence_level"] = "end-to-end"
+            state["requirements"][2]["minimum_evidence_level"] = "focused-test"
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("must remain focused-test strength or cheaper" in error for error in result["errors"]))
+            self.assertTrue(any("requires end-to-end evidence or stronger" in error for error in result["errors"]))
+
+    def test_optional_supporting_state_requires_no_state_integration_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            floor = state["capability_floors"][0]
+            floor["optional_supporting_state"] = ["learned routing history"]
+            floor["independence_requirement_ids"] = []
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("independence_requirement_ids must be a non-empty array" in error for error in result["errors"]))
+
+    def test_balanced_fitness_dimensions_require_permanent_floor_coverage(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["outcome_hierarchy"]["north_star"]["fitness_dimensions"].append({
+                "id": "FIT-SAFETY", "description": "Authority and safety remain bounded."
+            })
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("FIT-SAFETY" in error for error in result["errors"]))
+
+    def test_each_stage_requires_whole_system_release_gate_for_all_floors(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["requirements"][2]["system_scope"] = "interaction"
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("requires one end-to-end release gate" in error for error in result["errors"]))
+
+    def test_permanent_floor_gates_cannot_be_optional(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["requirements"][0]["required"] = False
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("gate requirement REQ-001 must be required" in error for error in result["errors"]))
     def test_completion_rejects_incomplete_and_accepts_evidence_backed_state(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

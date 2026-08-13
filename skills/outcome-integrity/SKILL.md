@@ -1,6 +1,6 @@
 ---
 name: outcome-integrity
-description: Preserve a parented outcome stack and prevent goal-horizon collapse, identity substitution, evidence loss, wrong-project resume, blind persistence, attention drift, premature completion, repeated failure, unbounded effects, and wasteful orchestration. Use for nontrivial, resumed, corrected, long-running, multi-agent, side-effecting, repeatedly failing, or unexpectedly growing work. Maintain bounded .codex evidence, return attention to one verified slice, and delegate only when it reduces total work.
+description: Preserve a parented outcome stack and permanent capability floors; prevent goal-horizon collapse, regression of proven behavior, wrong fitness optimization, identity substitution, evidence loss, blind persistence, premature completion, and wasteful orchestration. Use for nontrivial, resumed, corrected, evolving, long-running, multi-agent, side-effecting, repeatedly failing, or unexpectedly growing work. Maintain bounded executable evidence and proportionate proof ladders.
 ---
 
 # Outcome Integrity
@@ -38,11 +38,11 @@ Scope corrections before propagation: method replaces action; contrary evidence 
 
 ## Preserve Exact Identity And Contradictory Evidence
 
-Treat an explicitly named person, account, tool, provider, runtime, repository, credential, session, system, file, or resource as an identity-bound requirement. A matching display name, interface, capability, output, or family is not proof of equivalence. An alternative may advance unrelated requirements, but it cannot satisfy the named requirement unless the user authorizes substitution or authoritative evidence proves the identities equivalent.
+Treat explicitly named entities as identity-bound. A matching display name, interface, capability, output, or family is not proof of equivalence. Alternatives cannot satisfy the named requirement without authorized or authoritative equivalence.
 
-When observed evidence conflicts with the user's explicit statement or another authoritative observation, do not choose the convenient side or route around the conflict. Identify the exact entity, access surface, session, principal, context, and observation time; probe the same identity and surface; preserve both observations as counterevidence; and reconcile the violated assumption. A fallback is progress only for requirements it independently satisfies, not resolution of the contradiction.
+When authoritative observations conflict, identify the entity, surface, session, principal, context, and time; probe the same identity and surface; preserve both observations as counterevidence; and reconcile the assumption. A fallback advances only requirements it independently satisfies.
 
-Neither a user assertion nor one probe is automatically infallible. Until the conflict is resolved, keep the affected requirement failing or blocked and state what remains unknown. Ask the user only when the exact identity or authority cannot be determined safely from available evidence.
+Until resolved, keep the affected requirement failing or blocked and state the unknown. Ask only when identity or authority cannot be determined safely.
 
 ## Discern Before Persisting
 
@@ -69,13 +69,13 @@ Before responding, recover one compact control frame from the latest instruction
 - **Next Codex-owned action:** the next safe action already authorized by the project.
 - **Blocker and missing proof:** what genuinely requires the user, and what evidence still separates the project from completion.
 
-Classify the new message as one or more of: new outcome, correction, question or status, pause or diagnosis-only, or authorization or continuation. Apply it to the control frame before acting. A correction updates the active contract; a question does not cancel authorized work; a request to read, inspect, explain, or plan is a method rather than the project outcome unless the user explicitly makes that artifact the final deliverable.
+Classify each message as new outcome, correction, question/status, pause/diagnosis, or authorization/continuation. Apply it before acting. Corrections update the contract; questions do not cancel authorized work; reading, explaining, or planning remain methods unless explicitly made the deliverable.
 
-Interpret noisy, voice-transcribed, or imprecise wording from the available conversation and project evidence. When one interpretation clearly preserves the established outcome, proceed under it and state only any necessary assumption. Ask a clarifying question only when multiple materially different outcomes remain plausible and choosing one would change the work or create meaningful risk.
+Interpret noisy wording from context. Proceed when one interpretation preserves the outcome; ask only when materially different plausible meanings would change work or risk.
 
 After answering an interruption, apply the discernment gate, then continue the next safe authorized project action in the same turn. Do not stop at a recommendation, plan, or diagnosis when implementation remains authorized and executable. Do not make the user repeatedly say "do it", "continue", or "what next" for work you already own.
 
-Stop only for verified completion, an explicit pause or diagnosis-only request, a genuinely user-owned decision or authorization, or a blocker with no dependency-ready work. Before ending a turn, ask internally: **am I leaving the user to manage the next obvious action that Codex already owns?** If yes, continue the work instead of handing it back.
+Stop only for verified completion, explicit pause/diagnosis, user-owned authority, or a blocker with no ready work. Before ending ask: **am I leaving the user to manage the next obvious action Codex owns?** If yes, continue.
 
 ## Communicate For Productive Understanding
 
@@ -147,11 +147,12 @@ Do not record routine tool calls, unchanged status, worker chatter, token counts
 
 ## Make Acceptance Mechanical
 
-`ACCEPTANCE.json` is authoritative for completion. Use schema version 3 for new work and completion claims. Versions 1 and 2 remain readable for recovery. It must declare:
+`ACCEPTANCE.json` is authoritative for completion. Use schema version 4 for new work and completion claims. Versions 1–3 remain readable for recovery. It must declare:
 
 - a stable project identity plus relative root markers;
 - one north star, its delivery stages, the current stage, and explicit parent IDs;
 - stage-parented capabilities and acceptance requirements;
+- permanent capability floors, balanced fitness dimensions, and change/pre-release/release proof ladders;
 - exact identity requirements, with substitution allowed only when explicit;
 - requirements mapped to capability IDs and any identity IDs;
 - a proof scope and proof limits for every requirement;
@@ -160,7 +161,7 @@ Do not record routine tool calls, unchanged status, worker chatter, token counts
 - counterevidence retained as `unresolved` or with a specific resolution;
 - owner, reason, recovery trigger, and recovery action when blocked.
 
-Every passing slice needs sufficient evidence for each step and identity it covers. A stage can complete only when its required capabilities have passing coverage and its required slices pass. The north star can be achieved only when every required stage completes. Evidence moves upward only through declared coverage; activity never propagates completion. Migrate legacy state before a new completion claim.
+Every passing slice needs sufficient evidence for each step and identity it covers. Stages and the north star complete only through declared coverage. Evidence never propagates completion automatically. Migrate legacy state before a new completion claim.
 
 Never delete or weaken a capability or required item merely to make completion possible. Change acceptance only when the latest user instruction changes the outcome or current evidence disproves the requirement. A previously passing item must return to failing when its evidence is invalidated or contradicted.
 
@@ -181,6 +182,22 @@ Validate after material state changes:
 python <skill-dir>/scripts/project_outcome.py validate --root <project-root>
 ```
 
+## Preserve Proven Capability Floors
+
+A prior success is historical evidence until its essential behavior becomes an executable floor. When losing a proven capability would make later work less useful, mark it `permanent`; require every later stage to declare that it preserves it; and bind it to a balanced fitness function derived from the user outcome. Include productive output, quality, time or resource efficiency, and safety when material. Never optimize one dimension while leaving another required dimension unmeasured.
+
+Extract the cheapest deterministic interaction invariant that would catch the regression, not merely unit checks of individual parts. Use a proportionate proof ladder:
+
+1. **Change:** cheap deterministic preservation tests after every change that can affect the floor.
+2. **Pre-release:** a representative integration or no-state canary before installation or deployment.
+3. **Release:** a whole-system end-to-end checkpoint covering all permanent floors and fitness dimensions.
+
+Do not run an expensive benchmark after every edit; do not omit its cheap extracted invariant either. Profiles, caches, learned history, generated configuration, and prior receipts may improve behavior but must not contain essential control intelligence. When such state exists, require a clean-state or no-profile gate.
+
+Before replacing an execution path, changing architecture, strengthening policy, or narrowing metadata requirements, identify affected permanent floors and run their change gates. Preserve previously accepted unknowns unless the user changes the contract. Separate operational, capacity, metadata, accounting, schema, semantic, and policy failures; use deterministic handling or failover where defined, and reserve expensive reasoning or reconciliation for failures that require it.
+
+A stage needs one whole-system release requirement that crosses the complete user flow and covers every permanent floor. Green component, safety, authority, or recovery tests cannot substitute for useful delivery, interaction, concurrency, quality, elapsed-time, or efficiency evidence required by the fitness function.
+
 ## Advance One Material Slice
 
 Select the incomplete stage representing the largest verified constraint, then one non-passing acceptance ID within it. Record both IDs in both files. Choose the smallest end-to-end change or diagnostic that materially reduces that slice's gap.
@@ -193,7 +210,7 @@ Before expanding scope, answer internally:
 4. What result would disprove the approach?
 5. What existing behavior must remain intact?
 
-Also run an outcome-distance check: an intermediate artifact counts as progress only when it removes a named acceptance gap. Record which product capabilities the slice proves and its proof limits before treating it as acceptance evidence. After a rejected delegation or failed method, replan from the outcome and the remaining dependency graph instead of stopping or reporting the rejected method as the result.
+An intermediate artifact counts only when it removes a named gap. Record covered capabilities and limits. After a failed method, replan from the outcome and remaining dependencies rather than reporting the method as the result.
 
 Keep at most one unverified architectural layer in flight. A plan, scaffold, monitoring surface, or generated artifact is not a material slice unless it is itself the accepted outcome.
 
@@ -212,9 +229,9 @@ Before work can outlive the turn or accumulate side effects, define a proportion
 - **Lifecycle:** bound retention and clean up after success, cancellation, crash, and startup.
 - **Recovery:** define no-progress stop, owner, trigger, transition, restart behavior, and persistent safety-critical budget state.
 
-Authorization to continue does not authorize unbounded resource use or repeated irreversible side effects. Keep a bounded read-only poll lightweight; add only the controls proportional to its possible harm.
+Continuation never authorizes unbounded resources or repeated irreversible effects. Keep read-only polling lightweight and controls proportional.
 
-Observe frequently; mutate only on state change or explicit retry eligibility. Before acceptance, test repeated identical ticks plus restart and cancellation, and assert bounded resource growth with no duplicate side effects. If resource usage grows while the acceptance state does not improve, stop the producer, preserve evidence, and diagnose before resuming.
+Observe often; mutate only on state change or retry eligibility. Test repeated ticks, restart, cancellation, bounded growth, and duplicate effects. Stop and diagnose when resources grow without acceptance progress.
 
 ## Classify Failure Before Retrying
 
@@ -242,16 +259,7 @@ Correct each by returning to the controlling capability and the smallest verifie
 
 ## Admit Delegation Only When It Helps
 
-Current Codex owns the critical path. Delegate only when every condition is true:
-
-1. The lane is genuinely parallel and does not block the current next action.
-2. Its files, state, or external effects are disjoint and explicitly owned.
-3. It has one bounded deliverable tied to an acceptance ID.
-4. It has independent verification and one defined integration action.
-5. Expected contribution exceeds prompt, waiting, review, and integration cost.
-6. Failure cannot corrupt authoritative state; uncertain lanes are read-only.
-
-If any condition is false, work directly. Keep sequential reasoning in one agent. Use centralized integration, verify each worker result once, and never create worker review chains, heartbeat loops, or duplicate lanes.
+Current Codex owns the critical path. Delegate only parallel, disjoint, acceptance-linked work with bounded ownership, independent verification, one integration action, positive net value, and no authority risk. Otherwise work directly. Keep sequential reasoning together, integrate centrally, and avoid manager chains or duplicate lanes.
 
 ## Detect And Correct Drift
 
@@ -282,7 +290,7 @@ Before claiming completion, run:
 python <skill-dir>/scripts/project_outcome.py completion --root <project-root>
 ```
 
-Completion requires schema version 3, both project states `complete`, no current stage or slice, the north star `achieved`, every required stage `complete`, every required capability covered by passing slices, sufficient step and identity evidence, and no unresolved counterevidence. Slice completion does not mean stage completion; stage completion does not mean north-star achievement.
+Completion requires schema version 4, both project states `complete`, no current stage or slice, north star `achieved`, every stage complete, every capability and permanent floor covered at its required proof tiers, sufficient evidence, and no unresolved counterevidence. Slice completion does not complete its parents.
 
 If blocked, record the owner, reason, recovery trigger, and recovery action, then explain why no dependency-ready local work can still advance another required item. Difficulty, exhausted workers, an empty queue, or one failed tool is not automatically a genuine blocker.
 

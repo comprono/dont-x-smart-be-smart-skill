@@ -1,162 +1,183 @@
 {
-  "schema_version": 3,
-  "updated_utc": "2026-08-08T00:49:42Z",
-  "project_state": "complete",
+  "schema_version": 4,
+  "updated_utc": "2026-08-13T18:04:27Z",
+  "project_state": "active",
   "project_identity": {
     "id": "outcome-integrity-skill",
-    "root_markers": [
-      "skills/outcome-integrity/SKILL.md",
-      "scripts/install.py"
-    ]
+    "root_markers": ["skills/outcome-integrity/SKILL.md", "scripts/install.py"]
   },
   "outcome_hierarchy": {
     "north_star": {
       "id": "OUTCOME-INTEGRITY",
-      "description": "Publish a concise standalone skill that preserves a parented outcome stack and prevents completion leakage.",
-      "status": "achieved"
+      "description": "Maintain a concise standalone skill that preserves outcomes and proven capability fitness across evolution.",
+      "status": "active",
+      "fitness_dimensions": [
+        {"id": "FIT-EFFECTIVENESS", "description": "Useful verified outcome progress."},
+        {"id": "FIT-QUALITY", "description": "Correct, clear, user-comprehensible behavior."},
+        {"id": "FIT-EFFICIENCY", "description": "Proportionate time, tokens, tools, and proof cost."},
+        {"id": "FIT-SAFETY", "description": "Authority, evidence integrity, bounded effects, and recovery."}
+      ]
     },
     "delivery_stages": [
       {
-        "id": "STAGE-V3-RELEASE",
+        "id": "STAGE-V4-LOCAL",
         "parent_outcome_id": "OUTCOME-INTEGRITY",
-        "description": "Release the backward-readable schema-v3 outcome-stack contract locally and on GitHub.",
+        "description": "Verify and publish the generic schema-v4 capability-floor contract.",
         "required": true,
-        "status": "complete"
+        "status": "active",
+        "preserves_capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"]
       }
     ],
-    "current_stage_id": null
+    "current_stage_id": "STAGE-V4-LOCAL"
   },
   "outcome_capabilities": [
+    {"id": "CAP-OUTCOME", "description": "Preserve parented outcomes, accepted behavior, and honest evidence.", "required": true, "stage_id": "STAGE-V4-LOCAL", "preservation": "permanent"},
+    {"id": "CAP-EFFICIENCY", "description": "Keep execution, proof, and communication proportionate and productive.", "required": true, "stage_id": "STAGE-V4-LOCAL", "preservation": "permanent"},
+    {"id": "CAP-PACKAGE", "description": "Remain generic, backward-readable, valid, tested, and idempotently installable.", "required": true, "stage_id": "STAGE-V4-LOCAL", "preservation": "permanent"}
+  ],
+  "capability_floors": [
     {
-      "id": "CAP-PARENTED-STACK",
-      "description": "Maintain explicit north-star, delivery-stage, capability, slice, and action levels with scoped corrections.",
-      "required": true,
-      "stage_id": "STAGE-V3-RELEASE"
+      "id": "FLOOR-OUTCOME",
+      "capability_id": "CAP-OUTCOME",
+      "invariant": "Later stages preserve every declared permanent behavior and reject completion without whole-system evidence.",
+      "fitness_dimension_ids": ["FIT-EFFECTIVENESS", "FIT-QUALITY", "FIT-SAFETY"],
+      "proof_ladder": {"change": ["REQ-V4-CONTRACT"], "pre-release": ["REQ-V4-FORWARD"], "release": ["REQ-V4-PACKAGE", "REQ-V4-PUBLISH"]},
+      "optional_supporting_state": [],
+      "independence_requirement_ids": []
     },
     {
-      "id": "CAP-COMPLETION-ISOLATION",
-      "description": "Prevent child evidence or status from satisfying, substituting for, or rewriting a parent without declared coverage.",
-      "required": true,
-      "stage_id": "STAGE-V3-RELEASE"
+      "id": "FLOOR-EFFICIENCY",
+      "capability_id": "CAP-EFFICIENCY",
+      "invariant": "Ordinary changes use cheap deterministic gates while stronger proof is reserved for installation and release boundaries.",
+      "fitness_dimension_ids": ["FIT-EFFECTIVENESS", "FIT-EFFICIENCY"],
+      "proof_ladder": {"change": ["REQ-V4-CONTRACT"], "pre-release": ["REQ-V4-FORWARD"], "release": ["REQ-V4-PACKAGE", "REQ-V4-PUBLISH"]},
+      "optional_supporting_state": [],
+      "independence_requirement_ids": []
     },
     {
-      "id": "CAP-BACKWARD-RECOVERY",
-      "description": "Keep schema versions 1 and 2 readable for recovery while requiring schema 3 for new completion claims.",
-      "required": true,
-      "stage_id": "STAGE-V3-RELEASE"
-    },
-    {
-      "id": "CAP-PACKAGE",
-      "description": "Keep the generic skill token-bounded, tested, valid, and idempotently installable.",
-      "required": true,
-      "stage_id": "STAGE-V3-RELEASE"
-    },
-    {
-      "id": "CAP-PUBLISH",
-      "description": "Publish the exact verified source on GitHub main and as the latest v3.0.0 release.",
-      "required": true,
-      "stage_id": "STAGE-V3-RELEASE"
+      "id": "FLOOR-PACKAGE",
+      "capability_id": "CAP-PACKAGE",
+      "invariant": "The exact generic source remains valid, backward-readable, isolated, and equal to the installed copy.",
+      "fitness_dimension_ids": ["FIT-QUALITY", "FIT-EFFICIENCY", "FIT-SAFETY"],
+      "proof_ladder": {"change": ["REQ-V4-CONTRACT"], "pre-release": ["REQ-V4-FORWARD"], "release": ["REQ-V4-PACKAGE", "REQ-V4-PUBLISH"]},
+      "optional_supporting_state": [],
+      "independence_requirement_ids": []
     }
   ],
   "identity_requirements": [
-    {
-      "id": "ENTITY-STANDALONE-SKILL",
-      "description": "The standalone dont-x-smart-be-smart-skill source and installed outcome-integrity copy.",
-      "substitutable": false
-    }
+    {"id": "ENTITY-STANDALONE-SKILL", "description": "The standalone skill repository and active installed outcome-integrity skill.", "substitutable": false}
   ],
-  "current_slice_requirement_id": null,
+  "current_slice_requirement_id": "REQ-V4-PUBLISH",
   "requirements": [
     {
-      "id": "REQ-V3-CONTRACT",
-      "description": "The generic instructions and schema enforce the parented outcome stack and typed completion.",
+      "id": "REQ-V4-CONTRACT",
+      "description": "Cheap deterministic tests enforce the generic capability-floor contract after relevant changes.",
       "required": true,
-      "stage_id": "STAGE-V3-RELEASE",
-      "capability_ids": [
-        "CAP-PARENTED-STACK",
-        "CAP-COMPLETION-ISOLATION",
-        "CAP-BACKWARD-RECOVERY"
-      ],
+      "stage_id": "STAGE-V4-LOCAL",
+      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
       "identity_ids": ["ENTITY-STANDALONE-SKILL"],
-      "proof_scope": "Generic source assertions and adversarial validator fixtures cover parent integrity, cross-stage rejection, completion isolation, and v1/v2 recovery.",
-      "proof_limits": "Deterministic contract tests cannot guarantee every probabilistic model response.",
+      "gate_tiers": ["change"],
+      "system_scope": "interaction",
+      "proof_scope": "Source assertions and adversarial fixtures cover inheritance, fitness, proof cost, state independence, and whole-system gates.",
+      "proof_limits": "Deterministic tests do not prove independent model transfer or active installation.",
       "status": "passing",
       "minimum_evidence_level": "focused-test",
       "acceptance_steps": [
-        {"id": "STEP-V3-FRAME", "description": "Require the five-level parented outcome stack and scoped correction propagation."},
-        {"id": "STEP-V3-PARENTS", "description": "Reject unknown, cross-stage, and current-stage parent mismatches."},
-        {"id": "STEP-V3-COMPLETION", "description": "Reject stage and north-star completion without declared lower-level coverage."},
-        {"id": "STEP-V3-LEGACY", "description": "Resume valid schema-v1 and schema-v2 state but reject new completion claims until migration."}
+        {"id": "STEP-CONTRACT-INHERIT", "description": "Reject stages that omit permanent inherited capabilities."},
+        {"id": "STEP-CONTRACT-FITNESS", "description": "Reject unbalanced fitness or safety-only completion."},
+        {"id": "STEP-CONTRACT-LADDER", "description": "Require distinct cheap, pre-release, and whole-system proof tiers."},
+        {"id": "STEP-CONTRACT-STATE", "description": "Require independence proof when optional supporting state exists."}
       ],
-      "evidence": [
-        {
-          "level": "focused-test",
-          "ref": "tests/test_package.py; skills/outcome-integrity/scripts/project_outcome.py",
-          "summary": "Twenty-nine deterministic tests pass, including cross-stage substitution, slice-to-stage leakage, premature north-star achievement, current-stage mismatch, and v1/v2 recovery.",
-          "verified_utc": "2026-08-08T00:46:01Z",
-          "step_ids": ["STEP-V3-FRAME", "STEP-V3-PARENTS", "STEP-V3-COMPLETION", "STEP-V3-LEGACY"],
-          "identity_ids": ["ENTITY-STANDALONE-SKILL"]
-        }
-      ],
+      "evidence": [{
+        "level": "focused-test",
+        "ref": "tests/test_package.py; skills/outcome-integrity/scripts/project_outcome.py",
+        "summary": "Thirty-six deterministic tests pass, including seven adversarial capability-preservation cases; skill size decreased to 3,120 words.",
+        "verified_utc": "2026-08-13T18:04:27Z",
+        "step_ids": ["STEP-CONTRACT-INHERIT", "STEP-CONTRACT-FITNESS", "STEP-CONTRACT-LADDER", "STEP-CONTRACT-STATE"],
+        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
+      }],
       "counterevidence": [],
       "blocker": null
     },
     {
-      "id": "REQ-V3-PACKAGE",
-      "description": "The exact generic source passes every local gate and is installed idempotently without touching a plugin or application project.",
+      "id": "REQ-V4-FORWARD",
+      "description": "Independent generic scenarios apply permanent floors and proportional verification without leaking the motivating diagnosis.",
       "required": true,
-      "stage_id": "STAGE-V3-RELEASE",
-      "capability_ids": ["CAP-PACKAGE"],
+      "stage_id": "STAGE-V4-LOCAL",
+      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
       "identity_ids": ["ENTITY-STANDALONE-SKILL"],
-      "proof_scope": "Repository tests, official validation, compilation, project gates, isolated install, active install, and source hash comparison.",
-      "proof_limits": "Local package proof does not establish GitHub publication or universal model behavior.",
+      "gate_tiers": ["pre-release"],
+      "system_scope": "interaction",
+      "proof_scope": "Fresh agents receive only the updated skill and generic raw project situations.",
+      "proof_limits": "Two scenarios do not guarantee every future model or domain.",
       "status": "passing",
       "minimum_evidence_level": "integration",
       "acceptance_steps": [
-        {"id": "STEP-PACKAGE-TEST", "description": "Pass repository tests, official skill validation, compilation, and project validation."},
-        {"id": "STEP-PACKAGE-INSTALL", "description": "Install twice in isolation and into the active Codex home."},
-        {"id": "STEP-PACKAGE-PARITY", "description": "Verify exact source-to-installed file parity and one managed global rule block."},
-        {"id": "STEP-PACKAGE-ISOLATION", "description": "Verify generic sources contain no motivating plugin or provider identities."}
+        {"id": "STEP-FORWARD-PRESERVE", "description": "Preserve prior useful behavior as an inherited executable floor."},
+        {"id": "STEP-FORWARD-EFFICIENT", "description": "Choose cheap change gates and reserve full benchmarks for release."},
+        {"id": "STEP-FORWARD-STATE", "description": "Require clean-state behavior when optional learned state exists."},
+        {"id": "STEP-FORWARD-WHOLE", "description": "Require balanced whole-system delivery evidence."}
       ],
-      "evidence": [
-        {
-          "level": "integration",
-          "ref": "29 deterministic tests; quick_validate.py; compileall; project validate/resume; isolated and active double-install; exact five-file SHA-256 comparison; one managed global rule block",
-          "summary": "The generic schema-v3 package passed every local gate, installed idempotently, matched the active installed skill exactly, and kept motivating plugin/provider identities out of runtime sources.",
-          "verified_utc": "2026-08-08T00:47:51Z",
-          "step_ids": ["STEP-PACKAGE-TEST", "STEP-PACKAGE-INSTALL", "STEP-PACKAGE-PARITY", "STEP-PACKAGE-ISOLATION"],
-          "identity_ids": ["ENTITY-STANDALONE-SKILL"]
-        }
-      ],
+      "evidence": [{
+        "level": "integration",
+        "ref": "independent forward_test_controller and forward_test_pipeline responses",
+        "summary": "Fresh agents given only the updated skill and generic raw scenarios preserved old useful behavior as a permanent floor, required clean-state independence, selected cheap deterministic change gates and bounded higher tiers, and withheld release for missing whole-system balanced-fitness evidence.",
+        "verified_utc": "2026-08-13T18:00:54Z",
+        "step_ids": ["STEP-FORWARD-PRESERVE", "STEP-FORWARD-EFFICIENT", "STEP-FORWARD-STATE", "STEP-FORWARD-WHOLE"],
+        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
+      }],
       "counterevidence": [],
       "blocker": null
     },
     {
-      "id": "REQ-V3-PUBLISH",
-      "description": "GitHub main, public CI, tag v3.0.0, and the latest release identify the exact verified implementation.",
+      "id": "REQ-V4-PACKAGE",
+      "description": "The exact generic source passes full local validation and installation parity.",
       "required": true,
-      "stage_id": "STAGE-V3-RELEASE",
-      "capability_ids": ["CAP-PUBLISH"],
+      "stage_id": "STAGE-V4-LOCAL",
+      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
       "identity_ids": ["ENTITY-STANDALONE-SKILL"],
-      "proof_scope": "GitHub commit, Actions, tag, and release metadata prove publication of the verified source.",
-      "proof_limits": "Publication does not guarantee behavior in every future task.",
+      "gate_tiers": ["release"],
+      "system_scope": "end-to-end",
+      "proof_scope": "Full tests, official validation, compilation, completion gate, isolated and active installation, exact hashes, and generic-source scan.",
+      "proof_limits": "Local release proof does not publish GitHub or guarantee every future response.",
       "status": "passing",
+      "minimum_evidence_level": "end-to-end",
+      "acceptance_steps": [
+        {"id": "STEP-PACKAGE-VALIDATE", "description": "Pass all source, schema, compilation, and official validation gates."},
+        {"id": "STEP-PACKAGE-INSTALL", "description": "Install idempotently in isolation and the active Codex home."},
+        {"id": "STEP-PACKAGE-PARITY", "description": "Match installed source exactly with one managed global rule block."},
+        {"id": "STEP-PACKAGE-ISOLATE", "description": "Contain no project- or provider-specific correction."}
+      ],
+      "evidence": [{
+        "level": "end-to-end",
+        "ref": "36 deterministic tests; quick_validate.py; compileall; project validate/resume; isolated and active double-install; exact five-file SHA-256 parity; one managed global block; generic-source scan",
+        "summary": "The exact generic schema-v4 source passed every local gate, installed idempotently, matched all five active installed files exactly, retained one managed global block, and contained no motivating project/provider identity.",
+        "verified_utc": "2026-08-13T18:04:27Z",
+        "step_ids": ["STEP-PACKAGE-VALIDATE", "STEP-PACKAGE-INSTALL", "STEP-PACKAGE-PARITY", "STEP-PACKAGE-ISOLATE"],
+        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
+      }],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V4-PUBLISH",
+      "description": "The exact verified schema-v4 source is merged to the authoritative default branch and published as GitHub release v4.0.0.",
+      "required": true,
+      "stage_id": "STAGE-V4-LOCAL",
+      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
+      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
+      "gate_tiers": ["release"],
+      "system_scope": "end-to-end",
+      "proof_scope": "Authoritative remote branch, merged commit, immutable tag, and published non-prerelease GitHub release.",
+      "proof_limits": "Publication does not guarantee every future probabilistic response.",
+      "status": "failing",
       "minimum_evidence_level": "user-visible",
       "acceptance_steps": [
-        {"id": "STEP-PUBLISH-MAIN", "description": "Commit and merge the exact verified standalone source to GitHub main."},
-        {"id": "STEP-PUBLISH-CI", "description": "Confirm public validation passes for the merged implementation."},
-        {"id": "STEP-PUBLISH-RELEASE", "description": "Publish v3.0.0 at the implementation revision and verify it is the latest release."}
+        {"id": "STEP-PUBLISH-MERGE", "description": "Merge the exact verified source to the authoritative default branch."},
+        {"id": "STEP-PUBLISH-TAG", "description": "Create v4.0.0 at the merged source commit."},
+        {"id": "STEP-PUBLISH-RELEASE", "description": "Publish a non-draft, non-prerelease GitHub release with accurate notes."}
       ],
-      "evidence": [
-        {
-          "level": "user-visible",
-          "ref": "PR https://github.com/comprono/dont-x-smart-be-smart-skill/pull/4; CI https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/31231115164; release https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v3.0.0; refs/tags/v3.0.0",
-          "summary": "PR 4 merged the verified implementation to main at 52e66b0393dc044554ac6d4a44668653a3a861da, public main CI passed, and GitHub reports the non-draft v3.0.0 release as latest with its tag resolving exactly to that commit.",
-          "verified_utc": "2026-08-08T00:49:42Z",
-          "step_ids": ["STEP-PUBLISH-MAIN", "STEP-PUBLISH-CI", "STEP-PUBLISH-RELEASE"],
-          "identity_ids": ["ENTITY-STANDALONE-SKILL"]
-        }
-      ],
+      "evidence": [],
       "counterevidence": [],
       "blocker": null
     }

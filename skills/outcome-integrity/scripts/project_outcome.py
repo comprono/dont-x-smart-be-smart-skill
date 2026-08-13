@@ -39,7 +39,10 @@ REQUIREMENT_STATES = {"failing", "blocked", "passing"}
 NORTH_STAR_STATES = {"active", "achieved"}
 DELIVERY_STAGE_STATES = {"planned", "active", "blocked", "complete"}
 COUNTEREVIDENCE_STATES = {"unresolved", "resolved"}
-SUPPORTED_SCHEMA_VERSIONS = {1, 2, 3}
+SUPPORTED_SCHEMA_VERSIONS = {1, 2, 3, 4}
+PRESERVATION_VALUES = {"stage", "permanent"}
+GATE_TIERS = {"change", "pre-release", "release"}
+SYSTEM_SCOPES = {"component", "interaction", "end-to-end"}
 EVIDENCE_RANKS = {
     "activity": 0,
     "process-health": 1,
@@ -125,7 +128,7 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
                 f"{project['current_slice_id']} ACCEPTANCE.json={current_id or 'none'}"
             )
 
-        if schema_version == 3 and acceptance["outcome_hierarchy"]:
+        if schema_version >= 3 and acceptance["outcome_hierarchy"]:
             current_stage_id = acceptance["outcome_hierarchy"]["current_stage_id"]
             if project["current_stage_id"] != (current_stage_id or "none"):
                 errors.append(
@@ -151,7 +154,7 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
                         f"schema version 2 requires a non-empty PROJECT_OUTCOME.md line: {field}"
                     )
 
-        if schema_version == 3:
+        if schema_version >= 3:
             for field, present in (
                 (NORTH_STAR_OUTCOME_PREFIX, project["has_north_star_outcome"]),
                 (CURRENT_DELIVERY_STAGE_PREFIX, project["has_current_delivery_stage"]),
@@ -161,7 +164,7 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
             ):
                 if not present:
                     errors.append(
-                        f"schema version 3 requires a non-empty PROJECT_OUTCOME.md line: {field}"
+                        f"schema version {schema_version} requires a non-empty PROJECT_OUTCOME.md line: {field}"
                     )
 
         if mode == "resume":
@@ -173,15 +176,15 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
                 and acceptance["requirements_by_id"][current_id]["status"] == "passing"
             ):
                 errors.append("current slice already passes; select a remaining requirement or complete the project")
-            if schema_version == 3 and acceptance["outcome_hierarchy"] and acceptance["project_state"] == "active":
+            if schema_version >= 3 and acceptance["outcome_hierarchy"] and acceptance["project_state"] == "active":
                 hierarchy = acceptance["outcome_hierarchy"]
                 if hierarchy["current_stage_id"] is None:
                     errors.append("active work requires outcome_hierarchy.current_stage_id")
 
         if mode == "completion":
-            if schema_version != 3:
+            if schema_version != 4:
                 errors.append(
-                    "completion requires ACCEPTANCE.json schema_version 3; migrate legacy state first"
+                    "completion requires ACCEPTANCE.json schema_version 4; migrate legacy state first"
                 )
             if project["state"] != "complete" or acceptance["project_state"] != "complete":
                 errors.append("completion requires both project states to be complete")
@@ -219,7 +222,7 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
                     errors.append(
                         f"completion has {unresolved} unresolved counterevidence item(s)"
                     )
-            if schema_version == 3 and acceptance["outcome_hierarchy"]:
+            if schema_version >= 3 and acceptance["outcome_hierarchy"]:
                 hierarchy = acceptance["outcome_hierarchy"]
                 if hierarchy["north_star"]["status"] != "achieved":
                     errors.append("completion requires the north star status to be achieved")
@@ -335,9 +338,9 @@ def validate_acceptance_file(
 
     schema_version = data.get("schema_version")
     if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
-        errors.append("ACCEPTANCE.json schema_version must be 1, 2, or 3")
+        errors.append("ACCEPTANCE.json schema_version must be 1, 2, 3, or 4")
         return None
-    if schema_version in {1, 2}:
+    if schema_version in {1, 2, 3}:
         warnings.append(
             f"legacy ACCEPTANCE.json schema_version {schema_version} is readable for recovery but cannot prove new completion"
         )
@@ -353,8 +356,10 @@ def validate_acceptance_file(
             data.get("project_identity"), root, errors
         )
         outcome_hierarchy = (
-            validate_outcome_hierarchy(data.get("outcome_hierarchy"), errors)
-            if schema_version == 3
+            validate_outcome_hierarchy(
+                data.get("outcome_hierarchy"), errors, schema_version=schema_version
+            )
+            if schema_version >= 3
             else None
         )
         known_stage_ids = {
@@ -364,6 +369,14 @@ def validate_acceptance_file(
             data.get("outcome_capabilities"), errors,
             schema_version=schema_version, known_stage_ids=known_stage_ids
         )
+        capability_floors = (
+            validate_capability_floors(
+                data.get("capability_floors"), errors,
+                known_capability_ids={item["id"] for item in outcome_capabilities},
+                known_fitness_dimension_ids=set(outcome_hierarchy["fitness_dimension_ids"]),
+            )
+            if schema_version == 4 and outcome_hierarchy else []
+        )
         identity_requirements = validate_identity_requirements(
             data.get("identity_requirements"), errors
         )
@@ -371,6 +384,7 @@ def validate_acceptance_file(
         project_identity = None
         outcome_hierarchy = None
         outcome_capabilities = []
+        capability_floors = []
         identity_requirements = []
 
     capability_ids = {item["id"] for item in outcome_capabilities}
@@ -396,7 +410,7 @@ def validate_acceptance_file(
             schema_version=schema_version,
             known_capability_ids=capability_ids,
             known_identity_ids=identity_ids,
-            known_stage_ids=known_stage_ids if schema_version == 3 else set(),
+            known_stage_ids=known_stage_ids if schema_version >= 3 else set(),
             capability_stage_ids={item["id"]: item.get("stage_id") for item in outcome_capabilities},
         )
         if not normalized_item:
@@ -411,7 +425,7 @@ def validate_acceptance_file(
     if current_id is not None and current_id not in requirements_by_id:
         errors.append(f"current_slice_requirement_id does not exist: {current_id}")
 
-    if schema_version == 3 and outcome_hierarchy:
+    if schema_version >= 3 and outcome_hierarchy:
         current_stage_id = outcome_hierarchy["current_stage_id"]
         if current_id in requirements_by_id and current_stage_id is not None:
             if requirements_by_id[current_id]["stage_id"] != current_stage_id:
@@ -420,6 +434,11 @@ def validate_acceptance_file(
                 )
         validate_hierarchy_coverage(
             outcome_hierarchy, outcome_capabilities, normalized, errors
+        )
+    if schema_version == 4 and outcome_hierarchy:
+        validate_capability_preservation(
+            outcome_hierarchy, outcome_capabilities, capability_floors,
+            normalized, errors
         )
 
     counts = {
@@ -444,6 +463,7 @@ def validate_acceptance_file(
         "project_identity": project_identity,
         "outcome_hierarchy": outcome_hierarchy,
         "outcome_capabilities": outcome_capabilities,
+        "capability_floors": capability_floors,
         "identity_requirements": identity_requirements,
         "current_slice_requirement_id": current_id,
         "requirements": normalized,
@@ -491,8 +511,27 @@ def validate_project_identity(
     return {"id": project_id, "root_markers": normalized_markers}
 
 
+def validate_declared_ids(
+    values: object, prefix: str, errors: list[str], *, required: bool
+) -> list[str]:
+    if not isinstance(values, list) or (required and not values):
+        errors.append(f"{prefix} must be {'a non-empty array' if required else 'an array'}")
+        return []
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for index, value in enumerate(values):
+        if not valid_requirement_id(value):
+            errors.append(f"{prefix}[{index}] must match {REQUIREMENT_ID_PATTERN.pattern}")
+            continue
+        if value in seen:
+            errors.append(f"{prefix} contains duplicate ID: {value}")
+        seen.add(value)
+        normalized.append(value)
+    return normalized
+
+
 def validate_outcome_hierarchy(
-    item: object, errors: list[str]
+    item: object, errors: list[str], *, schema_version: int
 ) -> dict[str, Any] | None:
     prefix = "outcome_hierarchy"
     if not isinstance(item, dict):
@@ -510,6 +549,30 @@ def validate_outcome_hierarchy(
         errors.append(f"{prefix}.north_star.description must be non-empty")
     if north_star.get("status") not in NORTH_STAR_STATES:
         errors.append(f"{prefix}.north_star.status must be active or achieved")
+    fitness_dimension_ids: list[str] = []
+    if schema_version == 4:
+        dimensions = north_star.get("fitness_dimensions")
+        if not isinstance(dimensions, list) or len(dimensions) < 2:
+            errors.append(
+                f"{prefix}.north_star.fitness_dimensions must contain at least two balanced outcome dimensions"
+            )
+        else:
+            seen_dimensions: set[str] = set()
+            for index, dimension in enumerate(dimensions):
+                dimension_prefix = f"{prefix}.north_star.fitness_dimensions[{index}]"
+                if not isinstance(dimension, dict):
+                    errors.append(f"{dimension_prefix} must be an object")
+                    continue
+                dimension_id = dimension.get("id")
+                if not valid_requirement_id(dimension_id):
+                    errors.append(f"{dimension_prefix}.id must match {REQUIREMENT_ID_PATTERN.pattern}")
+                    continue
+                if dimension_id in seen_dimensions:
+                    errors.append(f"duplicate fitness dimension id: {dimension_id}")
+                seen_dimensions.add(dimension_id)
+                if not nonempty(dimension.get("description")):
+                    errors.append(f"{dimension_prefix}.description must be non-empty")
+                fitness_dimension_ids.append(dimension_id)
 
     stages = item.get("delivery_stages")
     if not isinstance(stages, list) or not stages:
@@ -545,6 +608,11 @@ def validate_outcome_hierarchy(
             "description": stage.get("description"),
             "required": stage["required"],
             "status": stage.get("status"),
+            "preserves_capability_ids": validate_declared_ids(
+                stage.get("preserves_capability_ids"),
+                f"{stage_prefix}.preserves_capability_ids", errors,
+                required=schema_version == 4,
+            ) if schema_version == 4 else [],
         })
 
     current_stage_id = item.get("current_stage_id")
@@ -572,6 +640,7 @@ def validate_outcome_hierarchy(
             "description": north_star.get("description"),
             "status": north_star.get("status"),
         },
+        "fitness_dimension_ids": fitness_dimension_ids,
         "delivery_stages": normalized_stages,
         "current_stage_id": current_stage_id,
     }
@@ -604,14 +673,20 @@ def validate_outcome_capabilities(
             errors.append(f"{prefix}.required must be boolean")
             continue
         stage_id = item.get("stage_id") if schema_version == 3 else None
-        if schema_version == 3 and stage_id not in known_stage_ids:
+        if schema_version >= 3:
+            stage_id = item.get("stage_id")
+        if schema_version >= 3 and stage_id not in known_stage_ids:
             errors.append(f"{prefix}.stage_id must identify a declared delivery stage")
+        preservation = item.get("preservation") if schema_version == 4 else "stage"
+        if schema_version == 4 and preservation not in PRESERVATION_VALUES:
+            errors.append(f"{prefix}.preservation must be stage or permanent")
         normalized.append(
             {
                 "id": item_id,
                 "description": item.get("description"),
                 "required": item["required"],
                 "stage_id": stage_id,
+                "preservation": preservation,
             }
         )
     return normalized
@@ -649,6 +724,199 @@ def validate_hierarchy_coverage(
             errors.append(
                 f"delivery stage {stage['id']} cannot be complete while required slices are not passing: "
                 + ", ".join(incomplete_requirements)
+            )
+
+
+def validate_capability_floors(
+    items: object, errors: list[str], *, known_capability_ids: set[str],
+    known_fitness_dimension_ids: set[str]
+) -> list[dict[str, Any]]:
+    if not isinstance(items, list) or not items:
+        errors.append("capability_floors must be a non-empty array for schema version 4")
+        return []
+    normalized: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    seen_capabilities: set[str] = set()
+    for index, item in enumerate(items):
+        prefix = f"capability_floors[{index}]"
+        if not isinstance(item, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        floor_id = item.get("id")
+        if not valid_requirement_id(floor_id):
+            errors.append(f"{prefix}.id must match {REQUIREMENT_ID_PATTERN.pattern}")
+            continue
+        if floor_id in seen_ids:
+            errors.append(f"duplicate capability floor id: {floor_id}")
+        seen_ids.add(floor_id)
+        capability_id = item.get("capability_id")
+        if capability_id not in known_capability_ids:
+            errors.append(f"{prefix}.capability_id references unknown ID: {capability_id}")
+        if capability_id in seen_capabilities:
+            errors.append(f"duplicate capability floor for: {capability_id}")
+        seen_capabilities.add(capability_id)
+        if not nonempty(item.get("invariant")):
+            errors.append(f"{prefix}.invariant must be non-empty")
+        dimension_ids = validate_declared_ids(
+            item.get("fitness_dimension_ids"), f"{prefix}.fitness_dimension_ids",
+            errors, required=True
+        )
+        for dimension_id in dimension_ids:
+            if dimension_id not in known_fitness_dimension_ids:
+                errors.append(f"{prefix}.fitness_dimension_ids references unknown ID: {dimension_id}")
+        proof_ladder = item.get("proof_ladder")
+        normalized_ladder: dict[str, list[str]] = {}
+        if not isinstance(proof_ladder, dict):
+            errors.append(f"{prefix}.proof_ladder must be an object")
+        else:
+            for tier in sorted(GATE_TIERS):
+                normalized_ladder[tier] = validate_declared_ids(
+                    proof_ladder.get(tier), f"{prefix}.proof_ladder.{tier}",
+                    errors, required=True
+                )
+            ladder_ids = [
+                requirement_id
+                for requirement_ids in normalized_ladder.values()
+                for requirement_id in requirement_ids
+            ]
+            if len(ladder_ids) != len(set(ladder_ids)):
+                errors.append(f"{prefix}.proof_ladder tiers must use distinct requirements")
+        optional_state = item.get("optional_supporting_state")
+        if not isinstance(optional_state, list) or not all(nonempty(value) for value in optional_state):
+            errors.append(f"{prefix}.optional_supporting_state must be an array of non-empty strings")
+            optional_state = []
+        independence_ids = validate_declared_ids(
+            item.get("independence_requirement_ids"),
+            f"{prefix}.independence_requirement_ids", errors,
+            required=bool(optional_state)
+        )
+        normalized.append({
+            "id": floor_id,
+            "capability_id": capability_id,
+            "fitness_dimension_ids": dimension_ids,
+            "proof_ladder": normalized_ladder,
+            "optional_supporting_state": optional_state,
+            "independence_requirement_ids": independence_ids,
+        })
+    return normalized
+
+
+def validate_capability_preservation(
+    hierarchy: dict[str, Any], capabilities: list[dict[str, Any]],
+    floors: list[dict[str, Any]], requirements: list[dict[str, Any]],
+    errors: list[str]
+) -> None:
+    capability_by_id = {item["id"]: item for item in capabilities}
+    requirement_by_id = {item["id"]: item for item in requirements}
+    permanent_ids = {
+        item["id"] for item in capabilities
+        if item["required"] and item["preservation"] == "permanent"
+    }
+    floor_capability_ids = {item["capability_id"] for item in floors}
+    missing_floors = sorted(permanent_ids - floor_capability_ids)
+    if missing_floors:
+        errors.append(
+            "permanent capabilities require capability floors: " + ", ".join(missing_floors)
+        )
+    nonpermanent_floors = sorted(floor_capability_ids - permanent_ids)
+    if nonpermanent_floors:
+        errors.append(
+            "capability floors may reference only required permanent capabilities: "
+            + ", ".join(nonpermanent_floors)
+        )
+
+    for stage in hierarchy["delivery_stages"]:
+        declared = set(stage["preserves_capability_ids"])
+        unknown = sorted(declared - set(capability_by_id))
+        if unknown:
+            errors.append(
+                f"delivery stage {stage['id']} preserves unknown capabilities: " + ", ".join(unknown)
+            )
+        missing = sorted(permanent_ids - declared)
+        if missing:
+            errors.append(
+                f"delivery stage {stage['id']} does not preserve permanent capabilities: "
+                + ", ".join(missing)
+            )
+
+    covered_dimensions: set[str] = set()
+    for floor in floors:
+        capability_id = floor["capability_id"]
+        covered_dimensions.update(floor["fitness_dimension_ids"])
+        for tier, requirement_ids in floor["proof_ladder"].items():
+            for requirement_id in requirement_ids:
+                requirement = requirement_by_id.get(requirement_id)
+                if not requirement:
+                    errors.append(
+                        f"capability floor {floor['id']} {tier} gate references unknown requirement: {requirement_id}"
+                    )
+                    continue
+                if capability_id not in requirement["capability_ids"]:
+                    errors.append(
+                        f"capability floor {floor['id']} {tier} gate requirement {requirement_id} does not cover {capability_id}"
+                    )
+                if not requirement["required"]:
+                    errors.append(
+                        f"capability floor {floor['id']} {tier} gate requirement {requirement_id} must be required"
+                    )
+                if tier not in requirement["gate_tiers"]:
+                    errors.append(
+                        f"capability floor {floor['id']} {tier} gate requirement {requirement_id} lacks that gate tier"
+                    )
+                minimum_rank = EVIDENCE_RANKS.get(requirement["minimum_evidence_level"], -1)
+                if tier == "change" and minimum_rank > EVIDENCE_RANKS["focused-test"]:
+                    errors.append(f"change gate {requirement_id} must remain focused-test strength or cheaper")
+                if tier == "pre-release" and minimum_rank < EVIDENCE_RANKS["integration"]:
+                    errors.append(f"pre-release gate {requirement_id} requires integration evidence or stronger")
+                if tier == "release" and minimum_rank < EVIDENCE_RANKS["end-to-end"]:
+                    errors.append(f"release gate {requirement_id} requires end-to-end evidence or stronger")
+        for requirement_id in floor["independence_requirement_ids"]:
+            requirement = requirement_by_id.get(requirement_id)
+            if not requirement:
+                errors.append(
+                    f"capability floor {floor['id']} independence gate references unknown requirement: {requirement_id}"
+                )
+            elif capability_id not in requirement["capability_ids"]:
+                errors.append(
+                    f"capability floor {floor['id']} independence gate {requirement_id} does not cover {capability_id}"
+                )
+            else:
+                if not requirement["required"]:
+                    errors.append(
+                        f"capability floor {floor['id']} independence gate {requirement_id} must be required"
+                    )
+                minimum_rank = EVIDENCE_RANKS.get(requirement["minimum_evidence_level"], -1)
+                if "pre-release" not in requirement["gate_tiers"]:
+                    errors.append(
+                        f"capability floor {floor['id']} independence gate {requirement_id} must be pre-release"
+                    )
+                if minimum_rank < EVIDENCE_RANKS["integration"]:
+                    errors.append(
+                        f"capability floor {floor['id']} independence gate {requirement_id} requires integration evidence or stronger"
+                    )
+                if requirement["system_scope"] not in {"interaction", "end-to-end"}:
+                    errors.append(
+                        f"capability floor {floor['id']} independence gate {requirement_id} must exercise an interaction or end-to-end path"
+                    )
+
+    missing_dimensions = sorted(set(hierarchy["fitness_dimension_ids"]) - covered_dimensions)
+    if missing_dimensions:
+        errors.append(
+            "north-star fitness dimensions lack permanent capability coverage: "
+            + ", ".join(missing_dimensions)
+        )
+
+    for stage in hierarchy["delivery_stages"]:
+        stage_requirements = [item for item in requirements if item["stage_id"] == stage["id"]]
+        whole_system = [
+            item for item in stage_requirements
+            if item["required"] and item["system_scope"] == "end-to-end"
+            and "release" in item["gate_tiers"]
+            and permanent_ids.issubset(set(item["capability_ids"]))
+        ]
+        if not whole_system:
+            errors.append(
+                f"delivery stage {stage['id']} requires one end-to-end release gate covering every permanent capability"
             )
 
 
@@ -746,8 +1014,8 @@ def validate_requirement(
         unresolved_counterevidence = validate_counterevidence(
             item.get("counterevidence"), f"{prefix}.counterevidence", errors
         )
-        stage_id = item.get("stage_id") if schema_version == 3 else None
-        if schema_version == 3:
+        stage_id = item.get("stage_id") if schema_version >= 3 else None
+        if schema_version >= 3:
             if stage_id not in known_stage_ids:
                 errors.append(f"{prefix}.stage_id must identify a declared delivery stage")
             cross_stage = [
@@ -759,12 +1027,32 @@ def validate_requirement(
                     f"{prefix}.capability_ids must belong to its delivery stage: "
                     + ", ".join(cross_stage)
                 )
+        if schema_version == 4:
+            raw_gate_tiers = item.get("gate_tiers")
+            if not isinstance(raw_gate_tiers, list) or not raw_gate_tiers:
+                errors.append(f"{prefix}.gate_tiers must be a non-empty array")
+                gate_tiers = []
+            else:
+                gate_tiers = []
+                for tier in raw_gate_tiers:
+                    if tier not in GATE_TIERS:
+                        errors.append(f"{prefix}.gate_tiers contains invalid tier: {tier}")
+                    elif tier not in gate_tiers:
+                        gate_tiers.append(tier)
+            system_scope = item.get("system_scope")
+            if system_scope not in SYSTEM_SCOPES:
+                errors.append(f"{prefix}.system_scope must be component, interaction, or end-to-end")
+        else:
+            gate_tiers = []
+            system_scope = None
     else:
         capability_ids = []
         identity_ids = []
         step_ids = []
         unresolved_counterevidence = 0
         stage_id = None
+        gate_tiers = []
+        system_scope = None
         if not isinstance(steps, list) or not steps or not all(nonempty(step) for step in steps):
             errors.append(f"{prefix}.acceptance_steps must contain non-empty strings")
 
@@ -838,6 +1126,9 @@ def validate_requirement(
         "required": required,
         "status": status,
         "stage_id": stage_id,
+        "gate_tiers": gate_tiers,
+        "system_scope": system_scope,
+        "minimum_evidence_level": minimum,
         "capability_ids": capability_ids,
         "identity_ids": identity_ids,
         "acceptance_step_ids": step_ids,
