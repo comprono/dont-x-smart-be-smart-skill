@@ -1,18 +1,22 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "updated_utc": "REPLACE_ME_UTC",
   "project_state": "active",
   "project_identity": {
     "id": "REPLACE_ME_STABLE_PROJECT_ID",
-    "root_markers": [
-      "REPLACE_ME_RELATIVE_PROJECT_MARKER"
-    ]
+    "root_markers": ["REPLACE_ME_RELATIVE_PROJECT_MARKER"]
   },
   "outcome_hierarchy": {
     "north_star": {
       "id": "OUTCOME-001",
       "description": "REPLACE_ME_WITH_THE_ENDURING_USER_VISIBLE_OUTCOME",
-      "status": "active"
+      "status": "active",
+      "fitness_dimensions": [
+        {"id": "FIT-PROGRESS", "description": "Useful verified outcome progress."},
+        {"id": "FIT-QUALITY", "description": "Result quality and correctness."},
+        {"id": "FIT-EFFICIENCY", "description": "Time and resource efficiency."},
+        {"id": "FIT-SAFETY", "description": "Authority, safety, and recoverability."}
+      ]
     },
     "delivery_stages": [
       {
@@ -20,7 +24,8 @@
         "parent_outcome_id": "OUTCOME-001",
         "description": "REPLACE_ME_WITH_THE_CURRENT_COHERENT_DELIVERY_STATE",
         "required": true,
-        "status": "active"
+        "status": "active",
+        "preserves_capability_ids": ["CAP-001"]
       }
     ],
     "current_stage_id": "STAGE-001"
@@ -28,33 +33,80 @@
   "outcome_capabilities": [
     {
       "id": "CAP-001",
-      "description": "REPLACE_ME_WITH_ONE_REQUIRED_PRODUCT_CAPABILITY",
+      "description": "REPLACE_ME_WITH_ONE_REQUIRED_PERMANENT_CAPABILITY",
       "required": true,
-      "stage_id": "STAGE-001"
+      "stage_id": "STAGE-001",
+      "preservation": "permanent"
+    }
+  ],
+  "capability_floors": [
+    {
+      "id": "FLOOR-001",
+      "capability_id": "CAP-001",
+      "invariant": "REPLACE_ME_WITH_CHEAP_OBSERVABLE_BEHAVIOR_THAT_LATER_WORK_MUST_NOT_BREAK",
+      "fitness_dimension_ids": ["FIT-PROGRESS", "FIT-QUALITY", "FIT-EFFICIENCY", "FIT-SAFETY"],
+      "proof_ladder": {
+        "change": ["REQ-CHANGE"],
+        "pre-release": ["REQ-PRE-RELEASE"],
+        "release": ["REQ-RELEASE"]
+      },
+      "optional_supporting_state": [],
+      "independence_requirement_ids": []
     }
   ],
   "identity_requirements": [],
-  "current_slice_requirement_id": "REQ-001",
+  "current_slice_requirement_id": "REQ-CHANGE",
   "requirements": [
     {
-      "id": "REQ-001",
-      "description": "REPLACE_ME_WITH_ONE_OBSERVABLE_REQUIREMENT",
+      "id": "REQ-CHANGE",
+      "description": "Cheap deterministic preservation gate for every relevant change.",
       "required": true,
       "stage_id": "STAGE-001",
-      "capability_ids": [
-        "CAP-001"
-      ],
+      "capability_ids": ["CAP-001"],
       "identity_ids": [],
-      "proof_scope": "REPLACE_ME_WITH_WHAT_THIS_PROOF_ESTABLISHES",
-      "proof_limits": "REPLACE_ME_WITH_WHAT_THIS_PROOF_DOES_NOT_ESTABLISH",
+      "gate_tiers": ["change"],
+      "system_scope": "component",
+      "proof_scope": "REPLACE_ME_WITH_THE_CHEAP_INTERACTION_INVARIANT",
+      "proof_limits": "Does not replace a live canary or whole-system release proof.",
+      "status": "failing",
+      "minimum_evidence_level": "focused-test",
+      "acceptance_steps": [{"id": "STEP-CHANGE", "description": "Run the cheap deterministic preservation gate."}],
+      "evidence": [],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-PRE-RELEASE",
+      "description": "Representative interaction or no-state canary before installation or deployment.",
+      "required": true,
+      "stage_id": "STAGE-001",
+      "capability_ids": ["CAP-001"],
+      "identity_ids": [],
+      "gate_tiers": ["pre-release"],
+      "system_scope": "interaction",
+      "proof_scope": "REPLACE_ME_WITH_THE_REPRESENTATIVE_CANARY",
+      "proof_limits": "Does not replace the complete release checkpoint.",
+      "status": "failing",
+      "minimum_evidence_level": "integration",
+      "acceptance_steps": [{"id": "STEP-PRE-RELEASE", "description": "Run the representative interaction canary."}],
+      "evidence": [],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-RELEASE",
+      "description": "Whole-system release checkpoint covering every permanent capability and fitness dimension.",
+      "required": true,
+      "stage_id": "STAGE-001",
+      "capability_ids": ["CAP-001"],
+      "identity_ids": [],
+      "gate_tiers": ["release"],
+      "system_scope": "end-to-end",
+      "proof_scope": "REPLACE_ME_WITH_THE_COMPLETE_USER_VISIBLE_FLOW",
+      "proof_limits": "Proves only the declared release configuration and conditions.",
       "status": "failing",
       "minimum_evidence_level": "end-to-end",
-      "acceptance_steps": [
-        {
-          "id": "STEP-001",
-          "description": "REPLACE_ME_WITH_A_REPRODUCIBLE_ACCEPTANCE_STEP"
-        }
-      ],
+      "acceptance_steps": [{"id": "STEP-RELEASE", "description": "Run the whole-system outcome checkpoint."}],
       "evidence": [],
       "counterevidence": [],
       "blocker": null

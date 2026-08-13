@@ -1,4 +1,4 @@
 interface:
   display_name: "Outcome Integrity"
-  short_description: "Preserve outcome hierarchy and verified progress"
-  default_prompt: "Use $outcome-integrity to preserve the full parented outcome stack, return attention to the verified gap, prevent completion leakage, and advance the next accountable authorized slice."
+  short_description: "Preserve outcomes and proven capabilities"
+  default_prompt: "Use $outcome-integrity to preserve the full parented outcome stack and permanent capability floors, keep fitness balanced, return attention to the verified gap, and advance the next efficient accountable authorized slice."

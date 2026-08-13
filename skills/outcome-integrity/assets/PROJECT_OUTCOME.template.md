@@ -14,6 +14,8 @@ State: active
 - Slice proof limits: REPLACE_ME
 - Methods, not outcomes: REPLACE_ME
 - Why it matters: REPLACE_ME
+- Balanced fitness: REPLACE_ME_WITH_PROGRESS_QUALITY_EFFICIENCY_AND_SAFETY_DIMENSIONS
+- Permanent capability floors: REPLACE_ME_WITH_BEHAVIOR_LATER_STAGES_MUST_PRESERVE
 
 ## Done Means
 

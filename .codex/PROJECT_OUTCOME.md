@@ -1,98 +1,99 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-08-08T00:49:42Z
+Updated: 2026-08-13T18:04:27Z
 State: complete
 
 ## North Star
 
-- North-star outcome: Improve and publicly release the standalone Outcome Integrity skill so Codex preserves the user's enduring outcome, current delivery stage, capability milestones, acceptance slices, and immediate actions without completion leaking between levels.
-- Current delivery stage: Release the schema-v3 outcome-stack contract as a backward-readable major upgrade of the standalone skill.
-- Stage completion boundary: Generic instructions, schema enforcement, adversarial tests, local installation, GitHub main, passing public CI, and the latest v3.0.0 release all identify the exact verified source; behavior from every future probabilistic model remains outside this stage's guarantee.
-- User-visible proof: New projects initialize the parent chain; v1/v2 projects resume; invalid cross-stage mappings and premature completion fail; the installed copy matches source; GitHub publishes the passing revision as v3.0.0.
-- Active acceptance slice: None; the v3.0.0 delivery stage and north-star release outcome are complete.
-- Slice proof limits: The release proves source, installation, CI, tag, and release identity, not behavior in every future probabilistic task.
-- Methods, not outcomes: Plugin-task auditing, editing instructions, schema migration, tests, installation, commits, CI, and release operations.
-- Why it matters: Without explicit parent levels, an immediate success can silently replace a milestone or the larger user outcome.
+- North-star outcome: Maintain a concise standalone skill that makes Codex preserve the user's real outcome, proven capabilities, productivity, efficiency, and safety across later evolution.
+- Current delivery stage: Install and verify schema v4 capability-floor preservation locally without changing any motivating project.
+- Stage completion boundary: The generic contract, validator, adversarial tests, independent forward scenarios, official validation, idempotent installation, and exact installed-source parity pass; GitHub publication is outside the current request.
+- User-visible proof: New state mechanically rejects lost permanent capabilities, unbalanced fitness, over-expensive change gates, missing clean-state proofs, and releases without a whole-system gate.
+- Active acceptance slice: None; the local schema-v4 capability-floor stage is complete.
+- Slice proof limits: Local tests and installation do not guarantee every future probabilistic response or publish a GitHub release.
+- Methods, not outcomes: The motivating report, schema edits, tests, forward scenarios, installation, and status reporting.
+- Why it matters: Historical success must become an inherited executable constraint, not a completed chapter later work may silently regress.
+- Balanced fitness: Useful verified progress, quality and clarity, time/resource efficiency, and proportional safety.
+- Permanent capability floors: Parented outcomes, productive communication, proportionate execution, exact evidence, and package integrity.
 
 ## Done Means
 
 - Authority: .codex/ACCEPTANCE.json
-- Summary: Every required v3.0.0 capability and slice passes, the north star is achieved for this release, and the exact verified revision is installed locally and published as GitHub's latest release.
+- Summary: All schema-v4 contract, forward-behavior, and local package requirements pass with every permanent floor covered at change, pre-release, and local release tiers.
 
 ## User Intent
 
-- Priorities: Strengthen the skill beyond a three-time-horizon explanation by enforcing parent relationships, typed completion, correction scope, and evidence isolation.
-- Working preferences: Keep the skill generic, concise, token-efficient, productive, and independent of the plugin project that revealed the defect.
-- Explicit corrections: Update the skill locally and on GitHub now.
-- Non-negotiables: Do not change the plugin, encode plugin/provider names, weaken backward recovery, or claim publication before external verification.
+- Priorities: Prevent repeated regression of previously proven useful behavior while making Codex more efficient, not more bureaucratic or confusing.
+- Working preferences: Generic, compact, mechanically enforced, cheap during ordinary work, and independent of all plugins and projects.
+- Explicit corrections: Efficiency is part of the protected outcome; safeguards must improve work rather than add confusing overhead.
+- Non-negotiables: Do not edit the motivating plugin, optimize safety alone, require expensive benchmarks after every change, or hide essential intelligence in profiles/history.
 
 ## Work Map
 
 ### Critical Path
 
-- Enforce north star -> delivery stage -> capability -> acceptance slice parent integrity.
-- Reject completion leakage, cross-stage substitution, and incompatible current-stage selection.
-- Preserve v1/v2 recovery, validate and install locally, then publish the exact passing revision as v3.0.0.
+- Encode permanent floors, balanced fitness, proof-cost tiers, clean-state independence, failure routing, and whole-system release coverage.
+- Validate adversarial cases, forward behavior, package integrity, and active installation.
 
 ### Add-ons
 
-- None before release evidence passes.
+- GitHub commit or release only if separately requested.
 
 ### Non-goals
 
-- Changing any plugin, provider integration, application, or project-specific orchestrator.
+- Repairing, inspecting, or changing the motivating project.
 
 ## Operational Envelope
 
-- Applies to: One bounded standalone skill release; no recurring process.
-- Progress signal and side-effect key: A named acceptance step becomes evidence-backed; local installation remains idempotent and GitHub publication is keyed by exact commit and v3.0.0 tag.
-- Cadence and retry eligibility: Diagnose a failed validation, CI, push, or release invariant before retrying.
-- Resource budget, reserve, and retention: One repository, one installed skill copy, no worker fan-out, no generated activity archive.
-- No-progress stop, restart, cancellation, and recovery: Resume from these state files and the Git diff; stop unchanged publication retries after two failures.
+- Applies to: One bounded local standalone-skill upgrade; no recurring work.
+- Progress signal and side-effect key: A named v4 acceptance gate passes; installation remains idempotent.
+- Cadence and retry eligibility: Run cheap deterministic tests after coherent edits; diagnose before repeating any failed gate.
+- Resource budget, reserve, and retention: One repository, two read-only forward scenarios, one installed skill copy, no external project mutations.
+- No-progress stop, restart, cancellation, and recovery: Resume from these files and current diff; stop unchanged retries after two failures.
 
 ## Verified State
 
-- All 21 exposed plugin-project tasks and one adjacent projectless task were audited without modifying the plugin | Evidence: task-history audit, 86 pages and 735 substantive exact-project turns | Verified: 2026-08-08T00:30:00Z
-- The audit isolated goal-horizon aliasing and untyped completion propagation as a generic failure class | Evidence: repeated product, stage, proof, release, and next-action substitutions in task history | Verified: 2026-08-08T00:30:00Z
-- The schema-v3 implementation passes 29 deterministic tests and keeps the invoked skill at 3,157 words and global rules at 650 words | Evidence: python -m unittest discover -s tests -v and local word counts | Verified: 2026-08-08T00:46:01Z
-- Official skill validation, compilation, project validation/resume, isolated double-install, active double-install, exact five-file SHA-256 parity, one managed global block, and generic-source isolation pass | Evidence: local validation and installation outputs | Verified: 2026-08-08T00:47:51Z
-- Pull request 4 merged the exact verified implementation to main at 52e66b0, public main CI run 31231115164 passed, and GitHub reports v3.0.0 as the latest non-draft release with its tag resolving exactly to that revision | Evidence: https://github.com/comprono/dont-x-smart-be-smart-skill/pull/4; https://github.com/comprono/dont-x-smart-be-smart-skill/actions/runs/31231115164; https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v3.0.0 | Verified: 2026-08-08T00:49:42Z
+- The reported failure class is general: proven behavior remained historical instead of becoming an inherited executable floor | Evidence: user-provided causal report | Verified: 2026-08-13T17:40:00Z
+- Schema-v4 source and seven new adversarial preservation cases pass 36 deterministic tests | Evidence: python -m unittest discover -s tests -v | Verified: 2026-08-13T18:04:27Z
+- The invoked skill is 3,120 words, down from v3's 3,157; global rules remain within 700 words | Evidence: local word counts | Verified: 2026-08-13T17:55:00Z
+- Two independent generic scenarios preserved prior throughput/concurrency as permanent floors, required clean-state behavior, chose cheap change gates plus bounded pre-release and release proof, and rejected component safety as whole-system completion | Evidence: forward_test_controller and forward_test_pipeline responses | Verified: 2026-08-13T18:00:54Z
+- Official validation, compilation, 36 tests, project validation/resume, isolated and active double-install, exact five-file parity, one managed global block, diff hygiene, and generic-source isolation pass | Evidence: local package and installation outputs | Verified: 2026-08-13T18:04:27Z
 
 ## Context Pointers
 
 - Architecture or project map: README.md and skills/outcome-integrity/SKILL.md
 - Active specification: .codex/PROJECT_OUTCOME.md and .codex/ACCEPTANCE.json
-- Verification commands: python -m unittest discover -s tests -v; project_outcome.py validate, resume, and completion; quick_validate.py
-- Evidence roots: tests, current diff, isolated installer output, installed-source hashes, GitHub CI and release metadata
+- Verification commands: python -m unittest discover -s tests -v; project_outcome.py validate, resume, completion; quick_validate.py
+- Evidence roots: tests, forward-test responses, isolated installer output, installed-source hashes
 
 ## Assumptions To Test
 
-- Explicit stage parents prevent a passing slice from completing a broader stage | Falsifier: an incomplete stage validates as complete | Next check: adversarial stage-coverage tests
-- Schema v2 remains usable for recovery | Falsifier: a valid v2 fixture cannot resume | Next check: legacy-resume regression
+- The compact skill causes an independent agent to preserve throughput and clean-state behavior, not only safety | Falsifier: forward scenarios accept component tests or prescribe constant expensive benchmarks | Next check: independent scenarios
+- Schema-v4 proof tiers reduce cost while protecting behavior | Falsifier: change gates can be end-to-end strength or release gates can be component-only | Next check: adversarial validator tests
 
 ## Decisions
 
-- Release as v3.0.0 and require schema v3 for new completion claims | Why: parented completion changes the durable contract while preserving v1/v2 recovery | Revisit when: migration evidence shows unacceptable recovery cost
-- Reuse capabilities and requirements as milestone and slice layers beneath new north-star and delivery-stage objects | Why: adds the missing hierarchy without a third state file or duplicate registry | Revisit when: real projects need a richer dependency graph
-- Keep the plugin solely as audit evidence | Why: the skill must remain independently reusable | Revisit when: never unless the user explicitly changes product scope
+- Use schema v4 for capability-floor enforcement while retaining v1-v3 recovery | Why: completion semantics changed mechanically | Revisit when: migration costs outweigh preservation value
+- Require distinct change, pre-release, and release requirements | Why: one expensive gate reused everywhere would defeat efficiency | Revisit when: a project proves a cheaper equivalent gate
+- Keep detailed fields in templates and validator, with one compact always-loaded global rule | Why: protection must not create prompt or communication bloat | Revisit when: forward evidence shows missing behavior
 
 ## Failure Memory
 
-- Slice completion promoted to stage or product completion | Class: goal-horizon collapse | Evidence: post-v2.1 task audit | Invariant: evidence moves upward only through declared parent coverage | Do not repeat: unqualified completion language
-- Current proof project substituted for the universal product | Class: downward objective replacement | Evidence: repeated user corrections in plugin history | Invariant: delivery stages advance but never redefine the north star | Do not repeat: rewriting a parent to match a convenient child
+- Proven capability stored only as history | Class: evolutionary regression | Evidence: user report | Invariant: essential accepted behavior becomes a permanent executable floor | Do not repeat: treating an earlier success as a closed chapter
+- Safety-only fitness displaced productive delivery | Class: wrong fitness | Evidence: user report | Invariant: measure progress, quality, efficiency, and safety together when material | Do not repeat: green safeguards without whole-system circulation
 
 ## Current Slice
 
 - Delivery Stage ID: none
 - Acceptance ID: none
-- Objective: Publish and verify the standalone Outcome Integrity v3.0.0 release.
-- Acceptance evidence: Local installation, GitHub main, public CI, tag v3.0.0, and the latest release all identify the exact verified implementation.
-- Protect: Backward recovery, token bounds, generic wording, unrelated repositories, and the plugin boundary.
+- Objective: Install and verify the generic schema-v4 capability-floor contract locally.
+- Acceptance evidence: Contract, independent forward behavior, official validation, installation, and exact source parity all pass.
+- Protect: Skill clarity, token efficiency, backward recovery, installed-user state, and unrelated projects.
 - Status: complete
 
 ## Next
 
-- Action: None; the verified schema-v3 implementation is installed locally and published as GitHub's latest release.
-- Why now: Every required capability, stage, and publication step is evidence-backed.
+- Action: None; the locally requested skill upgrade and its evidence are complete.
+- Why now: Every permanent floor and proof tier required by this delivery stage passes.
 - Blocker and recovery: None.

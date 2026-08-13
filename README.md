@@ -10,7 +10,7 @@ Long agent sessions can drift after context compaction, promote an add-on into t
 1. A concise global Codex rule block that activates outcome integrity for nontrivial project work.
 2. The `outcome-integrity` skill, which maintains bounded human intent and machine-verifiable acceptance inside each active project.
 
-`PROJECT_OUTCOME.md` preserves the north star, current delivery stage, active acceptance slice and limits, user intent, facts, failure invariants, and next action. Schema-v3 `ACCEPTANCE.json` owns the parent chain from north star through stages, capabilities, and slices, plus project identity, exact named entities, evidence, counterevidence, status, and recovery. Git owns history; neither project file is an activity transcript.
+`PROJECT_OUTCOME.md` preserves the north star, current stage, active slice, user intent, facts, failures, and next action. Schema-v4 `ACCEPTANCE.json` owns the parent chain plus permanent capability floors, balanced fitness dimensions, proportionate proof ladders, exact identities, evidence, and recovery. Git owns history; neither state file is an activity transcript.
 
 ## What It Prevents
 
@@ -65,6 +65,8 @@ python scripts/install.py --skip-global-rules
 
 Before substantive work, Codex forms a parented outcome stack: enduring north star, current delivery stage, capability milestone, acceptance slice, and next action. Every action must close a named descendant gap. A passing slice cannot complete its stage, and a complete stage cannot achieve the north star without declared coverage.
 
+Accepted behavior that later work must not break becomes a permanent capability floor. Each floor gets a cheap deterministic change gate, a representative pre-release canary, and a whole-system release checkpoint. The fitness function keeps useful output, quality, efficiency, and safety visible together, while optional profiles, caches, and learned history must pass a clean-state independence gate.
+
 During an active project, Codex also maintains a compact control frame containing the current deliverable and stage, latest correction, next Codex-owned action, genuine blocker, and missing completion evidence. Questions and corrections update that project rather than silently ending it. After answering an interruption, Codex discerns whether duties, evidence, authority, or irreversible effects conflict, then resumes the next safe authorized action instead of waiting for another "do it" instruction.
 
 Focus is implemented as repeated return, not forced concentration. When attention wanders into add-ons, excessive research, tool exploration, orchestration, or polishing, Codex preserves useful discoveries but returns to the current verified gap. It distinguishes analytical fixation, restless activity without evidence progress, and avoidant inaction. Detachment from a preferred method never weakens responsibility for the product outcome or its evidence.
@@ -118,7 +120,7 @@ Delegation is admitted only when work is parallel, disjoint, tied to an acceptan
 python -m unittest discover -s tests -v
 ```
 
-The tests cover packaging, token bounds, installation, focus and communication, legacy recovery, project identity, parent integrity, cross-stage rejection, completion isolation, capability coverage, exact-identity evidence, counterevidence, blocker recovery, and evidence-backed completion.
+The tests cover packaging, token bounds, installation, legacy recovery, parent integrity, permanent floors, balanced fitness coverage, proof-tier strength, clean-state independence, whole-system gates, exact identities, counterevidence, blockers, and evidence-backed completion.
 
 ## Design Basis
 
