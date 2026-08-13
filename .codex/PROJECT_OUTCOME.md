@@ -1,16 +1,16 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-08-13T18:04:27Z
-State: active
+Updated: 2026-08-13T18:37:04Z
+State: complete
 
 ## North Star
 
 - North-star outcome: Maintain a concise standalone skill that makes Codex preserve the user's real outcome, proven capabilities, productivity, efficiency, and safety across later evolution.
-- Current delivery stage: Publish the verified schema-v4 capability-floor release to the authoritative GitHub repository.
+- Current delivery stage: Schema-v4 capability-floor release published and verified in the authoritative GitHub repository.
 - Stage completion boundary: The verified commit is merged to the authoritative default branch and published as the non-prerelease v4.0.0 GitHub release.
 - User-visible proof: New state mechanically rejects lost permanent capabilities, unbalanced fitness, over-expensive change gates, missing clean-state proofs, and releases without a whole-system gate.
-- Active acceptance slice: REQ-V4-PUBLISH; publish the exact verified source without weakening its local proof.
+- Active acceptance slice: None; v4.0.0 is published from the authoritative merge commit.
 - Slice proof limits: Publication does not guarantee every future probabilistic response.
 - Methods, not outcomes: The motivating report, schema edits, tests, forward scenarios, installation, and status reporting.
 - Why it matters: Historical success must become an inherited executable constraint, not a completed chapter later work may silently regress.
@@ -59,6 +59,7 @@ State: active
 - The invoked skill is 3,120 words, down from v3's 3,157; global rules remain within 700 words | Evidence: local word counts | Verified: 2026-08-13T17:55:00Z
 - Two independent generic scenarios preserved prior throughput/concurrency as permanent floors, required clean-state behavior, chose cheap change gates plus bounded pre-release and release proof, and rejected component safety as whole-system completion | Evidence: forward_test_controller and forward_test_pipeline responses | Verified: 2026-08-13T18:00:54Z
 - Official validation, compilation, 36 tests, project validation/resume, isolated and active double-install, exact five-file parity, one managed global block, diff hygiene, and generic-source isolation pass | Evidence: local package and installation outputs | Verified: 2026-08-13T18:04:27Z
+- Pull request #5 merged after two passing GitHub Actions runs; main and tag v4.0.0 both resolve to d42fca19ba939b37a7ded27b0cb0ed1c70ed5372; the public release is non-draft and non-prerelease | Evidence: authoritative GitHub PR, refs, and release | Verified: 2026-08-13T18:37:04Z
 
 ## Context Pointers
 
@@ -85,15 +86,15 @@ State: active
 
 ## Current Slice
 
-- Delivery Stage ID: STAGE-V4-LOCAL
-- Acceptance ID: REQ-V4-PUBLISH
+- Delivery Stage ID: none
+- Acceptance ID: none
 - Objective: Publish the exact verified schema-v4 source as GitHub release v4.0.0.
-- Acceptance evidence: Pending authoritative merge, tag, and published release.
+- Acceptance evidence: PR #5 merged; main and v4.0.0 identify d42fca19ba939b37a7ded27b0cb0ed1c70ed5372; public release verified.
 - Protect: Skill clarity, token efficiency, backward recovery, installed-user state, and unrelated projects.
-- Status: active
+- Status: complete
 
 ## Next
 
-- Action: Push the verified branch, merge it to the authoritative default branch, and publish v4.0.0 from the merged commit.
-- Why now: The user explicitly authorized repository update and release after local verification completed.
+- Action: None; the requested repository update and v4.0.0 release are complete.
+- Why now: Local, CI, merge, tag, and public-release evidence all pass.
 - Blocker and recovery: None.

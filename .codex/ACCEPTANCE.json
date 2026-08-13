@@ -1,7 +1,7 @@
 {
   "schema_version": 4,
-  "updated_utc": "2026-08-13T18:04:27Z",
-  "project_state": "active",
+  "updated_utc": "2026-08-13T18:37:04Z",
+  "project_state": "complete",
   "project_identity": {
     "id": "outcome-integrity-skill",
     "root_markers": ["skills/outcome-integrity/SKILL.md", "scripts/install.py"]
@@ -10,7 +10,7 @@
     "north_star": {
       "id": "OUTCOME-INTEGRITY",
       "description": "Maintain a concise standalone skill that preserves outcomes and proven capability fitness across evolution.",
-      "status": "active",
+      "status": "achieved",
       "fitness_dimensions": [
         {"id": "FIT-EFFECTIVENESS", "description": "Useful verified outcome progress."},
         {"id": "FIT-QUALITY", "description": "Correct, clear, user-comprehensible behavior."},
@@ -24,11 +24,11 @@
         "parent_outcome_id": "OUTCOME-INTEGRITY",
         "description": "Verify and publish the generic schema-v4 capability-floor contract.",
         "required": true,
-        "status": "active",
+        "status": "complete",
         "preserves_capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"]
       }
     ],
-    "current_stage_id": "STAGE-V4-LOCAL"
+    "current_stage_id": null
   },
   "outcome_capabilities": [
     {"id": "CAP-OUTCOME", "description": "Preserve parented outcomes, accepted behavior, and honest evidence.", "required": true, "stage_id": "STAGE-V4-LOCAL", "preservation": "permanent"},
@@ -67,7 +67,7 @@
   "identity_requirements": [
     {"id": "ENTITY-STANDALONE-SKILL", "description": "The standalone skill repository and active installed outcome-integrity skill.", "substitutable": false}
   ],
-  "current_slice_requirement_id": "REQ-V4-PUBLISH",
+  "current_slice_requirement_id": null,
   "requirements": [
     {
       "id": "REQ-V4-CONTRACT",
@@ -170,14 +170,21 @@
       "system_scope": "end-to-end",
       "proof_scope": "Authoritative remote branch, merged commit, immutable tag, and published non-prerelease GitHub release.",
       "proof_limits": "Publication does not guarantee every future probabilistic response.",
-      "status": "failing",
+      "status": "passing",
       "minimum_evidence_level": "user-visible",
       "acceptance_steps": [
         {"id": "STEP-PUBLISH-MERGE", "description": "Merge the exact verified source to the authoritative default branch."},
         {"id": "STEP-PUBLISH-TAG", "description": "Create v4.0.0 at the merged source commit."},
         {"id": "STEP-PUBLISH-RELEASE", "description": "Publish a non-draft, non-prerelease GitHub release with accurate notes."}
       ],
-      "evidence": [],
+      "evidence": [{
+        "level": "user-visible",
+        "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/pull/5; https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v4.0.0; commit d42fca19ba939b37a7ded27b0cb0ed1c70ed5372",
+        "summary": "Pull request #5 merged after two passing GitHub Actions runs; authoritative main and tag v4.0.0 resolve to the same merge commit; the public release is non-draft and non-prerelease.",
+        "verified_utc": "2026-08-13T18:37:04Z",
+        "step_ids": ["STEP-PUBLISH-MERGE", "STEP-PUBLISH-TAG", "STEP-PUBLISH-RELEASE"],
+        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
+      }],
       "counterevidence": [],
       "blocker": null
     }
