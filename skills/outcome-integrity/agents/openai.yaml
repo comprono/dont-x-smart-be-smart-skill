@@ -1,4 +1,4 @@
 interface:
   display_name: "Outcome Integrity"
-  short_description: "Preserve outcomes and proven capabilities"
-  default_prompt: "Use $outcome-integrity to preserve the full parented outcome stack and permanent capability floors, keep fitness balanced, return attention to the verified gap, and advance the next efficient accountable authorized slice."
+  short_description: "Preserve outcomes through causal proof"
+  default_prompt: "Use $outcome-integrity to preserve the parented outcome stack and permanent capability floors, lock the earliest divergent transition, honor stop constraints, require production-shaped proof, and advance the next efficient authorized slice."

@@ -1,7 +1,7 @@
 {
-  "schema_version": 4,
-  "updated_utc": "2026-08-13T18:37:04Z",
-  "project_state": "complete",
+  "schema_version": 5,
+  "updated_utc": "2026-08-14T08:42:56Z",
+  "project_state": "active",
   "project_identity": {
     "id": "outcome-integrity-skill",
     "root_markers": ["skills/outcome-integrity/SKILL.md", "scripts/install.py"]
@@ -10,7 +10,7 @@
     "north_star": {
       "id": "OUTCOME-INTEGRITY",
       "description": "Maintain a concise standalone skill that preserves outcomes and proven capability fitness across evolution.",
-      "status": "achieved",
+      "status": "active",
       "fitness_dimensions": [
         {"id": "FIT-EFFECTIVENESS", "description": "Useful verified outcome progress."},
         {"id": "FIT-QUALITY", "description": "Correct, clear, user-comprehensible behavior."},
@@ -24,11 +24,11 @@
         "parent_outcome_id": "OUTCOME-INTEGRITY",
         "description": "Verify and publish the generic schema-v4 capability-floor contract.",
         "required": true,
-        "status": "complete",
+        "status": "active",
         "preserves_capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"]
       }
     ],
-    "current_stage_id": null
+    "current_stage_id": "STAGE-V4-LOCAL"
   },
   "outcome_capabilities": [
     {"id": "CAP-OUTCOME", "description": "Preserve parented outcomes, accepted behavior, and honest evidence.", "required": true, "stage_id": "STAGE-V4-LOCAL", "preservation": "permanent"},
@@ -41,7 +41,7 @@
       "capability_id": "CAP-OUTCOME",
       "invariant": "Later stages preserve every declared permanent behavior and reject completion without whole-system evidence.",
       "fitness_dimension_ids": ["FIT-EFFECTIVENESS", "FIT-QUALITY", "FIT-SAFETY"],
-      "proof_ladder": {"change": ["REQ-V4-CONTRACT"], "pre-release": ["REQ-V4-FORWARD"], "release": ["REQ-V4-PACKAGE", "REQ-V4-PUBLISH"]},
+      "proof_ladder": {"change": ["REQ-V5-CONTRACT"], "pre-release": ["REQ-V5-FORWARD"], "release": ["REQ-V5-PACKAGE", "REQ-V5-PUBLISH"]},
       "optional_supporting_state": [],
       "independence_requirement_ids": []
     },
@@ -50,7 +50,7 @@
       "capability_id": "CAP-EFFICIENCY",
       "invariant": "Ordinary changes use cheap deterministic gates while stronger proof is reserved for installation and release boundaries.",
       "fitness_dimension_ids": ["FIT-EFFECTIVENESS", "FIT-EFFICIENCY"],
-      "proof_ladder": {"change": ["REQ-V4-CONTRACT"], "pre-release": ["REQ-V4-FORWARD"], "release": ["REQ-V4-PACKAGE", "REQ-V4-PUBLISH"]},
+      "proof_ladder": {"change": ["REQ-V5-CONTRACT"], "pre-release": ["REQ-V5-FORWARD"], "release": ["REQ-V5-PACKAGE", "REQ-V5-PUBLISH"]},
       "optional_supporting_state": [],
       "independence_requirement_ids": []
     },
@@ -59,7 +59,7 @@
       "capability_id": "CAP-PACKAGE",
       "invariant": "The exact generic source remains valid, backward-readable, isolated, and equal to the installed copy.",
       "fitness_dimension_ids": ["FIT-QUALITY", "FIT-EFFICIENCY", "FIT-SAFETY"],
-      "proof_ladder": {"change": ["REQ-V4-CONTRACT"], "pre-release": ["REQ-V4-FORWARD"], "release": ["REQ-V4-PACKAGE", "REQ-V4-PUBLISH"]},
+      "proof_ladder": {"change": ["REQ-V5-CONTRACT"], "pre-release": ["REQ-V5-FORWARD"], "release": ["REQ-V5-PACKAGE", "REQ-V5-PUBLISH"]},
       "optional_supporting_state": [],
       "independence_requirement_ids": []
     }
@@ -67,7 +67,7 @@
   "identity_requirements": [
     {"id": "ENTITY-STANDALONE-SKILL", "description": "The standalone skill repository and active installed outcome-integrity skill.", "substitutable": false}
   ],
-  "current_slice_requirement_id": null,
+  "current_slice_requirement_id": "REQ-V5-PUBLISH",
   "requirements": [
     {
       "id": "REQ-V4-CONTRACT",
@@ -78,6 +78,7 @@
       "identity_ids": ["ENTITY-STANDALONE-SKILL"],
       "gate_tiers": ["change"],
       "system_scope": "interaction",
+      "proof_path": {"origin": "Schema-v4 source fixtures", "boundary": "schema-v4 validator contract", "observation": "adversarial capability-floor rejection", "fidelity": "production-shaped"},
       "proof_scope": "Source assertions and adversarial fixtures cover inheritance, fitness, proof cost, state independence, and whole-system gates.",
       "proof_limits": "Deterministic tests do not prove independent model transfer or active installation.",
       "status": "passing",
@@ -108,6 +109,7 @@
       "identity_ids": ["ENTITY-STANDALONE-SKILL"],
       "gate_tiers": ["pre-release"],
       "system_scope": "interaction",
+      "proof_path": {"origin": "Fresh generic agent prompts", "boundary": "invoked Outcome Integrity v4 instructions", "observation": "independent preservation decisions", "fidelity": "production-shaped"},
       "proof_scope": "Fresh agents receive only the updated skill and generic raw project situations.",
       "proof_limits": "Two scenarios do not guarantee every future model or domain.",
       "status": "passing",
@@ -138,6 +140,7 @@
       "identity_ids": ["ENTITY-STANDALONE-SKILL"],
       "gate_tiers": ["release"],
       "system_scope": "end-to-end",
+      "proof_path": {"origin": "Exact schema-v4 source checkout", "boundary": "validation and active installation flow", "observation": "installed-source parity and completion", "fidelity": "production"},
       "proof_scope": "Full tests, official validation, compilation, completion gate, isolated and active installation, exact hashes, and generic-source scan.",
       "proof_limits": "Local release proof does not publish GitHub or guarantee every future response.",
       "status": "passing",
@@ -168,6 +171,7 @@
       "identity_ids": ["ENTITY-STANDALONE-SKILL"],
       "gate_tiers": ["release"],
       "system_scope": "end-to-end",
+      "proof_path": {"origin": "Verified schema-v4 Git commit", "boundary": "authoritative GitHub merge, tag, and release flow", "observation": "public v4.0.0 release", "fidelity": "production"},
       "proof_scope": "Authoritative remote branch, merged commit, immutable tag, and published non-prerelease GitHub release.",
       "proof_limits": "Publication does not guarantee every future probabilistic response.",
       "status": "passing",
@@ -185,6 +189,120 @@
         "step_ids": ["STEP-PUBLISH-MERGE", "STEP-PUBLISH-TAG", "STEP-PUBLISH-RELEASE"],
         "identity_ids": ["ENTITY-STANDALONE-SKILL"]
       }],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V5-CONTRACT",
+      "description": "Schema-v5 deterministically rejects proof that bypasses the causal production boundary.",
+      "required": true,
+      "stage_id": "STAGE-V4-LOCAL",
+      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
+      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
+      "gate_tiers": ["change"],
+      "system_scope": "interaction",
+      "proof_path": {"origin": "Schema-v5 acceptance fixtures", "boundary": "project_outcome.py requirement and permanent-floor validation", "observation": "synthetic or component-only floor gates are rejected", "fidelity": "production-shaped"},
+      "proof_scope": "Adversarial fixtures exercise the same parser and validation entrypoint used by real project state.",
+      "proof_limits": "Does not prove independent model behavior, installation, CI, or publication.",
+      "status": "passing",
+      "minimum_evidence_level": "focused-test",
+      "acceptance_steps": [
+        {"id": "STEP-V5-PATH", "description": "Require origin, boundary, observation, and fidelity for every schema-v5 requirement."},
+        {"id": "STEP-V5-FLOOR", "description": "Reject permanent-floor change gates that are synthetic or component-only."},
+        {"id": "STEP-V5-RELEASE", "description": "Require production-fidelity end-to-end release proof."},
+        {"id": "STEP-V5-CAUSAL", "description": "Require bounded causal-control and stop-condition state."}
+      ],
+      "evidence": [{
+        "level": "focused-test",
+        "ref": "tests/test_package.py; skills/outcome-integrity/scripts/project_outcome.py; skills/outcome-integrity/assets/ACCEPTANCE.template.json",
+        "summary": "Forty-three deterministic tests pass. Schema v5 requires explicit proof paths, rejects synthetic or component-only permanent-floor change gates, requires production-fidelity release proof, preserves schema v1-v4 recovery, and requires causal-control state.",
+        "verified_utc": "2026-08-14T08:40:58Z",
+        "step_ids": ["STEP-V5-PATH", "STEP-V5-FLOOR", "STEP-V5-RELEASE", "STEP-V5-CAUSAL"],
+        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
+      }],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V5-FORWARD",
+      "description": "Fresh generic agents apply earliest-divergence, proof-fidelity, stop, prompt-ownership, and explanation-type rules.",
+      "required": true,
+      "stage_id": "STAGE-V4-LOCAL",
+      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
+      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
+      "gate_tiers": ["pre-release"],
+      "system_scope": "interaction",
+      "proof_path": {"origin": "Fresh agents given the exact updated skill and raw generic scenarios", "boundary": "independent reasoning under the invoked skill", "observation": "bounded decisions that reject bypasses and equivalent retries", "fidelity": "production-shaped"},
+      "proof_scope": "Two non-product-specific scenarios with no leaked diagnosis test transfer of the new rules.",
+      "proof_limits": "Two stochastic scenarios cannot guarantee every future response.",
+      "status": "passing",
+      "minimum_evidence_level": "integration",
+      "acceptance_steps": [
+        {"id": "STEP-V5-FORWARD-BOUNDARY", "description": "Reject a downstream synthetic fixture and demand the real producer boundary."},
+        {"id": "STEP-V5-FORWARD-STOP", "description": "Treat equivalent failures and exact-once stop rules as controlling."},
+        {"id": "STEP-V5-FORWARD-COMMS", "description": "Distinguish execution prompts and chronological causal questions from adjacent requests."}
+      ],
+      "evidence": [{
+        "level": "integration",
+        "ref": "fresh agents v5_forward_boundary and v5_forward_communication",
+        "summary": "With only the updated skill and raw generic facts, one agent rejected a synthetic post-boundary gate, classified changed-runtime failures as equivalent, and honored the fired stop; the other executed the corrected prompt ownership, answered the requested chronology, and selected a production-shaped boundary test instead of another costly run.",
+        "verified_utc": "2026-08-14T08:42:09Z",
+        "step_ids": ["STEP-V5-FORWARD-BOUNDARY", "STEP-V5-FORWARD-STOP", "STEP-V5-FORWARD-COMMS"],
+        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
+      }],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V5-PACKAGE",
+      "description": "The exact generic schema-v5 source passes validation and active installation parity.",
+      "required": true,
+      "stage_id": "STAGE-V4-LOCAL",
+      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
+      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
+      "gate_tiers": ["release"],
+      "system_scope": "end-to-end",
+      "proof_path": {"origin": "Exact schema-v5 source checkout", "boundary": "full validation and installer flow", "observation": "completion and active installed-source parity", "fidelity": "production"},
+      "proof_scope": "Full tests, official validation, compilation, completion, idempotent installation, hashes, token bounds, and generic-source scan.",
+      "proof_limits": "Local proof does not establish GitHub publication or universal probabilistic behavior.",
+      "status": "passing",
+      "minimum_evidence_level": "end-to-end",
+      "acceptance_steps": [
+        {"id": "STEP-V5-PACKAGE-TEST", "description": "Pass all deterministic, compilation, and official skill validation gates."},
+        {"id": "STEP-V5-PACKAGE-INSTALL", "description": "Install idempotently and match the active installed source exactly."},
+        {"id": "STEP-V5-PACKAGE-ISOLATE", "description": "Keep the runtime skill generic and within token bounds."}
+      ],
+      "evidence": [{
+        "level": "end-to-end",
+        "ref": "43 deterministic tests; compileall; quick_validate.py; schema-v5 validate; isolated installer test; active double-install; exact five-file SHA-256 parity; one managed global block; generic runtime scan",
+        "summary": "The exact generic schema-v5 source passed all local gates, remained within 3,327 invoked-skill words and 698 global words, installed idempotently, matched all five active installed files, and contained no motivating project or provider identity.",
+        "verified_utc": "2026-08-14T08:42:56Z",
+        "step_ids": ["STEP-V5-PACKAGE-TEST", "STEP-V5-PACKAGE-INSTALL", "STEP-V5-PACKAGE-ISOLATE"],
+        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
+      }],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V5-PUBLISH",
+      "description": "The exact verified schema-v5 source is merged and published as GitHub release v5.0.0.",
+      "required": true,
+      "stage_id": "STAGE-V4-LOCAL",
+      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
+      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
+      "gate_tiers": ["release"],
+      "system_scope": "end-to-end",
+      "proof_path": {"origin": "Verified schema-v5 Git commit", "boundary": "authoritative GitHub CI, merge, tag, and release flow", "observation": "public non-prerelease v5.0.0", "fidelity": "production"},
+      "proof_scope": "Authoritative main branch, CI, immutable tag, and public GitHub release.",
+      "proof_limits": "Publication does not guarantee every future response.",
+      "status": "failing",
+      "minimum_evidence_level": "user-visible",
+      "acceptance_steps": [
+        {"id": "STEP-V5-PUBLISH-CI", "description": "Pass GitHub Actions for the exact release source."},
+        {"id": "STEP-V5-PUBLISH-MERGE", "description": "Merge the exact verified source to main."},
+        {"id": "STEP-V5-PUBLISH-RELEASE", "description": "Publish non-draft, non-prerelease v5.0.0 from the merge commit."}
+      ],
+      "evidence": [],
       "counterevidence": [],
       "blocker": null
     }
