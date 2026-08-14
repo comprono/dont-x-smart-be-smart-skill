@@ -93,6 +93,14 @@ State: {state}
 ## Failure Memory
 - Symptom patch | Class: semantic | Evidence: reproduction | Invariant: trace state | Do not repeat: blind retry
 
+## Causal Control
+- Known-good reference: Last accepted real path.
+- Failing reference: Current reproduction.
+- Earliest divergent transition: Real producer crosses the declared decision boundary incorrectly.
+- Production-path proof: Real producer to decision boundary to acceptance observation.
+- Stop conditions and attempt limits: Stop after two equivalent acceptance failures.
+- Forbidden bypasses: Do not inject already-correct post-boundary state.
+
 ## Current Slice
 - Delivery Stage ID: {'none' if state == 'complete' else 'STAGE-001'}
 - Acceptance ID: {current_id}
@@ -117,7 +125,7 @@ def acceptance_data(
     minimum_level: str = "end-to-end",
     evidence_level: str | None = None,
     blocker: dict[str, str] | None = None,
-    schema_version: int = 4,
+    schema_version: int = 5,
 ) -> dict[str, object]:
     evidence = []
     if evidence_level:
@@ -199,7 +207,7 @@ def acceptance_data(
         }
         data["outcome_capabilities"][0]["stage_id"] = "STAGE-001"
         requirement["stage_id"] = "STAGE-001"
-    if schema_version == 4:
+    if schema_version >= 4:
         data["outcome_hierarchy"]["north_star"]["fitness_dimensions"] = [
             {"id": "FIT-UTILITY", "description": "Useful verified output advances."},
             {"id": "FIT-EFFICIENCY", "description": "Resources and time remain proportionate."},
@@ -207,14 +215,28 @@ def acceptance_data(
         data["outcome_hierarchy"]["delivery_stages"][0]["preserves_capability_ids"] = ["CAP-001"]
         data["outcome_capabilities"][0]["preservation"] = "permanent"
         requirement["gate_tiers"] = ["change"]
-        requirement["system_scope"] = "component"
+        requirement["system_scope"] = "interaction" if schema_version >= 5 else "component"
         requirement["minimum_evidence_level"] = "focused-test"
+        if schema_version >= 5:
+            requirement["proof_path"] = {
+                "origin": "The real upstream producer.",
+                "boundary": "The production decision under test.",
+                "observation": "The downstream acceptance effect.",
+                "fidelity": "production-shaped",
+            }
         pre_release = json.loads(json.dumps(requirement))
         pre_release["id"] = "REQ-PRE-RELEASE"
         pre_release["description"] = "The representative interaction path passes."
         pre_release["gate_tiers"] = ["pre-release"]
         pre_release["system_scope"] = "interaction"
         pre_release["minimum_evidence_level"] = "integration"
+        if schema_version >= 5:
+            pre_release["proof_path"] = {
+                "origin": "A representative real input.",
+                "boundary": "The production integration boundary.",
+                "observation": "The canary acceptance effect.",
+                "fidelity": "production-shaped",
+            }
         pre_release["acceptance_steps"] = [{"id": "STEP-PRE-RELEASE", "description": "Exercise the interaction path."}]
         release = json.loads(json.dumps(requirement))
         release["id"] = "REQ-RELEASE"
@@ -222,6 +244,13 @@ def acceptance_data(
         release["gate_tiers"] = ["release"]
         release["system_scope"] = "end-to-end"
         release["minimum_evidence_level"] = "end-to-end"
+        if schema_version >= 5:
+            release["proof_path"] = {
+                "origin": "The real user entrypoint.",
+                "boundary": "The complete production flow.",
+                "observation": "The user-visible outcome.",
+                "fidelity": "production",
+            }
         release["acceptance_steps"] = [{"id": "STEP-RELEASE", "description": "Exercise the complete user flow."}]
         if evidence_level:
             pre_release["evidence"][0]["step_ids"] = ["STEP-PRE-RELEASE"]
@@ -300,6 +329,9 @@ class PackageTests(unittest.TestCase):
         self.assertIn("- Active acceptance slice:", template)
         self.assertIn("- Slice proof limits:", template)
         self.assertIn("- Methods, not outcomes:", template)
+        self.assertIn("## Causal Control", template)
+        self.assertIn("- Earliest divergent transition:", template)
+        self.assertIn("- Stop conditions and attempt limits:", template)
         self.assertIn("Use $outcome-integrity", openai_yaml)
 
     def test_simple_questions_receive_a_direct_plain_language_answer_first(self) -> None:
@@ -346,7 +378,7 @@ class PackageTests(unittest.TestCase):
 
         self.assertIn("Questions and corrections update that project", readme)
         self.assertIn('instead of waiting for another "do it" instruction', readme)
-        self.assertIn("advance the next efficient accountable authorized slice", openai_yaml)
+        self.assertIn("advance the next efficient authorized slice", openai_yaml)
 
     def test_confusing_reply_loops_are_stopped_and_status_layers_are_separated(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -365,11 +397,11 @@ class PackageTests(unittest.TestCase):
         ):
             self.assertIn(phrase, skill)
 
-        self.assertIn("Separate product outcome, tooling or plugin state", global_rules)
+        self.assertIn("Separate product, tooling, model/restart", global_rules)
         self.assertIn("conclusion, material distinction, and next owned action", global_rules)
         self.assertIn("Continuing an explanation loop", readme)
         self.assertIn("short conclusion, distinction, and next-action frame", readme)
-        self.assertIn("preserve the full parented outcome stack", openai_yaml)
+        self.assertIn("preserve the parented outcome stack", openai_yaml)
 
     def test_recurring_work_has_a_bounded_operational_envelope(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -388,8 +420,8 @@ class PackageTests(unittest.TestCase):
 
         for phrase in (
             "Before recurring, unattended, retrying, or automatic work",
-            "idempotency identity",
-            "Stop producers when resources grow",
+            "idempotency",
+            "exact-once",
         ):
             self.assertIn(phrase, global_rules)
 
@@ -402,7 +434,27 @@ class PackageTests(unittest.TestCase):
             self.assertIn(phrase, template)
 
         self.assertIn("unattended loops consume storage", readme)
-        self.assertIn("return attention to the verified gap", openai_yaml)
+        self.assertIn("earliest divergent transition", openai_yaml)
+
+    def test_causal_boundary_prompt_ownership_and_failure_equivalence_are_explicit(self) -> None:
+        skill = SKILL.read_text(encoding="utf-8")
+        global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
+        for phrase in (
+            "Treat pasted instructions by conversational function",
+            "Match the explanation requested",
+            "Lock the earliest transition where known-good and failing paths diverge",
+            "fixture that injects already-correct post-boundary state",
+            "Equivalence is determined by the acceptance outcome and earliest divergent transition",
+            "A triggered stop ends that authorization",
+        ):
+            self.assertIn(phrase, skill)
+        for phrase in (
+            "chronology, rationale, responsibility",
+            "cross the production boundary",
+            "earliest divergence match",
+            "Record explicit `do not`",
+        ):
+            self.assertIn(phrase, global_rules)
 
     def test_product_proof_identity_and_conflict_rules_are_generic(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -451,14 +503,14 @@ class PackageTests(unittest.TestCase):
         ):
             self.assertIn(phrase, global_rules)
 
-        self.assertLessEqual(len(skill.split()), 3186)
+        self.assertLessEqual(len(skill.split()), 3420)
         self.assertLessEqual(len(global_rules.split()), 700)
         for project_specific in ("Bhagavad", "Krishna", "Arjuna", "Claude", "Antigravity"):
             self.assertNotIn(project_specific.casefold(), skill.casefold())
             self.assertNotIn(project_specific.casefold(), global_rules.casefold())
 
 
-    def test_schema_v4_template_declares_capability_preservation_fields(self) -> None:
+    def test_schema_v5_template_declares_capability_and_proof_path_fields(self) -> None:
         acceptance_template = (
             REPOSITORY_ROOT
             / "skills"
@@ -467,7 +519,7 @@ class PackageTests(unittest.TestCase):
             / "ACCEPTANCE.template.json"
         ).read_text(encoding="utf-8")
         for phrase in (
-            '"schema_version": 4',
+            '"schema_version": 5',
             '"project_identity"',
             '"outcome_hierarchy"',
             '"delivery_stages"',
@@ -481,6 +533,11 @@ class PackageTests(unittest.TestCase):
             '"proof_ladder"',
             '"gate_tiers"',
             '"system_scope"',
+            '"proof_path"',
+            '"origin"',
+            '"boundary"',
+            '"observation"',
+            '"fidelity": "production-shaped"',
             '"outcome_capabilities"',
             '"identity_requirements"',
             '"capability_ids"',
@@ -584,7 +641,7 @@ class PackageTests(unittest.TestCase):
             write_state(root, project_text(state="complete", current_id="none"), completed)
             result = self.state.validate(root, mode="completion")
             self.assertFalse(result["ok"])
-            self.assertTrue(any("schema_version 4" in error for error in result["errors"]))
+            self.assertTrue(any("schema_version 5" in error for error in result["errors"]))
 
     def test_completion_requires_every_product_capability(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -713,7 +770,7 @@ class PackageTests(unittest.TestCase):
             )
             result = self.state.validate(root, mode="completion")
             self.assertFalse(result["ok"])
-            self.assertTrue(any("schema_version 4" in error for error in result["errors"]))
+            self.assertTrue(any("schema_version 5" in error for error in result["errors"]))
 
     def test_cross_stage_capability_substitution_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -809,6 +866,82 @@ class PackageTests(unittest.TestCase):
             self.assertFalse(result["ok"])
             self.assertTrue(any("must remain focused-test strength or cheaper" in error for error in result["errors"]))
             self.assertTrue(any("requires end-to-end evidence or stronger" in error for error in result["errors"]))
+
+    def test_schema_v5_requires_a_complete_proof_path(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            del state["requirements"][0]["proof_path"]
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("proof_path must be an object" in error for error in result["errors"]))
+
+    def test_permanent_floor_change_gate_cannot_inject_post_boundary_state(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["requirements"][0]["proof_path"]["fidelity"] = "synthetic"
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any(
+                "change gate REQ-001 must use production-shaped or production proof fidelity" in error
+                for error in result["errors"]
+            ))
+
+    def test_permanent_floor_change_gate_must_cross_the_real_interaction_boundary(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["requirements"][0]["system_scope"] = "component"
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("must cross an interaction" in error for error in result["errors"]))
+
+    def test_release_gate_requires_production_fidelity(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["requirements"][2]["proof_path"]["fidelity"] = "production-shaped"
+            write_state(root, project_text(), state)
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("release proof must be production-fidelity" in error for error in result["errors"]))
+
+    def test_schema_v5_requires_causal_control_lines(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            incomplete = project_text().replace(
+                "- Earliest divergent transition: Real producer crosses the declared decision boundary incorrectly.\n",
+                "",
+            )
+            write_state(root, incomplete, acceptance_data())
+            result = self.state.validate(root)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("Earliest divergent transition" in error for error in result["errors"]))
+
+    def test_schema_v4_resumes_but_cannot_prove_new_completion(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            legacy = acceptance_data(schema_version=4)
+            write_state(root, project_text(), legacy)
+            resumed = self.state.validate(root, mode="resume")
+            self.assertTrue(resumed["ok"], resumed)
+            self.assertTrue(any("legacy" in warning for warning in resumed["warnings"]))
+
+            completed = acceptance_data(
+                schema_version=4,
+                project_state="complete",
+                current_id=None,
+                status="passing",
+                evidence_level="end-to-end",
+            )
+            write_state(root, project_text(state="complete", current_id="none"), completed)
+            result = self.state.validate(root, mode="completion")
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("schema_version 5" in error for error in result["errors"]))
 
     def test_optional_supporting_state_requires_no_state_integration_gate(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

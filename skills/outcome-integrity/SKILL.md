@@ -73,6 +73,8 @@ Classify each message as new outcome, correction, question/status, pause/diagnos
 
 Interpret noisy wording from context. Proceed when one interpretation preserves the outcome; ask only when materially different plausible meanings would change work or risk.
 
+Treat pasted instructions by conversational function. Do not return an actionable prompt as prose when it targets active unfinished work unless asked to draft, rewrite, or quote it. A correction that it is "for you" transfers execution ownership immediately.
+
 After answering an interruption, apply the discernment gate, then continue the next safe authorized project action in the same turn. Do not stop at a recommendation, plan, or diagnosis when implementation remains authorized and executable. Do not make the user repeatedly say "do it", "continue", or "what next" for work you already own.
 
 Stop only for verified completion, explicit pause/diagnosis, user-owned authority, or a blocker with no ready work. Before ending ask: **am I leaving the user to manage the next obvious action Codex owns?** If yes, continue.
@@ -90,6 +92,8 @@ When status needs structure, answer in this order:
 Never let `Done`, `working`, `complete`, `blocked`, `restart`, `plugin`, `local`, or `installed` refer to multiple layers in one sentence. Name the layer. A released tool is not a completed user outcome; a running worker is not a finished external action.
 
 If the user says the answer is confusing, repeats the question, or restates it more simply, stop expansion. Use at most three plain sentences for the conclusion, material distinction, and next action. Never answer "yes, exactly" to an interpretation that loses a material distinction.
+
+Match the explanation requested: state, mechanism, chronology, rationale, responsibility, or next action. For "when," "where did we go wrong," or "why," lead with the evidence-backed timeline and decision, not the latest symptom.
 
 In project reports, `Next` means an agent-owned action already started or immediately executable. Do safe authorized work instead of assigning it back to the user; otherwise name the exact user-owned decision or authority.
 
@@ -147,12 +151,13 @@ Do not record routine tool calls, unchanged status, worker chatter, token counts
 
 ## Make Acceptance Mechanical
 
-`ACCEPTANCE.json` is authoritative for completion. Use schema version 4 for new work and completion claims. Versions 1–3 remain readable for recovery. It must declare:
+`ACCEPTANCE.json` is authoritative for completion. Use schema version 5 for new work and completion claims. Versions 1–4 remain readable for recovery. It must declare:
 
 - a stable project identity plus relative root markers;
 - one north star, its delivery stages, the current stage, and explicit parent IDs;
 - stage-parented capabilities and acceptance requirements;
 - permanent capability floors, balanced fitness dimensions, and change/pre-release/release proof ladders;
+- proof paths naming the real input origin, exact boundary under test, downstream observation, and fidelity;
 - exact identity requirements, with substitution allowed only when explicit;
 - requirements mapped to capability IDs and any identity IDs;
 - a proof scope and proof limits for every requirement;
@@ -194,6 +199,8 @@ Extract the cheapest deterministic interaction invariant that would catch the re
 
 Do not run an expensive benchmark after every edit; do not omit its cheap extracted invariant either. Profiles, caches, learned history, generated configuration, and prior receipts may improve behavior but must not contain essential control intelligence. When such state exists, require a clean-state or no-profile gate.
 
+Lock the earliest transition where known-good and failing paths diverge. A root repair must change it. Before costlier proof, require the cheap gate to start at the real upstream producer, cross that production boundary, and observe the acceptance effect. A fixture that injects already-correct post-boundary state cannot prove its creation. Synthetic component tests may diagnose internals, but cannot authorize a canary or release for a permanent floor.
+
 Before replacing an execution path, changing architecture, strengthening policy, or narrowing metadata requirements, identify affected permanent floors and run their change gates. Preserve previously accepted unknowns unless the user changes the contract. Separate operational, capacity, metadata, accounting, schema, semantic, and policy failures; use deterministic handling or failover where defined, and reserve expensive reasoning or reconciliation for failures that require it.
 
 A stage needs one whole-system release requirement that crosses the complete user flow and covers every permanent floor. Green component, safety, authority, or recovery tests cannot substitute for useful delivery, interaction, concurrency, quality, elapsed-time, or efficiency evidence required by the fitness function.
@@ -229,6 +236,8 @@ Before work can outlive the turn or accumulate side effects, define a proportion
 - **Lifecycle:** bound retention and clean up after success, cancellation, crash, and startup.
 - **Recovery:** define no-progress stop, owner, trigger, transition, restart behavior, and persistent safety-critical budget state.
 
+Extract explicit `do not`, `only after`, `exactly once`, attempt limits, and stop conditions into `Causal Control`; check them before gated actions. A triggered stop ends that authorization. Further diagnosis or editing needs preserved authority or a later correction.
+
 Continuation never authorizes unbounded resources or repeated irreversible effects. Keep read-only polling lightweight and controls proportional.
 
 Observe often; mutate only on state change or retry eligibility. Test repeated ticks, restart, cancellation, bounded growth, and duplicate effects. Stop and diagnose when resources grow without acceptance progress.
@@ -245,7 +254,7 @@ Classify the failure from evidence, then apply the matching policy:
 | Unexpected or semantic | Wrong behavior, invariant violation, unknown exception | Do not retry blindly. Reproduce, trace authoritative state, and diagnose first. |
 | Ambiguous external write | Timeout after submit, payment, publish, send, or application | Query authoritative external state or use the idempotency key before any retry. |
 
-When the same acceptance outcome fails twice, stop repeated status checks and symptom patches. Record the evidence and violated invariant in `Failure Memory`. A third attempt requires new root-cause evidence, a changed state, or a materially changed approach.
+When the same acceptance outcome fails twice, stop status checks and symptom patches. Equivalence is determined by the acceptance outcome and earliest divergent transition—not a new commit, implementation, run identity, or symptom. Record the violated invariant. A third attempt requires new causal evidence and a boundary-changing repair proven by the production-shaped change gate.
 
 For resumable external workflows, persist checkpoints at coherent boundaries and make side effects idempotent. Conversation state is not execution state.
 
@@ -290,7 +299,7 @@ Before claiming completion, run:
 python <skill-dir>/scripts/project_outcome.py completion --root <project-root>
 ```
 
-Completion requires schema version 4, both project states `complete`, no current stage or slice, north star `achieved`, every stage complete, every capability and permanent floor covered at its required proof tiers, sufficient evidence, and no unresolved counterevidence. Slice completion does not complete its parents.
+Completion requires schema version 5, both project states `complete`, no current stage or slice, north star `achieved`, every stage complete, every capability and permanent floor covered at its required proof tiers, sufficient evidence, and no unresolved counterevidence. Slice completion does not complete its parents.
 
 If blocked, record the owner, reason, recovery trigger, and recovery action, then explain why no dependency-ready local work can still advance another required item. Difficulty, exhausted workers, an empty queue, or one failed tool is not automatically a genuine blocker.
 

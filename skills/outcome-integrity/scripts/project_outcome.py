@@ -39,10 +39,11 @@ REQUIREMENT_STATES = {"failing", "blocked", "passing"}
 NORTH_STAR_STATES = {"active", "achieved"}
 DELIVERY_STAGE_STATES = {"planned", "active", "blocked", "complete"}
 COUNTEREVIDENCE_STATES = {"unresolved", "resolved"}
-SUPPORTED_SCHEMA_VERSIONS = {1, 2, 3, 4}
+SUPPORTED_SCHEMA_VERSIONS = {1, 2, 3, 4, 5}
 PRESERVATION_VALUES = {"stage", "permanent"}
 GATE_TIERS = {"change", "pre-release", "release"}
 SYSTEM_SCOPES = {"component", "interaction", "end-to-end"}
+PROOF_FIDELITIES = {"synthetic", "production-shaped", "production"}
 EVIDENCE_RANKS = {
     "activity": 0,
     "process-health": 1,
@@ -67,6 +68,8 @@ CURRENT_DELIVERY_STAGE_PREFIX = "- Current delivery stage:"
 STAGE_COMPLETION_BOUNDARY_PREFIX = "- Stage completion boundary:"
 ACTIVE_ACCEPTANCE_SLICE_PREFIX = "- Active acceptance slice:"
 SLICE_PROOF_LIMITS_PREFIX = "- Slice proof limits:"
+EARLIEST_DIVERGENCE_PREFIX = "- Earliest divergent transition:"
+STOP_CONDITIONS_PREFIX = "- Stop conditions and attempt limits:"
 
 
 def project_paths(root: str | Path) -> tuple[Path, Path]:
@@ -167,6 +170,16 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
                         f"schema version {schema_version} requires a non-empty PROJECT_OUTCOME.md line: {field}"
                     )
 
+        if schema_version >= 5:
+            for field, present in (
+                (EARLIEST_DIVERGENCE_PREFIX, project["has_earliest_divergence"]),
+                (STOP_CONDITIONS_PREFIX, project["has_stop_conditions"]),
+            ):
+                if not present:
+                    errors.append(
+                        f"schema version {schema_version} requires a non-empty PROJECT_OUTCOME.md line: {field}"
+                    )
+
         if mode == "resume":
             if acceptance["project_state"] == "active" and current_id is None:
                 errors.append("active work requires current_slice_requirement_id")
@@ -182,9 +195,9 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
                     errors.append("active work requires outcome_hierarchy.current_stage_id")
 
         if mode == "completion":
-            if schema_version != 4:
+            if schema_version != 5:
                 errors.append(
-                    "completion requires ACCEPTANCE.json schema_version 4; migrate legacy state first"
+                    "completion requires ACCEPTANCE.json schema_version 5; migrate legacy state first"
                 )
             if project["state"] != "complete" or acceptance["project_state"] != "complete":
                 errors.append("completion requires both project states to be complete")
@@ -289,7 +302,8 @@ def validate_project_file(
         errors.append("Current Slice must contain '- Acceptance ID: REQ-ID' or '- Acceptance ID: none'")
 
     decisions = section_bullets(lines, "## Decisions", "## Failure Memory")
-    failures = section_bullets(lines, "## Failure Memory", "## Current Slice")
+    failure_end = "## Causal Control" if "## Causal Control" in lines else "## Current Slice"
+    failures = section_bullets(lines, "## Failure Memory", failure_end)
     if len(decisions) > 5:
         warnings.append("more than five current decisions; replace stale entries")
     if len(failures) > 5:
@@ -314,6 +328,8 @@ def validate_project_file(
         "has_stage_completion_boundary": has_nonempty_prefixed_line(lines, STAGE_COMPLETION_BOUNDARY_PREFIX),
         "has_active_acceptance_slice": has_nonempty_prefixed_line(lines, ACTIVE_ACCEPTANCE_SLICE_PREFIX),
         "has_slice_proof_limits": has_nonempty_prefixed_line(lines, SLICE_PROOF_LIMITS_PREFIX),
+        "has_earliest_divergence": has_nonempty_prefixed_line(lines, EARLIEST_DIVERGENCE_PREFIX),
+        "has_stop_conditions": has_nonempty_prefixed_line(lines, STOP_CONDITIONS_PREFIX),
     }
 
 
@@ -338,9 +354,9 @@ def validate_acceptance_file(
 
     schema_version = data.get("schema_version")
     if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
-        errors.append("ACCEPTANCE.json schema_version must be 1, 2, 3, or 4")
+        errors.append("ACCEPTANCE.json schema_version must be 1, 2, 3, 4, or 5")
         return None
-    if schema_version in {1, 2, 3}:
+    if schema_version in {1, 2, 3, 4}:
         warnings.append(
             f"legacy ACCEPTANCE.json schema_version {schema_version} is readable for recovery but cannot prove new completion"
         )
@@ -375,7 +391,7 @@ def validate_acceptance_file(
                 known_capability_ids={item["id"] for item in outcome_capabilities},
                 known_fitness_dimension_ids=set(outcome_hierarchy["fitness_dimension_ids"]),
             )
-            if schema_version == 4 and outcome_hierarchy else []
+            if schema_version >= 4 and outcome_hierarchy else []
         )
         identity_requirements = validate_identity_requirements(
             data.get("identity_requirements"), errors
@@ -435,10 +451,10 @@ def validate_acceptance_file(
         validate_hierarchy_coverage(
             outcome_hierarchy, outcome_capabilities, normalized, errors
         )
-    if schema_version == 4 and outcome_hierarchy:
+    if schema_version >= 4 and outcome_hierarchy:
         validate_capability_preservation(
             outcome_hierarchy, outcome_capabilities, capability_floors,
-            normalized, errors
+            normalized, errors, schema_version=schema_version
         )
 
     counts = {
@@ -550,7 +566,7 @@ def validate_outcome_hierarchy(
     if north_star.get("status") not in NORTH_STAR_STATES:
         errors.append(f"{prefix}.north_star.status must be active or achieved")
     fitness_dimension_ids: list[str] = []
-    if schema_version == 4:
+    if schema_version >= 4:
         dimensions = north_star.get("fitness_dimensions")
         if not isinstance(dimensions, list) or len(dimensions) < 2:
             errors.append(
@@ -611,8 +627,8 @@ def validate_outcome_hierarchy(
             "preserves_capability_ids": validate_declared_ids(
                 stage.get("preserves_capability_ids"),
                 f"{stage_prefix}.preserves_capability_ids", errors,
-                required=schema_version == 4,
-            ) if schema_version == 4 else [],
+                required=schema_version >= 4,
+            ) if schema_version >= 4 else [],
         })
 
     current_stage_id = item.get("current_stage_id")
@@ -677,8 +693,8 @@ def validate_outcome_capabilities(
             stage_id = item.get("stage_id")
         if schema_version >= 3 and stage_id not in known_stage_ids:
             errors.append(f"{prefix}.stage_id must identify a declared delivery stage")
-        preservation = item.get("preservation") if schema_version == 4 else "stage"
-        if schema_version == 4 and preservation not in PRESERVATION_VALUES:
+        preservation = item.get("preservation") if schema_version >= 4 else "stage"
+        if schema_version >= 4 and preservation not in PRESERVATION_VALUES:
             errors.append(f"{prefix}.preservation must be stage or permanent")
         normalized.append(
             {
@@ -732,7 +748,7 @@ def validate_capability_floors(
     known_fitness_dimension_ids: set[str]
 ) -> list[dict[str, Any]]:
     if not isinstance(items, list) or not items:
-        errors.append("capability_floors must be a non-empty array for schema version 4")
+        errors.append("capability_floors must be a non-empty array for schema version 4 or later")
         return []
     normalized: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
@@ -804,7 +820,7 @@ def validate_capability_floors(
 def validate_capability_preservation(
     hierarchy: dict[str, Any], capabilities: list[dict[str, Any]],
     floors: list[dict[str, Any]], requirements: list[dict[str, Any]],
-    errors: list[str]
+    errors: list[str], *, schema_version: int
 ) -> None:
     capability_by_id = {item["id"]: item for item in capabilities}
     requirement_by_id = {item["id"]: item for item in requirements}
@@ -870,6 +886,21 @@ def validate_capability_preservation(
                     errors.append(f"pre-release gate {requirement_id} requires integration evidence or stronger")
                 if tier == "release" and minimum_rank < EVIDENCE_RANKS["end-to-end"]:
                     errors.append(f"release gate {requirement_id} requires end-to-end evidence or stronger")
+                if schema_version >= 5:
+                    proof_path = requirement.get("proof_path") or {}
+                    fidelity = proof_path.get("fidelity")
+                    if tier == "change" and requirement["system_scope"] not in {"interaction", "end-to-end"}:
+                        errors.append(
+                            f"permanent-floor change gate {requirement_id} must cross an interaction or end-to-end boundary"
+                        )
+                    if tier in {"change", "pre-release"} and fidelity not in {"production-shaped", "production"}:
+                        errors.append(
+                            f"{tier} gate {requirement_id} must use production-shaped or production proof fidelity"
+                        )
+                    if tier == "release" and fidelity != "production":
+                        errors.append(
+                            f"release gate {requirement_id} must use production proof fidelity"
+                        )
         for requirement_id in floor["independence_requirement_ids"]:
             requirement = requirement_by_id.get(requirement_id)
             if not requirement:
@@ -913,6 +944,7 @@ def validate_capability_preservation(
             if item["required"] and item["system_scope"] == "end-to-end"
             and "release" in item["gate_tiers"]
             and permanent_ids.issubset(set(item["capability_ids"]))
+            and (schema_version < 5 or (item.get("proof_path") or {}).get("fidelity") == "production")
         ]
         if not whole_system:
             errors.append(
@@ -1027,7 +1059,7 @@ def validate_requirement(
                     f"{prefix}.capability_ids must belong to its delivery stage: "
                     + ", ".join(cross_stage)
                 )
-        if schema_version == 4:
+        if schema_version >= 4:
             raw_gate_tiers = item.get("gate_tiers")
             if not isinstance(raw_gate_tiers, list) or not raw_gate_tiers:
                 errors.append(f"{prefix}.gate_tiers must be a non-empty array")
@@ -1042,9 +1074,28 @@ def validate_requirement(
             system_scope = item.get("system_scope")
             if system_scope not in SYSTEM_SCOPES:
                 errors.append(f"{prefix}.system_scope must be component, interaction, or end-to-end")
+            proof_path = (
+                validate_proof_path(item.get("proof_path"), f"{prefix}.proof_path", errors)
+                if schema_version >= 5 else None
+            )
+            if schema_version >= 5 and proof_path:
+                fidelity = proof_path["fidelity"]
+                if "pre-release" in gate_tiers and (
+                    system_scope == "component" or fidelity == "synthetic"
+                ):
+                    errors.append(
+                        f"{prefix} pre-release proof must be production-shaped or production interaction evidence"
+                    )
+                if "release" in gate_tiers and (
+                    system_scope != "end-to-end" or fidelity != "production"
+                ):
+                    errors.append(
+                        f"{prefix} release proof must be production-fidelity end-to-end evidence"
+                    )
         else:
             gate_tiers = []
             system_scope = None
+            proof_path = None
     else:
         capability_ids = []
         identity_ids = []
@@ -1053,6 +1104,7 @@ def validate_requirement(
         stage_id = None
         gate_tiers = []
         system_scope = None
+        proof_path = None
         if not isinstance(steps, list) or not steps or not all(nonempty(step) for step in steps):
             errors.append(f"{prefix}.acceptance_steps must contain non-empty strings")
 
@@ -1128,12 +1180,36 @@ def validate_requirement(
         "stage_id": stage_id,
         "gate_tiers": gate_tiers,
         "system_scope": system_scope,
+        "proof_path": proof_path,
         "minimum_evidence_level": minimum,
         "capability_ids": capability_ids,
         "identity_ids": identity_ids,
         "acceptance_step_ids": step_ids,
         "unresolved_counterevidence": unresolved_counterevidence,
     }
+
+
+def validate_proof_path(
+    item: object, prefix: str, errors: list[str]
+) -> dict[str, str] | None:
+    if not isinstance(item, dict):
+        errors.append(f"{prefix} must be an object for schema version 5")
+        return None
+    normalized: dict[str, str] = {}
+    for field in ("origin", "boundary", "observation"):
+        value = item.get(field)
+        if not nonempty(value):
+            errors.append(f"{prefix}.{field} must be non-empty")
+        else:
+            normalized[field] = value
+    fidelity = item.get("fidelity")
+    if fidelity not in PROOF_FIDELITIES:
+        errors.append(
+            f"{prefix}.fidelity must be synthetic, production-shaped, or production"
+        )
+    else:
+        normalized["fidelity"] = fidelity
+    return normalized if len(normalized) == 4 else None
 
 
 def validate_id_references(

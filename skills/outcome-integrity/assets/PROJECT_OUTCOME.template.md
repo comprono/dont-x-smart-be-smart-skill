@@ -74,6 +74,15 @@ State: active
 
 - REPLACE_ME_OR_NONE | Class: REPLACE_ME | Evidence: REPLACE_ME | Invariant: REPLACE_ME | Do not repeat: REPLACE_ME
 
+## Causal Control
+
+- Known-good reference: REPLACE_ME_OR_NONE
+- Failing reference: REPLACE_ME_OR_NONE
+- Earliest divergent transition: REPLACE_ME_OR_NOT_YET_KNOWN
+- Production-path proof: REPLACE_ME_WITH_ORIGIN_BOUNDARY_AND_OBSERVATION
+- Stop conditions and attempt limits: REPLACE_ME_OR_NONE
+- Forbidden bypasses: REPLACE_ME_OR_NONE
+
 ## Current Slice
 
 - Delivery Stage ID: STAGE-001
