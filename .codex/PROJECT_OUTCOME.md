@@ -1,16 +1,16 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-08-14T08:42:56Z
-State: active
+Updated: 2026-08-14T08:44:37Z
+State: complete
 
 ## North Star
 
 - North-star outcome: Maintain a concise standalone skill that makes Codex preserve the user's real outcome, proven capabilities, productivity, efficiency, and safety across later evolution.
-- Current delivery stage: Enforce causal-boundary and production-path fidelity, install it, and publish the verified schema-v5 release.
+- Current delivery stage: Schema-v5 causal-boundary and production-path fidelity release published and verified.
 - Stage completion boundary: Generic contract tests, independent forward tests, installed parity, CI, authoritative merge, tag, and public v5.0.0 release all pass.
 - User-visible proof: A permanent-floor gate cannot pass by injecting post-boundary state, and an equivalent failure cannot be relabeled as a new attempt merely because code or run identity changed.
-- Active acceptance slice: REQ-V5-PUBLISH; publish the exact verified schema-v5 source as v5.0.0.
+- Active acceptance slice: None; v5.0.0 is published from the authoritative merge commit.
 - Slice proof limits: Publication does not guarantee every future probabilistic response.
 - Methods, not outcomes: The motivating report, schema edits, tests, forward scenarios, installation, and status reporting.
 - Why it matters: Historical success must become an inherited executable constraint, not a completed chapter later work may silently regress.
@@ -63,6 +63,7 @@ State: active
 - Schema-v5 validator, template, and policy pass 43 deterministic tests, compilation, official skill validation, token bounds, and state validation | Evidence: local source gates | Verified: 2026-08-14T08:40:58Z
 - Two fresh generic forward scenarios reject post-boundary synthetic proof, recognize equivalent failures despite changed code/run identity, honor exact stop authority, execute corrected prompt ownership, and answer chronology as chronology | Evidence: v5_forward_boundary and v5_forward_communication | Verified: 2026-08-14T08:42:09Z
 - Full package gates pass: 43 tests, compilation, official validation, schema-v5 validation, active double-install, exact five-file parity, one managed global block, generic runtime scan, 3,327 invoked words, and 698 global words | Evidence: local package and install outputs | Verified: 2026-08-14T08:42:56Z
+- Pull request #6 merged after both GitHub Actions checks passed; main and tag v5.0.0 resolved to 5e5566bb95106524f1f569e9f9d14fa78464cd6f; public release is non-draft and non-prerelease | Evidence: authoritative GitHub PR, refs, and release | Verified: 2026-08-14T08:44:37Z
 
 ## Context Pointers
 
@@ -99,15 +100,15 @@ State: active
 
 ## Current Slice
 
-- Delivery Stage ID: STAGE-V4-LOCAL
-- Acceptance ID: REQ-V5-PUBLISH
+- Delivery Stage ID: none
+- Acceptance ID: none
 - Objective: Publish the exact verified schema-v5 source as GitHub release v5.0.0.
-- Acceptance evidence: Local contract, forward, package, and installed-parity gates pass; GitHub evidence is pending.
+- Acceptance evidence: Local, independent-forward, installed-parity, GitHub CI, merge, tag, and public-release gates all pass.
 - Protect: Skill clarity, token efficiency, backward recovery, installed-user state, and unrelated projects.
-- Status: active
+- Status: complete
 
 ## Next
 
-- Action: Commit, push, pass GitHub Actions, merge, tag, and publish v5.0.0.
-- Why now: The audited real session falsified v4's assumption that an interaction-labeled gate necessarily exercised the causal production boundary.
+- Action: None; the requested generic skill uplift, local installation, and GitHub v5.0.0 release are complete.
+- Why now: Every schema-v5 contract, forward, package, installed-parity, CI, merge, tag, and release gate passes.
 - Blocker and recovery: None.
