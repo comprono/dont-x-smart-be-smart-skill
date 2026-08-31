@@ -1,18 +1,18 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-08-14T08:44:37Z
-State: complete
+Updated: 2026-08-31T16:08:40Z
+State: active
 
 ## North Star
 
 - North-star outcome: Maintain a concise standalone skill that makes Codex preserve the user's real outcome, proven capabilities, productivity, efficiency, and safety across later evolution.
-- Current delivery stage: Schema-v5 causal-boundary and production-path fidelity release published and verified.
-- Stage completion boundary: Generic contract tests, independent forward tests, installed parity, CI, authoritative merge, tag, and public v5.0.0 release all pass.
-- User-visible proof: A permanent-floor gate cannot pass by injecting post-boundary state, and an equivalent failure cannot be relabeled as a new attempt merely because code or run identity changed.
-- Active acceptance slice: None; v5.0.0 is published from the authoritative merge commit.
-- Slice proof limits: Publication does not guarantee every future probabilistic response.
-- Methods, not outcomes: The motivating report, schema edits, tests, forward scenarios, installation, and status reporting.
+- Current delivery stage: Make bounded admission cross the real model-to-tool boundary and stop method-family churn before it consumes hours.
+- Stage completion boundary: A synchronous Pre/Post hook, exact single-use tool claims, bounded method-family controls, generic incident replays, transactional opt-in installation, and a live trusted denial canary pass without regressing released floors.
+- User-visible proof: An unreserved or mismatched covered material call is denied before execution; a disproven method cannot continue through new symptoms, workers, files, runs, or paraphrased failures.
+- Active acceptance slice: REQ-V6-HOOK-CONTRACT — implement and prove the actual dispatcher-to-hook-to-ledger denial boundary.
+- Slice proof limits: Subprocess hook tests do not prove local hook trust, hosted tools, specialized opt-out paths, or the whole release installation.
+- Methods, not outcomes: The motivating audit, schema edits, tests, forward scenarios, installation, and status reporting.
 - Why it matters: Historical success must become an inherited executable constraint, not a completed chapter later work may silently regress.
 - Balanced fitness: Useful verified progress, quality and clarity, time/resource efficiency, and proportional safety.
 - Permanent capability floors: Parented outcomes, productive communication, proportionate execution, exact evidence, and package integrity.
@@ -20,25 +20,26 @@ State: complete
 ## Done Means
 
 - Authority: .codex/ACCEPTANCE.json
-- Summary: All schema-v4 contract, forward-behavior, and local package requirements pass with every permanent floor covered at change, pre-release, and local release tiers.
+- Summary: The generic schema-v6 contract mechanically intercepts covered material tool calls, meters bounded work, and stops disproven method families while preserving every prior permanent floor.
 
 ## User Intent
 
-- Priorities: Prevent root-cause substitution, synthetic-boundary proof, stop-rule rationalization, repeated equivalent failures, prompt-ownership mistakes, and explanation-type mismatch without adding product-specific process.
+- Priorities: Prevent voluntary admission bypass, unmetered preparation, one-attempt unlimited work, caller-lowered classification, scope expansion after architecture invalidation, method-family symptom churn, and false completion without a live hook boundary.
 - Working preferences: Generic, compact, mechanically enforced, cheap during ordinary work, and independent of all plugins and projects.
-- Explicit corrections: Efficiency is part of the protected outcome; safeguards must improve work rather than add confusing overhead.
-- Non-negotiables: Do not edit the motivating plugin, optimize safety alone, require expensive benchmarks after every change, or hide essential intelligence in profiles/history.
+- Explicit corrections: Improve this standalone skill generically so the audited failures cannot recur in any project; implementation, not another project-specific diagnosis, is the deliverable. The latest request explicitly authorizes publishing this hardened source to the comprono/dont-x-smart-be-smart-skill GitHub repository.
+- Non-negotiables: Do not edit the motivating project, encode any provider/model/project identity, publish stable v6.0.0 before the live trusted canary, require expensive proof after every edit, or reset counters on runtime identity.
 
 ## Work Map
 
 ### Critical Path
 
-- Encode permanent floors, balanced fitness, proof-cost tiers, clean-state independence, failure routing, and whole-system release coverage.
-- Validate adversarial cases, forward behavior, package integrity, and active installation.
+- Bind actual PreToolUse identity and arguments to one atomic claim, then require matching PostToolUse observation.
+- Meter cumulative tool, support, worker, scope, path, hot-path, elapsed, and method-family no-progress usage before the call runs.
+- Validate generic incident replays, transactional shared-hook installation, active parity, honest trust state, and one live denial canary.
 
 ### Add-ons
 
-- None; publication is part of the explicit delivery request.
+- Publish v6.0.0-rc.1 as an honest prerelease through branch, pull request, CI, merge, tag, and GitHub Release; do not claim live hook trust.
 
 ### Non-goals
 
@@ -46,24 +47,19 @@ State: complete
 
 ## Operational Envelope
 
-- Applies to: One bounded standalone-skill schema-v5 upgrade and GitHub release; no recurring work.
-- Progress signal and side-effect key: A named v4 acceptance gate passes; installation remains idempotent.
-- Cadence and retry eligibility: Run cheap deterministic tests after coherent edits; diagnose before repeating any failed gate.
-- Resource budget, reserve, and retention: One skill repository, bounded deterministic tests, two read-only generic forward scenarios, one install, one release; no motivating-project mutations.
-- No-progress stop, restart, cancellation, and recovery: Resume from these files and current diff; stop unchanged retries after two failures.
+- Applies to: One bounded standalone-skill schema-v6 interception upgrade and its explicitly authorized v6.0.0-rc.1 GitHub prerelease; no motivating-project edits, recurring service, or stable v6.0.0 release before the live canary.
+- Progress signal and side-effect key: A real hook payload is denied or claimed once, Post observation settles it, and a namespaced acceptance receipt advances; installation remains owned and idempotent.
+- Cadence and retry eligibility: Run focused hook/control tests after coherent edits; no retry or scope growth after a disproven boundary without structured causal evidence and a lower-complexity comparison.
+- Resource budget, reserve, and retention: Three disjoint implementation lanes, bounded deterministic tests, one generic incident replay, one opt-in active install, and one live denial canary; preserve a direct-delivery reserve.
+- No-progress stop, restart, cancellation, and recovery: Stop the current method family after two failures or its no-progress/tool/support envelope; candidate, run, worker, stage, compaction, or file recreation never resets cumulative usage.
 
 ## Verified State
 
-- The reported failure class is general: proven behavior remained historical instead of becoming an inherited executable floor | Evidence: user-provided causal report | Verified: 2026-08-13T17:40:00Z
-- Schema-v4 source and seven new adversarial preservation cases pass 36 deterministic tests | Evidence: python -m unittest discover -s tests -v | Verified: 2026-08-13T18:04:27Z
-- The invoked skill is 3,120 words, down from v3's 3,157; global rules remain within 700 words | Evidence: local word counts | Verified: 2026-08-13T17:55:00Z
-- Two independent generic scenarios preserved prior throughput/concurrency as permanent floors, required clean-state behavior, chose cheap change gates plus bounded pre-release and release proof, and rejected component safety as whole-system completion | Evidence: forward_test_controller and forward_test_pipeline responses | Verified: 2026-08-13T18:00:54Z
-- Official validation, compilation, 36 tests, project validation/resume, isolated and active double-install, exact five-file parity, one managed global block, diff hygiene, and generic-source isolation pass | Evidence: local package and installation outputs | Verified: 2026-08-13T18:04:27Z
-- Pull request #5 merged after two passing GitHub Actions runs; main and tag v4.0.0 both resolve to d42fca19ba939b37a7ded27b0cb0ed1c70ed5372; the public release is non-draft and non-prerelease | Evidence: authoritative GitHub PR, refs, and release | Verified: 2026-08-13T18:37:04Z
-- Schema-v5 validator, template, and policy pass 43 deterministic tests, compilation, official skill validation, token bounds, and state validation | Evidence: local source gates | Verified: 2026-08-14T08:40:58Z
-- Two fresh generic forward scenarios reject post-boundary synthetic proof, recognize equivalent failures despite changed code/run identity, honor exact stop authority, execute corrected prompt ownership, and answer chronology as chronology | Evidence: v5_forward_boundary and v5_forward_communication | Verified: 2026-08-14T08:42:09Z
-- Full package gates pass: 43 tests, compilation, official validation, schema-v5 validation, active double-install, exact five-file parity, one managed global block, generic runtime scan, 3,327 invoked words, and 698 global words | Evidence: local package and install outputs | Verified: 2026-08-14T08:42:56Z
-- Pull request #6 merged after both GitHub Actions checks passed; main and tag v5.0.0 resolved to 5e5566bb95106524f1f569e9f9d14fa78464cd6f; public release is non-draft and non-prerelease | Evidence: authoritative GitHub PR, refs, and release | Verified: 2026-08-14T08:44:37Z
+- v4.0.0 passed 36 tests, independent scenarios, package/installation gates, and release checks | Evidence: local gates and authoritative GitHub refs | Verified: 2026-08-13T18:37:04Z
+- v5.0.0 passed 43 tests, causal forward scenarios, package/installation gates, and release checks | Evidence: local gates and authoritative GitHub refs | Verified: 2026-08-14T08:44:37Z
+- Schema v5 was advisory at the action boundary: it had no stable candidate/lineage ledger, no atomic reservation, no same-candidate predecessor receipt, and no exact effect-set admission | Evidence: source validator and audited task chronology | Verified: 2026-08-17T22:03:17Z
+- Released v6 remained voluntarily invoked: one 2h45m target turn produced 105 file-change events, 48 subagent events, four compactions, and zero stage advancement; work continued after the architecture was admitted unable to reach evaluation | Evidence: audited long-running task chronology and current source audit | Verified: 2026-08-19T05:20:00Z
+- Generic anti-deviation hardening passed 145 tests plus independent exploit replays; the shared skill, rules, and hook definitions are installed with exact disk parity, while active hook trust remains unverified | Evidence: full unittest suite, quick_validate, independent forward validation, and install --hook-health | Verified: 2026-08-31T00:00:00Z
 
 ## Context Pointers
 
@@ -74,41 +70,45 @@ State: complete
 
 ## Assumptions To Test
 
-- The compact skill causes an independent agent to preserve throughput and clean-state behavior, not only safety | Falsifier: forward scenarios accept component tests or prescribe constant expensive benchmarks | Next check: independent scenarios
-- Schema-v4 proof tiers reduce cost while protecting behavior | Falsifier: change gates can be end-to-end strength or release gates can be component-only | Next check: adversarial validator tests
+- A real synchronous hook prevents voluntary admission bypass | Falsifier: an initialized active project executes a covered unreserved mutation without a PreToolUse denial | Next check: hook subprocess then live dispatcher canary
+- Structured method-family budgets stop symptom churn without blocking direct delivery | Falsifier: changed boundaries, tools, files, workers, runs, or paraphrases reset the family or support counters | Next check: generic incident replay
 
 ## Decisions
 
-- Use schema v4 for capability-floor enforcement while retaining v1-v3 recovery | Why: completion semantics changed mechanically | Revisit when: migration costs outweigh preservation value
-- Require distinct change, pre-release, and release requirements | Why: one expensive gate reused everywhere would defeat efficiency | Revisit when: a project proves a cheaper equivalent gate
-- Keep detailed fields in templates and validator, with one compact always-loaded global rule | Why: protection must not create prompt or communication bloat | Revisit when: forward evidence shows missing behavior
+- Use schema v6 plus an atomic, revision-checked ledger while retaining v1-v5 recovery | Why: static validation detects bad state after the action; reservation must refuse it before effects or spend | Revisit when: a cheaper equally enforceable boundary exists
+- Derive lineage from acceptance semantics and the causal boundary; treat external run IDs as telemetry | Why: runtime identity must never reset aggregate counters | Revisit when: the user explicitly opens a different stage or outcome
+- Bind receipts to a complete candidate and consume exact target/effect authorization at reservation | Why: proof and approval cannot safely propagate across changed artifacts or effect sets | Revisit when: authoritative equivalence is proven
+- Install a synchronous user-level Pre/Post hook only through an explicit transactional flag and preserve unrelated hook configuration | Why: a standalone skill cannot enforce its own invocation, while global hook trust and shared configuration remain user-controlled | Revisit when: a managed platform hook or dedicated plugin supplies a stronger boundary
+- Bind one actual material tool call per claim and aggregate failures by structured acceptance outcome, boundary, and method family | Why: one voluntary attempt otherwise hides unlimited support work and free-text symptom changes evade the stop | Revisit when: Codex exposes a stronger first-class lease/budget API
 
 ## Failure Memory
 
-- Proven capability stored only as history | Class: evolutionary regression | Evidence: user report | Invariant: essential accepted behavior becomes a permanent executable floor | Do not repeat: treating an earlier success as a closed chapter
-- Safety-only fitness displaced productive delivery | Class: wrong fitness | Evidence: user report | Invariant: measure progress, quality, efficiency, and safety together when material | Do not repeat: green safeguards without whole-system circulation
-- Synthetic fixtures and changed code labels hid the unchanged earliest divergence | Class: proof fidelity and failure equivalence | Evidence: audited Codex task 019ffc36-235e-7f92-bcd3-d924302d9f62 | Invariant: prove the real producer-boundary-observation path before promotion | Do not repeat: downstream symptom repair presented as causal repair
+- Proven capability and balanced fitness became history instead of executable floors | Class: evolutionary regression | Evidence: user reports | Invariant: inherit accepted behavior and measure effectiveness, quality, efficiency, and safety together | Do not repeat: green safeguards without delivery
+- Synthetic proof and injected admission hid the real producer boundary | Class: proof-boundary substitution | Evidence: audited tasks and v6 tests | Invariant: start at the actual tool proposal and observe pre-execution denial | Do not repeat: proving downstream ledger behavior while execution bypasses it
+- A narrow authorization was widened to unrelated targets | Class: effect-set drift | Evidence: audited task chronology | Invariant: action, target identities, effects, context, uses, and expiry must match exactly | Do not repeat: treating prior approval as category-wide authority
+- A disproven architecture expanded instead of triggering a method comparison | Class: method-family fixation | Evidence: target task item 83 followed by 111 additional path touches and 45 subagent events | Invariant: architecture invalidation stops that family before any further material call | Do not repeat: replacing an invalid design with a larger member of the same unproven family
 
 ## Causal Control
 
-- Known-good reference: Outcome Integrity v4.0.0 preserves permanent capability floors and proportional proof tiers.
-- Failing reference: Audited task 019ffc36-235e-7f92-bcd3-d924302d9f62 repeatedly passed synthetic downstream gates while the real upstream transition remained broken.
-- Earliest divergent transition: The harness accepted a test that injected already-diverse post-boundary inputs instead of exercising the real producer that prematurely collapsed them.
-- Production-path proof: Fresh generic agents must reject downstream fixtures, lock the earliest divergence, preserve explicit stop rules, and answer chronological questions chronologically.
-- Stop conditions and attempt limits: No motivating-project edits; no expensive live product benchmark; at most two generic forward scenarios; publish only after local and CI gates pass.
-- Forbidden bypasses: No provider, project, benchmark, or model-specific runtime rule; no synthetic component proof may authorize a higher proof tier.
+- Known-good reference: Released v6 preserves stable lineage, candidate-bound proof, prerequisite ordering, exact effects, and atomic ledger mutation once attempt-begin is voluntarily called.
+- Failing reference: The real model-to-tool dispatcher can bypass attempt-begin, and one attempt can hide unlimited edits, elapsed time, workers, scope growth, and distinct failures in one method family.
+- Earliest divergent transition: A covered material tool proposal reached execution without a host-derived, single-use, bounded claim against the current acceptance slice and method family.
+- Production-path proof: Actual PreToolUse input must cross the installed runtime and atomic ledger, deny before execution or consume one exact claim, then matching PostToolUse must settle it.
+- Stop conditions and attempt limits: No motivating-project edits or stable v6.0.0 publication; stop a family after two failures or bounded no-progress/support usage; no live completion claim until hook trust and denial are observed.
+- Forbidden bypasses: No caller-lowered classification, free-text failure identity, one-attempt unlimited work, run/candidate/stage resets, direct execution-control edits, or universal-enforcement claim beyond documented hook coverage.
+- Mutable execution-control ledger: .codex/ACCEPTANCE.json#execution_control (sole authority)
 
 ## Current Slice
 
-- Delivery Stage ID: none
-- Acceptance ID: none
-- Objective: Publish the exact verified schema-v5 source as GitHub release v5.0.0.
-- Acceptance evidence: Local, independent-forward, installed-parity, GitHub CI, merge, tag, and public-release gates all pass.
+- Delivery Stage ID: STAGE-V6-INTERCEPTION
+- Acceptance ID: REQ-V6-HOOK-CONTRACT
+- Objective: Cross the actual model-to-tool boundary and deny or meter each covered material call before execution.
+- Acceptance evidence: Source, atomic claim/observe, breaker, reconciliation, compact-history, replay, installer, and parity gates pass; a trusted fresh-task dispatcher denial remains pending.
 - Protect: Skill clarity, token efficiency, backward recovery, installed-user state, and unrelated projects.
-- Status: complete
+- Status: active
 
 ## Next
 
-- Action: None; the requested generic skill uplift, local installation, and GitHub v5.0.0 release are complete.
-- Why now: Every schema-v5 contract, forward, package, installed-parity, CI, merge, tag, and release gate passes.
-- Blocker and recovery: None.
+- Action: Publish the exact tested candidate as GitHub prerelease v6.0.0-rc.1 through pull request, CI, merge, tag, and release; then retain the fresh-task trusted denial canary as the gate for stable v6.0.0.
+- Why now: Source, 145 tests, independent exploit replay, shared installation, and exact configuration parity pass; a prerelease can deliver the candidate honestly while live dispatch remains the only missing stable-release proof.
+- Blocker and recovery: Hook health is configured-exact-trust-unverified. A same-account authorization file is single-use evidence, not cryptographic proof of human authorship; stop if its provenance is uncertain.

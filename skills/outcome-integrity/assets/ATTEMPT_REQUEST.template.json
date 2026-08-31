@@ -1,0 +1,33 @@
+{
+  "requirement_id": "REQ-CHANGE",
+  "tier": "change",
+  "method_family_id": "METHOD-DIRECT",
+  "prior_method_family_id": null,
+  "method_change_evidence_ref": null,
+  "lower_complexity_comparison_ref": null,
+  "acceptance_outcome_id": "REPLACE_ME_LIVE_NORTH_STAR_ID",
+  "boundary_id": "BOUNDARY-CHANGE",
+  "cost_class": "cheap",
+  "action_classes": ["local", "proof"],
+  "scope_growth": "none",
+  "allowed_paths": [],
+  "tool_binding": {
+    "tool_name": "exec_command",
+    "cwd_relative": ".",
+    "tool_input_fingerprint": "REPLACE_ME_SHA256_TOOL_INPUT_FINGERPRINT",
+    "max_uses": 1
+  },
+  "candidate_fingerprint": "REPLACE_ME_SHA256_CANDIDATE_FINGERPRINT",
+  "prerequisite_ids": [],
+  "no_prerequisites_reason": "No hard downstream prerequisite applies to this local reversible proof action.",
+  "authorization_id": null,
+  "target_identity_ids": [],
+  "action": "Run the declared change-tier proof.",
+  "effect": "Collect read-only local evidence.",
+  "principal": "REPLACE_ME_ACTING_PRINCIPAL",
+  "context_fingerprint": "REPLACE_ME_SHA256_CONTEXT_FINGERPRINT",
+  "evaluation_fingerprint": null,
+  "evaluation_role": "none",
+  "external_run_id": null,
+  "causal_evidence_ref": ".codex/evidence/ATTEMPT-EVIDENCE.json"
+}
