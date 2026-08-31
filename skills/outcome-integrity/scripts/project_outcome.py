@@ -148,6 +148,9 @@ CONTROL_STATE_PATHS = {
     ".codex/ACCEPTANCE.json",
     ".codex/PROJECT_OUTCOME.md",
 }
+CONTROL_STATE_PREFIXES = (
+    ".codex/.outcome-integrity-control-snapshots/",
+)
 EXECUTION_LIMIT_FIELDS = (
     "total_attempts",
     "failed_attempts",
@@ -280,6 +283,34 @@ STATE_TRANSITION_REQUEST_KINDS = {
     STATE_TRANSITION_KIND,
 }
 STATE_TRANSITION_REQUEST_FIELDS = {"kind", "id", "reason", "authorization_ref", "recovery_evidence_ref", "target_project_state", "expected_lineage_id", "expected_candidate_fingerprint", "expected_scope_fingerprint"}
+ATTEMPT_ADMISSION_STOP_KIND = "outcome-integrity-attempt-admission-stop-v1"
+ATTEMPT_ADMISSION_STOP_RECEIPT_KIND = (
+    "outcome-integrity-attempt-admission-stop-receipt-v1"
+)
+ATTEMPT_ADMISSION_LIMIT_FIELDS = (
+    "total_attempts",
+    "expensive_attempts",
+    "support_attempts",
+    "active_attempt_seconds",
+)
+ATTEMPT_ADMISSION_STOP_FIELDS = {
+    "kind",
+    "id",
+    "recorded_utc",
+    "prior_revision",
+    "result_revision",
+    "reason",
+    "exhausted_limits",
+    "request_fingerprint",
+    "lineage_id",
+    "candidate_fingerprint",
+    "scope_fingerprint",
+    "limits_snapshot",
+    "limits_fingerprint",
+    "usage_fingerprint",
+    "usage_anchor",
+    "admission_stop_fingerprint",
+}
 STRUCTURED_TARGET_KEYS = {
     "dest",
     "destination",
@@ -1802,6 +1833,15 @@ def validate_execution_control(
         normalized_limits,
         normalized_usage,
         revision,
+        errors,
+    )
+    validate_attempt_admission_stops(
+        item.get("attempt_admission_stops"),
+        f"{prefix}.attempt_admission_stops",
+        revision,
+        lineage_id,
+        candidate_fingerprint,
+        scope_fingerprint,
         errors,
     )
 
@@ -4074,6 +4114,109 @@ def validate_usage_anchor(value: object, prefix: str, errors: list[str]) -> None
             errors.append(f"{prefix}.{field} must be a non-negative integer")
 
 
+def validate_attempt_admission_stops(
+    items: object,
+    prefix: str,
+    current_revision: object,
+    lineage_id: object,
+    candidate_fingerprint: object,
+    scope_fingerprint: object,
+    errors: list[str],
+) -> None:
+    """Validate producer-origin admission stops without making them mandatory for old state."""
+    if items is None:
+        return
+    if not isinstance(items, list):
+        errors.append(f"{prefix} must be an array when present")
+        return
+    seen_ids: set[str] = set()
+    previous_result_revision = -1
+    for index, item in enumerate(items):
+        item_prefix = f"{prefix}[{index}]"
+        if not isinstance(item, dict):
+            errors.append(f"{item_prefix} must be an object")
+            continue
+        unknown = sorted(set(item) - ATTEMPT_ADMISSION_STOP_FIELDS)
+        missing = sorted(ATTEMPT_ADMISSION_STOP_FIELDS - set(item))
+        if unknown:
+            errors.append(f"{item_prefix} contains unknown fields: {', '.join(unknown)}")
+        if missing:
+            errors.append(f"{item_prefix} is missing fields: {', '.join(missing)}")
+        if item.get("kind") != ATTEMPT_ADMISSION_STOP_KIND:
+            errors.append(f"{item_prefix}.kind is invalid")
+        item_id = item.get("id")
+        if not valid_requirement_id(item_id):
+            errors.append(f"{item_prefix}.id must be a stable ID")
+        elif item_id in seen_ids:
+            errors.append(f"{prefix} contains duplicate ids")
+        else:
+            seen_ids.add(item_id)
+        validate_utc(item.get("recorded_utc"), f"{item_prefix}.recorded_utc", errors)
+        prior_revision = item.get("prior_revision")
+        result_revision = item.get("result_revision")
+        if not nonnegative_int(prior_revision) or not nonnegative_int(result_revision):
+            errors.append(f"{item_prefix} revisions must be non-negative integers")
+        elif result_revision != prior_revision + 1:
+            errors.append(f"{item_prefix}.result_revision must equal prior_revision plus one")
+        elif prior_revision < previous_result_revision:
+            errors.append(f"{item_prefix}.prior_revision must not precede earlier history")
+        elif nonnegative_int(current_revision) and result_revision > current_revision:
+            errors.append(f"{item_prefix}.result_revision cannot exceed the live revision")
+        if nonnegative_int(result_revision):
+            previous_result_revision = max(previous_result_revision, result_revision)
+        exhausted = item.get("exhausted_limits")
+        if (
+            not isinstance(exhausted, list)
+            or not exhausted
+            or len(exhausted) != len(set(exhausted))
+            or any(field not in ATTEMPT_ADMISSION_LIMIT_FIELDS for field in exhausted)
+            or parsed_attempt_admission_stop(item.get("reason"), exhausted) != exhausted
+        ):
+            errors.append(f"{item_prefix} must bind a canonical non-empty exhausted-limit list")
+        for field in (
+            "request_fingerprint",
+            "candidate_fingerprint",
+            "scope_fingerprint",
+            "limits_fingerprint",
+            "usage_fingerprint",
+            "admission_stop_fingerprint",
+        ):
+            if not valid_fingerprint(item.get(field)):
+                errors.append(f"{item_prefix}.{field} must be a SHA-256 fingerprint")
+        if not valid_requirement_id(item.get("lineage_id")):
+            errors.append(f"{item_prefix}.lineage_id must be a stable ID")
+        historical_binding = (
+            item.get("lineage_id") != lineage_id
+            or item.get("candidate_fingerprint") != candidate_fingerprint
+            or item.get("scope_fingerprint") != scope_fingerprint
+        )
+        if historical_binding and (
+            not nonnegative_int(result_revision)
+            or not nonnegative_int(current_revision)
+            or result_revision >= current_revision
+        ):
+            errors.append(f"{item_prefix} historical binding must precede the live revision")
+        limits_snapshot = validate_exact_limit_map(
+            item.get("limits_snapshot"), f"{item_prefix}.limits_snapshot", errors
+        )
+        if limits_snapshot and canonical_fingerprint(limits_snapshot) != item.get(
+            "limits_fingerprint"
+        ):
+            errors.append(f"{item_prefix}.limits_fingerprint does not match its snapshot")
+        validate_usage_anchor(item.get("usage_anchor"), f"{item_prefix}.usage_anchor", errors)
+        fingerprint_payload = {
+            field: item.get(field)
+            for field in sorted(
+                ATTEMPT_ADMISSION_STOP_FIELDS - {"admission_stop_fingerprint"}
+            )
+        }
+        if valid_fingerprint(item.get("admission_stop_fingerprint")) and (
+            canonical_fingerprint(fingerprint_payload)
+            != item.get("admission_stop_fingerprint")
+        ):
+            errors.append(f"{item_prefix}.admission_stop_fingerprint is invalid")
+
+
 def consumed_recovery_authorization_fingerprints(
     control: object,
 ) -> set[str]:
@@ -4122,6 +4265,61 @@ def control_snapshot_directory(root: Path) -> Path:
         / ".outcome-integrity-control-snapshots"
         / root_hash
     )
+
+
+def attempt_admission_stop_receipt_path(root: Path, fingerprint: object) -> Path:
+    if not valid_fingerprint(fingerprint):
+        raise ValueError("attempt-admission stop fingerprint is invalid")
+    return (
+        control_snapshot_directory(root)
+        / "attempt-admission-stops"
+        / (str(fingerprint).removeprefix("sha256:") + ".json")
+    )
+
+
+def write_attempt_admission_stop_receipt(
+    root: Path, record: dict[str, Any]
+) -> tuple[Path, bool]:
+    fingerprint = record.get("admission_stop_fingerprint")
+    receipt_path = attempt_admission_stop_receipt_path(root, fingerprint)
+    relative_path = receipt_path.relative_to(root.expanduser().resolve()).as_posix()
+    if path_has_link_component(root, relative_path):
+        raise ValueError("attempt-admission custody path contains a symlink or junction")
+    payload = {
+        "kind": ATTEMPT_ADMISSION_STOP_RECEIPT_KIND,
+        "admission_stop": record,
+    }
+    if receipt_path.exists():
+        current, errors = load_json_object(receipt_path, "attempt-admission stop receipt")
+        if errors or current != payload:
+            raise ValueError("attempt-admission custody receipt conflicts with existing state")
+        return receipt_path, False
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    if path_has_link_component(root, relative_path):
+        raise ValueError("attempt-admission custody path contains a symlink or junction")
+    atomic_write_json(receipt_path, payload)
+    return receipt_path, True
+
+
+def attempt_admission_stop_receipt_matches(
+    root: Path, record: dict[str, Any]
+) -> bool:
+    try:
+        receipt_path = attempt_admission_stop_receipt_path(
+            root, record.get("admission_stop_fingerprint")
+        )
+        relative_path = receipt_path.relative_to(root.expanduser().resolve()).as_posix()
+        if path_has_link_component(root, relative_path) or not receipt_path.is_file():
+            return False
+        receipt, errors = load_json_object(
+            receipt_path, "attempt-admission stop receipt"
+        )
+        return not errors and receipt == {
+            "kind": ATTEMPT_ADMISSION_STOP_RECEIPT_KIND,
+            "admission_stop": record,
+        }
+    except (OSError, ValueError):
+        return False
 
 
 def write_preclaim_control_snapshot(
@@ -4306,7 +4504,10 @@ def extract_apply_patch_paths(
 
 
 def is_control_state_path(path: str) -> bool:
-    return path.casefold() in {value.casefold() for value in CONTROL_STATE_PATHS}
+    folded = path.casefold()
+    return folded in {value.casefold() for value in CONTROL_STATE_PATHS} or any(
+        folded.startswith(prefix.casefold()) for prefix in CONTROL_STATE_PREFIXES
+    )
 
 
 def _structured_target_strings(value: object) -> list[str]:
@@ -4374,6 +4575,10 @@ def extract_control_state_targets(
                             command,
                         ):
                             targets.add(control_path)
+                for prefix in CONTROL_STATE_PREFIXES:
+                    custody_pattern = re.escape(prefix.rstrip("/")).replace("/", r"[\\/]")
+                    if re.search(rf"(?i){custody_pattern}(?:[\\/]|\b)", command):
+                        targets.add(prefix.rstrip("/"))
 
     if isinstance(tool_input, dict) and tool_name not in READ_ONLY_TOOL_NAMES:
         for key, value in tool_input.items():
@@ -4818,10 +5023,44 @@ def attempt_begin(
             if usage["active_attempt_seconds"] >= limits["active_attempt_seconds"]:
                 exhausted.append("active_attempt_seconds")
             if exhausted:
+                now = utc_now()
+                stop_reason = "attempt admission exhausted: " + ", ".join(exhausted)
+                admission_stop = {
+                    "kind": ATTEMPT_ADMISSION_STOP_KIND,
+                    "id": f"ADMISSION-STOP-{control['revision'] + 1:06d}",
+                    "recorded_utc": now,
+                    "prior_revision": control["revision"],
+                    "result_revision": control["revision"] + 1,
+                    "reason": stop_reason,
+                    "exhausted_limits": exhausted,
+                    "request_fingerprint": canonical_fingerprint(request),
+                    "lineage_id": control["lineage"]["id"],
+                    "candidate_fingerprint": control["candidate"]["fingerprint"],
+                    "scope_fingerprint": control["lineage"]["scope_fingerprint"],
+                    "limits_snapshot": json.loads(json.dumps(limits)),
+                    "limits_fingerprint": canonical_fingerprint(limits),
+                    "usage_fingerprint": canonical_fingerprint(usage),
+                    "usage_anchor": compact_usage_anchor(usage),
+                }
+                admission_stop["admission_stop_fingerprint"] = canonical_fingerprint(
+                    admission_stop
+                )
+                receipt_path, receipt_created = write_attempt_admission_stop_receipt(
+                    resolved_root, admission_stop
+                )
+                control.setdefault("attempt_admission_stops", []).append(admission_stop)
                 control["status"] = "stopped"
-                control["stop_reason"] = "attempt admission exhausted: " + ", ".join(exhausted)
+                control["stop_reason"] = stop_reason
                 control["revision"] += 1
-                atomic_write_json(acceptance_path, data)
+                try:
+                    atomic_write_json(acceptance_path, data)
+                except OSError:
+                    if receipt_created:
+                        try:
+                            receipt_path.unlink()
+                        except OSError:
+                            pass
+                    raise
                 return {
                     "ok": False,
                     "command": "attempt-begin",
@@ -6188,15 +6427,9 @@ def stopped_limit_has_fired(control: dict[str, Any]) -> bool:
 def exhausted_attempt_admission_limits(control: dict[str, Any]) -> list[str]:
     limits = control.get("limits") if isinstance(control.get("limits"), dict) else {}
     usage = control.get("usage") if isinstance(control.get("usage"), dict) else {}
-    fields = (
-        "total_attempts",
-        "expensive_attempts",
-        "support_attempts",
-        "active_attempt_seconds",
-    )
     return [
         field
-        for field in fields
+        for field in ATTEMPT_ADMISSION_LIMIT_FIELDS
         if isinstance(usage.get(field), int)
         and isinstance(limits.get(field), int)
         and usage[field] >= limits[field]
@@ -6219,6 +6452,51 @@ def parsed_attempt_admission_stop(
     ):
         return []
     return declared
+
+
+def admission_stop_matches_live(
+    record: object,
+    control: dict[str, Any],
+    root: Path,
+    *,
+    expected_result_revision: object,
+    expected_reason: object,
+) -> bool:
+    if not isinstance(record, dict) or set(record) != ATTEMPT_ADMISSION_STOP_FIELDS:
+        return False
+    exhausted = record.get("exhausted_limits")
+    if not isinstance(exhausted, list) or not exhausted:
+        return False
+    fingerprint_payload = {
+        field: record.get(field)
+        for field in sorted(
+            ATTEMPT_ADMISSION_STOP_FIELDS - {"admission_stop_fingerprint"}
+        )
+    }
+    return bool(
+        record.get("kind") == ATTEMPT_ADMISSION_STOP_KIND
+        and record.get("result_revision") == expected_result_revision
+        and record.get("reason") == expected_reason
+        and parsed_attempt_admission_stop(
+            record.get("reason"), exhausted_attempt_admission_limits(control)
+        )
+        == exhausted
+        and record.get("lineage_id") == control.get("lineage", {}).get("id")
+        and record.get("candidate_fingerprint")
+        == control.get("candidate", {}).get("fingerprint")
+        and record.get("scope_fingerprint")
+        == control.get("lineage", {}).get("scope_fingerprint")
+        and record.get("limits_snapshot") == control.get("limits")
+        and record.get("limits_fingerprint")
+        == canonical_fingerprint(control.get("limits"))
+        and record.get("usage_fingerprint")
+        == canonical_fingerprint(control.get("usage"))
+        and record.get("usage_anchor") == compact_usage_anchor(control.get("usage"))
+        and valid_fingerprint(record.get("request_fingerprint"))
+        and record.get("admission_stop_fingerprint")
+        == canonical_fingerprint(fingerprint_payload)
+        and attempt_admission_stop_receipt_matches(root, record)
+    )
 
 
 def validate_limit_extension_request(
@@ -6736,7 +7014,37 @@ def state_transition(root: str | Path, request_path: str | Path, expected_revisi
                 return {"ok": False, "command": "state-transition", "errors": ["PROJECT_OUTCOME state markers are invalid"]}
             proposed = json.loads(json.dumps(data)); proposed_control = proposed["execution_control"]; now = utc_now()
             source_stop_reason = control.get("stop_reason")
-            record = {"kind": STATE_TRANSITION_KIND, "id": request["id"], "transitioned_utc": now, "prior_revision": expected_revision, "result_revision": expected_revision + 1, "reason": request["reason"].strip(), "authorization_ref": auth_ref, "authorization_fingerprint": authorization_fingerprint, "recovery_evidence_ref": recovery_ref, "target_project_state": target, "lineage_id": lineage.get("id"), "candidate_fingerprint": candidate.get("fingerprint"), "scope_fingerprint": lineage.get("scope_fingerprint"), "usage_fingerprint": canonical_fingerprint(control["usage"]), "usage_anchor": compact_usage_anchor(control["usage"]), "source_stop_reason": source_stop_reason, "source_stop_reason_fingerprint": canonical_fingerprint(source_stop_reason)}
+            admission_stops = control.get("attempt_admission_stops")
+            source_admission_stop = (
+                admission_stops[-1]
+                if isinstance(admission_stops, list) and admission_stops
+                else None
+            )
+            source_admission_stop_fingerprint = (
+                source_admission_stop.get("admission_stop_fingerprint")
+                if admission_stop_matches_live(
+                    source_admission_stop,
+                    control,
+                    resolved_root,
+                    expected_result_revision=expected_revision,
+                    expected_reason=source_stop_reason,
+                )
+                else None
+            )
+            if (
+                target == "blocked"
+                and isinstance(source_stop_reason, str)
+                and source_stop_reason.startswith("attempt admission exhausted: ")
+                and source_admission_stop_fingerprint is None
+            ):
+                return {
+                    "ok": False,
+                    "command": "state-transition",
+                    "errors": [
+                        "attempt-admission blocking requires the matching producer-origin custody receipt"
+                    ],
+                }
+            record = {"kind": STATE_TRANSITION_KIND, "id": request["id"], "transitioned_utc": now, "prior_revision": expected_revision, "result_revision": expected_revision + 1, "reason": request["reason"].strip(), "authorization_ref": auth_ref, "authorization_fingerprint": authorization_fingerprint, "recovery_evidence_ref": recovery_ref, "target_project_state": target, "lineage_id": lineage.get("id"), "candidate_fingerprint": candidate.get("fingerprint"), "scope_fingerprint": lineage.get("scope_fingerprint"), "usage_fingerprint": canonical_fingerprint(control["usage"]), "usage_anchor": compact_usage_anchor(control["usage"]), "source_stop_reason": source_stop_reason, "source_stop_reason_fingerprint": canonical_fingerprint(source_stop_reason), "source_admission_stop_fingerprint": source_admission_stop_fingerprint}
             record["transition_fingerprint"] = canonical_fingerprint(record)
             proposed_control.setdefault("state_transitions", []).append(record)
             proposed["project_state"] = target; proposed["updated_utc"] = now; proposed_control["reconciled_utc"] = now; proposed_control["revision"] = expected_revision + 1
@@ -6813,11 +7121,7 @@ def limit_extend(
                     "command": "limit-extend",
                     "errors": ["limit extension requires a stopped control with no active attempt"],
                 }
-            exhausted_admission_limits = exhausted_attempt_admission_limits(control)
             stop_reason = control.get("stop_reason")
-            direct_attempt_admission_stop = bool(
-                parsed_attempt_admission_stop(stop_reason, exhausted_admission_limits)
-            )
             transitions = control.get("state_transitions")
             last_transition = transitions[-1] if isinstance(transitions, list) and transitions else {}
             source_stop_reason = (
@@ -6834,6 +7138,22 @@ def limit_extend(
                 if isinstance(last_transition, dict)
                 else {}
             )
+            admission_stops = control.get("attempt_admission_stops")
+            source_admission_stop_fingerprint = (
+                last_transition.get("source_admission_stop_fingerprint")
+                if isinstance(last_transition, dict)
+                else None
+            )
+            source_admission_stop = next(
+                (
+                    record
+                    for record in reversed(admission_stops)
+                    if isinstance(record, dict)
+                    and record.get("admission_stop_fingerprint")
+                    == source_admission_stop_fingerprint
+                ),
+                None,
+            ) if isinstance(admission_stops, list) else None
             blocked_attempt_admission_stop = (
                 isinstance(last_transition, dict)
                 and last_transition.get("kind") == STATE_TRANSITION_KIND
@@ -6844,18 +7164,20 @@ def limit_extend(
                 == compact_usage_anchor(control.get("usage"))
                 and last_transition.get("source_stop_reason_fingerprint")
                 == canonical_fingerprint(source_stop_reason)
-                and bool(
-                    parsed_attempt_admission_stop(
-                        source_stop_reason, exhausted_admission_limits
-                    )
+                and admission_stop_matches_live(
+                    source_admission_stop,
+                    control,
+                    resolved_root,
+                    expected_result_revision=last_transition.get("prior_revision"),
+                    expected_reason=source_stop_reason,
                 )
+                and source_admission_stop_fingerprint
+                == source_admission_stop.get("admission_stop_fingerprint")
                 and last_transition.get("transition_fingerprint")
                 == canonical_fingerprint(transition_payload)
                 and control.get("stop_reason") == "project state transitioned to blocked: " + str(last_transition.get("reason", ""))
             )
-            attempt_admission_exhausted = bool(exhausted_admission_limits) and (
-                direct_attempt_admission_stop or blocked_attempt_admission_stop
-            )
+            attempt_admission_exhausted = bool(blocked_attempt_admission_stop)
             if not stopped_limit_has_fired(control) and not attempt_admission_exhausted:
                 return {
                     "ok": False,

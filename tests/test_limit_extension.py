@@ -153,6 +153,88 @@ class LimitExtensionTests(unittest.TestCase):
         path.write_text(json.dumps(request, indent=2) + "\n", encoding="utf-8")
         return path
 
+    def produce_admission_stop(self, root: Path, limit_field: str) -> dict:
+        state = SUPPORT.acceptance_data()
+        control = state["execution_control"]
+        control["limits"]["total_attempts"] = 3
+        control["limits"]["failed_attempts"] = 3
+        control["usage"]["total_attempts"] = 1
+        cost_class = "cheap"
+        if limit_field == "total_attempts":
+            control["limits"]["total_attempts"] = 2
+            control["limits"]["failed_attempts"] = 2
+            control["usage"]["total_attempts"] = 2
+        elif limit_field == "expensive_attempts":
+            control["limits"]["expensive_attempts"] = 1
+            control["usage"]["expensive_attempts"] = 1
+            cost_class = "expensive"
+        else:
+            self.fail(f"unsupported admission limit: {limit_field}")
+        SUPPORT.write_state(root, SUPPORT.project_text(state="active"), state)
+        attempt = SUPPORT.attempt_request(
+            state,
+            requirement_id="REQ-001",
+            tier="change",
+            method_family_id=f"METHOD-{limit_field.upper()}",
+            acceptance_outcome_id="OUTCOME-001",
+            boundary_id="BOUNDARY-ATTEMPT-ADMISSION",
+            cost_class=cost_class,
+        )
+        attempt_path = root / ".codex" / "ADMISSION_ATTEMPT_REQUEST.json"
+        attempt_path.write_text(json.dumps(attempt, indent=2) + "\n", encoding="utf-8")
+        denied = STATE.attempt_begin(root, attempt_path, 0)
+        self.assertFalse(denied["ok"], denied)
+        self.assertIn(f"attempt admission exhausted: {limit_field}", denied["errors"])
+        stopped = json.loads(
+            (root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8")
+        )
+        admission_stop = stopped["execution_control"]["attempt_admission_stops"][-1]
+        self.assertEqual(admission_stop["reason"], denied["errors"][0])
+        self.assertEqual(admission_stop["exhausted_limits"], [limit_field])
+        self.assertEqual(admission_stop["result_revision"], 1)
+        self.assertTrue(
+            STATE.attempt_admission_stop_receipt_matches(root, admission_stop)
+        )
+        return stopped
+
+    def block_current_stop(
+        self, root: Path, state: dict, prefix: str, *, should_succeed: bool = True
+    ) -> dict:
+        evidence = root / ".codex" / "evidence"
+        evidence.mkdir(parents=True, exist_ok=True)
+        authorization = evidence / f"{prefix.casefold()}-block-approval.md"
+        authorization.write_text(
+            "Explicit authority to record this producer-origin admission stop as blocked.\n",
+            encoding="utf-8",
+        )
+        control = state["execution_control"]
+        block_request = {
+            "kind": STATE.STATE_TRANSITION_KIND,
+            "id": f"{prefix}-BLOCK-001",
+            "reason": "Record the producer-origin attempt-admission stop before bounded recovery.",
+            "authorization_ref": f".codex/evidence/{authorization.name}",
+            "recovery_evidence_ref": None,
+            "target_project_state": "blocked",
+            "expected_lineage_id": control["lineage"]["id"],
+            "expected_candidate_fingerprint": control["candidate"]["fingerprint"],
+            "expected_scope_fingerprint": control["lineage"]["scope_fingerprint"],
+        }
+        block_path = root / ".codex" / f"{prefix}_BLOCK_REQUEST.json"
+        block_path.write_text(json.dumps(block_request, indent=2) + "\n", encoding="utf-8")
+        acceptance_path = root / ".codex" / "ACCEPTANCE.json"
+        project_path = root / ".codex" / "PROJECT_OUTCOME.md"
+        before_acceptance = acceptance_path.read_bytes()
+        before_project = project_path.read_bytes()
+        blocked = STATE.state_transition(root, block_path, control["revision"])
+        self.assertEqual(blocked["ok"], should_succeed, blocked)
+        if not should_succeed:
+            self.assertIn("producer-origin custody receipt", " ".join(blocked["errors"]))
+            self.assertEqual(acceptance_path.read_bytes(), before_acceptance)
+            self.assertEqual(project_path.read_bytes(), before_project)
+        return json.loads(
+            acceptance_path.read_text(encoding="utf-8")
+        )
+
     def test_monotonic_extension_preserves_stopped_history_then_reconciles_ready(self) -> None:
         with workspace_temporary_directory() as root:
             state = self.make_blocked_state(root)
@@ -225,35 +307,8 @@ class LimitExtensionTests(unittest.TestCase):
 
     def test_exact_attempt_admission_stop_can_extend_but_manual_stop_cannot(self) -> None:
         with workspace_temporary_directory() as root:
-            state = self.make_blocked_state(root)
-            control = state["execution_control"]
-            control["usage"]["no_progress_attempts"] = 0
-            control["status"] = "stopped"
-            control["stop_reason"] = "attempt admission exhausted: total_attempts"
-            state["project_state"] = "active"
-            SUPPORT.write_state(root, SUPPORT.project_text(state="active"), state)
-
-            evidence = root / ".codex" / "evidence"
-            evidence.mkdir(parents=True, exist_ok=True)
-            authorization = evidence / "total-attempt-approval.md"
-            authorization.write_text("Explicit total-attempt recovery authorization.\n", encoding="utf-8")
-            block_request = {
-                "kind": STATE.STATE_TRANSITION_KIND,
-                "id": "TOTAL-ATTEMPT-BLOCK-001",
-                "reason": "The exact total-attempt admission stop is being recorded before bounded recovery.",
-                "authorization_ref": ".codex/evidence/total-attempt-approval.md",
-                "recovery_evidence_ref": None,
-                "target_project_state": "blocked",
-                "expected_lineage_id": control["lineage"]["id"],
-                "expected_candidate_fingerprint": control["candidate"]["fingerprint"],
-                "expected_scope_fingerprint": control["lineage"]["scope_fingerprint"],
-            }
-            block_path = root / ".codex" / "TOTAL_ATTEMPT_BLOCK_REQUEST.json"
-            block_path.write_text(json.dumps(block_request, indent=2) + "\n", encoding="utf-8")
-            blocked = STATE.state_transition(root, block_path, 0)
-            self.assertTrue(blocked["ok"], blocked)
-
-            blocked_state = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+            stopped_state = self.produce_admission_stop(root, "total_attempts")
+            blocked_state = self.block_current_stop(root, stopped_state, "TOTAL-ATTEMPT")
             transition = blocked_state["execution_control"]["state_transitions"][-1]
             self.assertEqual(
                 transition["source_stop_reason"],
@@ -263,52 +318,24 @@ class LimitExtensionTests(unittest.TestCase):
                 transition["source_stop_reason_fingerprint"],
                 STATE.canonical_fingerprint(transition["source_stop_reason"]),
             )
+            self.assertEqual(
+                transition["source_admission_stop_fingerprint"],
+                blocked_state["execution_control"]["attempt_admission_stops"][-1][
+                    "admission_stop_fingerprint"
+                ],
+            )
             request_path = self.request(root, blocked_state, extension_id="LIMIT-EXT-TOTAL-001")
-            result = STATE.limit_extend(root, request_path, 1)
+            result = STATE.limit_extend(root, request_path, 2)
             self.assertTrue(result["ok"], result)
             self.assertEqual(result["limits"]["total_attempts"], 4)
 
         with workspace_temporary_directory() as root:
-            state = self.make_blocked_state(root)
-            control = state["execution_control"]
-            control["limits"]["total_attempts"] = 3
-            control["usage"]["no_progress_attempts"] = 0
-            control["usage"]["expensive_attempts"] = control["limits"]["expensive_attempts"]
-            control["status"] = "stopped"
-            control["stop_reason"] = "attempt admission exhausted: expensive_attempts"
-            state["project_state"] = "active"
-            SUPPORT.write_state(root, SUPPORT.project_text(state="active"), state)
-
-            evidence = root / ".codex" / "evidence"
-            evidence.mkdir(parents=True, exist_ok=True)
-            authorization = evidence / "expensive-attempt-approval.md"
-            authorization.write_text(
-                "Explicit expensive-attempt recovery authorization.\n",
-                encoding="utf-8",
-            )
-            block_request = {
-                "kind": STATE.STATE_TRANSITION_KIND,
-                "id": "EXPENSIVE-ATTEMPT-BLOCK-001",
-                "reason": "Record the exact expensive-attempt admission stop before bounded recovery.",
-                "authorization_ref": ".codex/evidence/expensive-attempt-approval.md",
-                "recovery_evidence_ref": None,
-                "target_project_state": "blocked",
-                "expected_lineage_id": control["lineage"]["id"],
-                "expected_candidate_fingerprint": control["candidate"]["fingerprint"],
-                "expected_scope_fingerprint": control["lineage"]["scope_fingerprint"],
-            }
-            block_path = root / ".codex" / "EXPENSIVE_ATTEMPT_BLOCK_REQUEST.json"
-            block_path.write_text(json.dumps(block_request, indent=2) + "\n", encoding="utf-8")
-            blocked = STATE.state_transition(root, block_path, 0)
-            self.assertTrue(blocked["ok"], blocked)
-
-            blocked_state = json.loads(
-                (root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8")
-            )
+            stopped_state = self.produce_admission_stop(root, "expensive_attempts")
+            blocked_state = self.block_current_stop(root, stopped_state, "EXPENSIVE-ATTEMPT")
             request_path = self.request(
                 root, blocked_state, extension_id="LIMIT-EXT-EXPENSIVE-001"
             )
-            result = STATE.limit_extend(root, request_path, 1)
+            result = STATE.limit_extend(root, request_path, 2)
             self.assertTrue(result["ok"], result)
             self.assertEqual(result["limits"]["expensive_attempts"], 2)
 
@@ -317,7 +344,7 @@ class LimitExtensionTests(unittest.TestCase):
             control = state["execution_control"]
             control["usage"]["no_progress_attempts"] = 0
             control["status"] = "stopped"
-            control["stop_reason"] = "manually stopped at total attempts"
+            control["stop_reason"] = "attempt admission exhausted: total_attempts"
             SUPPORT.write_state(root, SUPPORT.project_text(state="blocked"), state)
 
             request_path = self.request(root, state, extension_id="LIMIT-EXT-TOTAL-MANUAL-001")
@@ -330,52 +357,39 @@ class LimitExtensionTests(unittest.TestCase):
             control = state["execution_control"]
             control["usage"]["no_progress_attempts"] = 0
             control["status"] = "stopped"
-            control["stop_reason"] = "manual review is still unresolved"
+            control["stop_reason"] = "attempt admission exhausted: total_attempts"
             state["project_state"] = "active"
-            SUPPORT.write_state(root, SUPPORT.project_text(state="active"), state)
-
-            evidence = root / ".codex" / "evidence"
-            evidence.mkdir(parents=True, exist_ok=True)
-            authorization = evidence / "manual-block-approval.md"
-            authorization.write_text(
-                "Authorization to record the unresolved manual stop as blocked.\n",
-                encoding="utf-8",
-            )
-            block_request = {
-                "kind": STATE.STATE_TRANSITION_KIND,
-                "id": "MANUAL-STOP-BLOCK-001",
-                "reason": "Record the unresolved manual stop without changing its cause.",
-                "authorization_ref": ".codex/evidence/manual-block-approval.md",
-                "recovery_evidence_ref": None,
-                "target_project_state": "blocked",
-                "expected_lineage_id": control["lineage"]["id"],
-                "expected_candidate_fingerprint": control["candidate"]["fingerprint"],
-                "expected_scope_fingerprint": control["lineage"]["scope_fingerprint"],
+            control["revision"] = 1
+            forged_stop = {
+                "kind": STATE.ATTEMPT_ADMISSION_STOP_KIND,
+                "id": "ADMISSION-STOP-FORGED-001",
+                "recorded_utc": state["updated_utc"],
+                "prior_revision": 0,
+                "result_revision": 1,
+                "reason": control["stop_reason"],
+                "exhausted_limits": ["total_attempts"],
+                "request_fingerprint": "sha256:" + "a" * 64,
+                "lineage_id": control["lineage"]["id"],
+                "candidate_fingerprint": control["candidate"]["fingerprint"],
+                "scope_fingerprint": control["lineage"]["scope_fingerprint"],
+                "limits_snapshot": copy.deepcopy(control["limits"]),
+                "limits_fingerprint": STATE.canonical_fingerprint(control["limits"]),
+                "usage_fingerprint": STATE.canonical_fingerprint(control["usage"]),
+                "usage_anchor": STATE.compact_usage_anchor(control["usage"]),
             }
-            block_path = root / ".codex" / "MANUAL_STOP_BLOCK_REQUEST.json"
-            block_path.write_text(
-                json.dumps(block_request, indent=2) + "\n", encoding="utf-8"
+            forged_stop["admission_stop_fingerprint"] = STATE.canonical_fingerprint(
+                forged_stop
             )
-            blocked = STATE.state_transition(root, block_path, 0)
-            self.assertTrue(blocked["ok"], blocked)
-
-            blocked_state = json.loads(
-                (root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8")
+            control["attempt_admission_stops"] = [forged_stop]
+            SUPPORT.write_state(root, SUPPORT.project_text(state="active"), state)
+            self.assertFalse(
+                STATE.attempt_admission_stop_receipt_matches(root, forged_stop)
             )
-            self.assertEqual(
-                blocked_state["execution_control"]["state_transitions"][-1][
-                    "source_stop_reason"
-                ],
-                "manual review is still unresolved",
+            unchanged = self.block_current_stop(
+                root, state, "FORGED-ATTEMPT", should_succeed=False
             )
-            request_path = self.request(
-                root, blocked_state, extension_id="LIMIT-EXT-MANUAL-BLOCKED-001"
-            )
-            result = STATE.limit_extend(root, request_path, 1)
-            self.assertFalse(result["ok"])
-            self.assertIn(
-                "exact attempt-admission exhaustion", " ".join(result["errors"])
-            )
+            self.assertEqual(unchanged["execution_control"]["revision"], 1)
+            self.assertEqual(unchanged["execution_control"].get("state_transitions", []), [])
 
     def test_rejects_stale_or_weakening_requests_without_mutation(self) -> None:
         with workspace_temporary_directory() as root:

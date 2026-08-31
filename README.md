@@ -152,7 +152,7 @@ python ~/.codex/skills/outcome-integrity/scripts/project_outcome.py attempt-fini
 
 Copy `assets/ATTEMPT_REQUEST.template.json` and `assets/ATTEMPT_RESULT.template.json` rather than inventing either contract. The begin response supplies the exact `attempt_id`; actual tool/input fingerprints and structured failure identities are derived, not caller-chosen.
 
-New runs, workers, candidates, stages, compactions, recreated files, changed wording, or renamed boundaries do not reset cumulative tool/support/method-family counters. Candidate changes clear proof receipts while preserving usage, and evaluations used to shape a candidate become diagnostic. Local candidate-changing work cannot mint proof. State reconciliation cannot rename away active or stopped family history, and stopped control reopens only through the separately authorized state-transition path. Recovery authorization content is single-use across limit extensions, migrations, and state transitions even when copied to a new path or ID. New recovery history uses compact hash-bound usage anchors so enforcement state grows with events rather than repeatedly embedding the entire ledger.
+New runs, workers, candidates, stages, compactions, recreated files, changed wording, or renamed boundaries do not reset cumulative tool/support/method-family counters. Candidate changes clear proof receipts while preserving usage, and evaluations used to shape a candidate become diagnostic. Local candidate-changing work cannot mint proof. State reconciliation cannot rename away active or stopped family history, and stopped control reopens only through the separately authorized state-transition path. Admission-limit recovery also requires the producer-origin record minted by `attempt-begin`; a copied stop string and exhausted counter are insufficient. Recovery authorization content is single-use across limit extensions, migrations, and state transitions even when copied to a new path or ID. New recovery history uses compact hash-bound usage anchors so enforcement state grows with events rather than repeatedly embedding the entire ledger.
 
 You can also invoke the skill explicitly:
 
@@ -188,7 +188,7 @@ No prompt, skill, or user hook can guarantee every response or intercept every p
 
 Within those limits, the synchronous hook makes covered admission mechanical rather than voluntary. It resolves an exact initialized ancestor or explicit target and binds the host session to that root. An unbound session uses a bounded, link-safe descendant search only when exactly one initialized project exists; multiple roots, conflicts, unsafe links, or search-cap exhaustion fail closed. Directories with no initialized project remain unaffected.
 
-The session registry and preclaim snapshots are fail-closed same-user guardrails, not cryptographic custody against another process already controlling that operating-system account.
+The session registry, preclaim snapshots, and producer-origin admission-stop receipts are fail-closed same-user guardrails protected on covered hook paths, not cryptographic custody against another process already controlling that operating-system account.
 
 Recovery authorization references are hash-bound, single-use evidence; a local file does not cryptographically prove human authorship under the same operating-system account. If authorship or provenance is uncertain, stop and obtain a platform-visible or independently protected approval before recovery.
 

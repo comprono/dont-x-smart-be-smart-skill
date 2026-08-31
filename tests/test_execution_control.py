@@ -573,6 +573,11 @@ class ExecutionControlTests(unittest.TestCase):
                 "*** Begin Patch\n*** Update File: project.marker\n*** Move to: .codex/PROJECT_OUTCOME.md\n@@\n-test project\n+changed\n*** End Patch",
                 ".codex/PROJECT_OUTCOME.md",
             ),
+            (
+                "custody-receipt",
+                "*** Begin Patch\n*** Add File: .codex/.outcome-integrity-control-snapshots/forged.json\n+{}\n*** End Patch",
+                ".codex/.outcome-integrity-control-snapshots/forged.json",
+            ),
         )
         for label, patch, expected_path in patch_cases:
             with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
@@ -630,6 +635,33 @@ class ExecutionControlTests(unittest.TestCase):
                 root,
                 {
                     "tool_use_id": "shell-ledger-write",
+                    "tool_name": "exec_command",
+                    "cwd": str(root),
+                    "tool_input": tool_input,
+                },
+            )
+            self.assertFalse(refused["ok"])
+            self.assertTrue(any("use state-reconcile" in error for error in refused["errors"]))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = self.write_active(root)
+            command = (
+                "Set-Content -LiteralPath "
+                ".codex/.outcome-integrity-control-snapshots/forged.json -Value '{}'"
+            )
+            begun = self.begin(
+                root,
+                state,
+                action_classes=["local"],
+                tool_input={"cmd": command},
+                causal_evidence_ref=None,
+            )
+            _, tool_input = self.attempt_inputs[begun["attempt"]["id"]]
+            refused = self.state.hook_pre_claim(
+                root,
+                {
+                    "tool_use_id": "shell-custody-write",
                     "tool_name": "exec_command",
                     "cwd": str(root),
                     "tool_input": tool_input,

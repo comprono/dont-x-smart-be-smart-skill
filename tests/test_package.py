@@ -384,6 +384,7 @@ def acceptance_data(
             "diagnostic_evaluation_fingerprints": [],
             "prerequisites": [],
             "authorizations": [],
+            "attempt_admission_stops": [],
             "active_attempt": None,
             "stop_reason": None,
             "support_stop_reason": None,

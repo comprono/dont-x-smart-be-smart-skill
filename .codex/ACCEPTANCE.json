@@ -1,6 +1,6 @@
 {
   "schema_version": 6,
-  "updated_utc": "2026-08-31T20:58:23Z",
+  "updated_utc": "2026-08-31T21:18:42Z",
   "project_state": "active",
   "project_identity": {
     "id": "outcome-integrity-skill",
@@ -271,8 +271,8 @@
     }
   ],
   "execution_control": {
-    "revision": 42,
-    "reconciled_utc": "2026-08-31T20:58:23Z",
+    "revision": 43,
+    "reconciled_utc": "2026-08-31T21:18:42Z",
     "lineage": {
       "id": "LINEAGE-V6-INTERCEPTION",
       "stage_id": "STAGE-V6-INTERCEPTION",
@@ -287,7 +287,7 @@
       "scope_fingerprint": "sha256:86ae3c8056c66b4b47a2ed7bd7ae67fc3e3a6d87f80d3b24021582fbd2d646fa"
     },
     "candidate": {
-      "fingerprint": "sha256:bf5e1234e03c3b62a4092a838c991af13cd912b65cb639e8370fbe4895d2fe0d",
+      "fingerprint": "sha256:4fdfc86ae25d43a8039ddc6228acd2345602545efec6bae81f97a5bd9087f3a5",
       "manifest_paths": [
         "skills/outcome-integrity",
         "global/AGENTS.snippet.md",

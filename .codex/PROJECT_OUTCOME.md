@@ -1,7 +1,7 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-08-31T20:58:23Z
+Updated: 2026-08-31T21:18:42Z
 State: active
 
 ## North Star
@@ -57,7 +57,7 @@ State: active
 ## Verified State
 
 - Released v6 remained voluntarily invoked: one 2h45m target turn produced 105 file-change events, 48 subagent events, four compactions, and zero stage advancement; work continued after the architecture was admitted unable to reach evaluation | Evidence: audited long-running task chronology and current source audit | Verified: 2026-08-19T05:20:00Z
-- The corrected RC2 candidate passes 149 tests after binding blocked-state recovery to the exact source stop reason; official validation, isolated install parity, CI, and publication remain to be refreshed | Evidence: full unittest suite and the manual-stop to blocked-state denial regression | Verified: 2026-09-01T00:00:00Z
+- The corrected RC2 candidate passes 149 tests, official skill validation, isolated double-install parity, and two independent producer-custody forgery audits; CI and publication remain to be refreshed | Evidence: full unittest suite, quick_validate.py, isolated hook-enabled install, and held-out producer-custody attacks | Verified: 2026-09-01T00:00:00Z
 - A complete audit of the relevant project-task histories found a remaining self-governance gap: simple work could become ledger, worker, commentary, and release machinery before the first delivery attempt | Evidence: complete task audit plus a generic bounded-deliverable replay | Verified: 2026-09-01T00:00:00Z
 - v6.0.0-rc.1 was merged through PR #7 after passing branch, pull-request, and main-branch workflows, tagged at merge commit 53ec4f3957ab7c04300e6a994fde0a02e11be2f5, and published as a non-draft GitHub prerelease while v5.0.0 remained latest stable | Evidence: https://github.com/comprono/dont-x-smart-be-smart-skill/pull/7 and https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v6.0.0-rc.1 | Verified: 2026-08-31T16:13:41Z
 
@@ -104,12 +104,12 @@ State: active
 - Delivery Stage ID: STAGE-V6-INTERCEPTION
 - Acceptance ID: REQ-V6-FAST-PACKAGE
 - Objective: Pass release CI and publish the exact validated candidate as v6.0.0-rc.2 without claiming stable live-hook enforcement.
-- Acceptance evidence: The corrected candidate passes 149 tests and the source-stop binding regression; fresh candidate-bound contract, forward, installer, CI, tag, and publication proof remain pending.
+- Acceptance evidence: The exact candidate passes 149 tests, official validation, isolated double-install parity, and two independent custody-forgery audits; CI, merge, tag, and publication proof remain pending.
 - Protect: Released capability floors, live-hook truthfulness, skill brevity, and unrelated projects.
 - Status: active
 
 ## Next
 
-- Action: Refresh candidate-bound contract, forward, validation, and installer proof, then commit, pass CI, merge, tag, and publish v6.0.0-rc.2 as a prerelease.
+- Action: Bind this exact candidate, commit and push it, pass CI, then merge, tag, and publish v6.0.0-rc.2 as a prerelease.
 - Why now: The complete relevant history and latest generic replay agree that control overhead can replace a simple outcome before delivery.
 - Blocker and recovery: Stable v6.0.0 still requires a trusted live hook canary; this bounded repair may ship only as a prerelease while that proof remains unresolved.
