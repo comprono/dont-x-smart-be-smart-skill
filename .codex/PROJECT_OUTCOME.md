@@ -1,7 +1,7 @@
 <!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
-Updated: 2026-08-31T16:08:40Z
+Updated: 2026-08-31T16:15:15Z
 State: active
 
 ## North Star
@@ -39,7 +39,7 @@ State: active
 
 ### Add-ons
 
-- Publish v6.0.0-rc.1 as an honest prerelease through branch, pull request, CI, merge, tag, and GitHub Release; do not claim live hook trust.
+- v6.0.0-rc.1 prerelease publication is complete; stable v6.0.0 remains gated on the live trusted denial canary.
 
 ### Non-goals
 
@@ -60,6 +60,7 @@ State: active
 - Schema v5 was advisory at the action boundary: it had no stable candidate/lineage ledger, no atomic reservation, no same-candidate predecessor receipt, and no exact effect-set admission | Evidence: source validator and audited task chronology | Verified: 2026-08-17T22:03:17Z
 - Released v6 remained voluntarily invoked: one 2h45m target turn produced 105 file-change events, 48 subagent events, four compactions, and zero stage advancement; work continued after the architecture was admitted unable to reach evaluation | Evidence: audited long-running task chronology and current source audit | Verified: 2026-08-19T05:20:00Z
 - Generic anti-deviation hardening passed 145 tests plus independent exploit replays; the shared skill, rules, and hook definitions are installed with exact disk parity, while active hook trust remains unverified | Evidence: full unittest suite, quick_validate, independent forward validation, and install --hook-health | Verified: 2026-08-31T00:00:00Z
+- v6.0.0-rc.1 was merged through PR #7 after passing branch, pull-request, and main-branch workflows, tagged at merge commit 53ec4f3957ab7c04300e6a994fde0a02e11be2f5, and published as a non-draft GitHub prerelease while v5.0.0 remained latest stable | Evidence: https://github.com/comprono/dont-x-smart-be-smart-skill/pull/7 and https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v6.0.0-rc.1 | Verified: 2026-08-31T16:13:41Z
 
 ## Context Pointers
 
@@ -109,6 +110,6 @@ State: active
 
 ## Next
 
-- Action: Publish the exact tested candidate as GitHub prerelease v6.0.0-rc.1 through pull request, CI, merge, tag, and release; then retain the fresh-task trusted denial canary as the gate for stable v6.0.0.
-- Why now: Source, 145 tests, independent exploit replay, shared installation, and exact configuration parity pass; a prerelease can deliver the candidate honestly while live dispatch remains the only missing stable-release proof.
+- Action: In a fresh Codex task, review and trust the exact Outcome Integrity hooks, then run one unreserved covered-mutation denial canary through the real dispatcher before stable v6.0.0.
+- Why now: v6.0.0-rc.1 is publicly delivered from the verified merge commit; live dispatch is the only remaining stable-release proof.
 - Blocker and recovery: Hook health is configured-exact-trust-unverified. A same-account authorization file is single-use evidence, not cryptographic proof of human authorship; stop if its provenance is uncertain.
