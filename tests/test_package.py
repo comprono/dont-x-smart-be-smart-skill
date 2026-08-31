@@ -384,6 +384,7 @@ def acceptance_data(
             "diagnostic_evaluation_fingerprints": [],
             "prerequisites": [],
             "authorizations": [],
+            "attempt_admission_stops": [],
             "active_attempt": None,
             "stop_reason": None,
             "support_stop_reason": None,
@@ -593,6 +594,38 @@ class PackageTests(unittest.TestCase):
         self.assertIn("direct plain-language conclusion first", readme)
         self.assertIn("Use $outcome-integrity", openai_yaml)
 
+    def test_bounded_delivery_defaults_to_the_state_free_direct_lane(self) -> None:
+        skill = SKILL.read_text(encoding="utf-8")
+        global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
+        readme = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
+
+        for phrase in (
+            "Choose Direct Delivery Before Durable State",
+            "8 total tool calls",
+            "3 support calls before delivery",
+            "6 files, 0 workers, 2 planned interim updates",
+            "Difficulty, failure, or desired architecture cannot promote",
+            "query authoritative state or an idempotency key before retrying",
+        ):
+            self.assertIn(phrase, skill)
+        for phrase in (
+            "Default to direct delivery",
+            "advisory until durable state exists",
+            "Create no `.codex` state, child root, plan, framework, publisher, or control plane",
+            "In an initialized parent, use one slice under controls",
+            "difficulty, failure, or desired architecture cannot promote",
+            "query authoritative state or idempotency before retrying",
+        ):
+            self.assertIn(phrase, global_rules)
+        for phrase in (
+            "Direct delivery first",
+            "That lane uses only `deliverable -> acceptance check`",
+            "Calling `init` without one creates nothing",
+            "behavioral bounds, not ledger enforcement before durable state exists",
+            "cannot prove that a caller's asserted reason is semantically true",
+        ):
+            self.assertIn(phrase, readme)
+
     def test_active_projects_keep_ownership_across_questions_and_corrections(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
         global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
@@ -746,9 +779,13 @@ class PackageTests(unittest.TestCase):
 
         self.assertLessEqual(len(skill.split()), 3800)
         self.assertLessEqual(len(global_rules.split()), 760)
-        for project_specific in ("Bhagavad", "Krishna", "Arjuna", "Claude", "Antigravity"):
-            self.assertNotIn(project_specific.casefold(), skill.casefold())
-            self.assertNotIn(project_specific.casefold(), global_rules.casefold())
+        for public_text in (skill, global_rules):
+            for identity_pattern in (
+                r"(?i)codex://threads/[0-9a-f-]+",
+                r"(?i)[a-z]:\\users\\[^\\\s]+",
+                r"(?i)(?:^|\s)/home/[^/\s]+",
+            ):
+                self.assertNotRegex(public_text, identity_pattern)
 
 
     def test_schema_v6_template_declares_proof_and_execution_control_fields(self) -> None:
@@ -1122,14 +1159,144 @@ class PackageTests(unittest.TestCase):
             self.assertTrue((codex_home / "skills" / "outcome-integrity" / "SKILL.md").is_file())
             self.assert_no_installer_artifacts(codex_home)
 
-    def test_initialize_creates_both_files_without_overwriting(self) -> None:
+    def test_initialize_requires_durable_admission_and_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            first = self.state.initialize(root)
+            refused = self.state.initialize(root)
+            self.assertFalse(refused["ok"])
+            self.assertFalse((root / ".codex").exists())
+            self.assertIn("direct-delivery lane", refused["errors"][0])
+            first = self.state.initialize(root, durable_reason="multi-deliverable")
             second = self.state.initialize(root)
             self.assertEqual(len(first["created"]), 2)
+            self.assertEqual(first["durable_reason"], "multi-deliverable")
             self.assertEqual(second["created"], [])
             self.assertFalse(self.state.validate(root)["ok"])
+
+    def test_cli_init_requires_an_intrinsic_durable_reason_without_writes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            refused = subprocess.run(
+                [sys.executable, str(STATE_SCRIPT), "init", "--root", str(root)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(refused.returncode, 1, refused.stderr or refused.stdout)
+            self.assertFalse(json.loads(refused.stdout)["ok"])
+            self.assertFalse((root / ".codex").exists())
+
+            bogus = subprocess.run(
+                [
+                    sys.executable,
+                    str(STATE_SCRIPT),
+                    "init",
+                    "--root",
+                    str(root),
+                    "--durable-reason",
+                    "architecture-seems-useful",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(bogus.returncode, 0)
+            self.assertFalse((root / ".codex").exists())
+
+            admitted = subprocess.run(
+                [
+                    sys.executable,
+                    str(STATE_SCRIPT),
+                    "init",
+                    "--root",
+                    str(root),
+                    "--durable-reason",
+                    "persistent",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(admitted.returncode, 0, admitted.stderr or admitted.stdout)
+            self.assertEqual(len(json.loads(admitted.stdout)["created"]), 2)
+
+    def test_init_refuses_linked_state_without_touching_the_target(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "project"
+            root.mkdir()
+            external = Path(temporary) / "external-state"
+            external.mkdir()
+            sentinel = external / "sentinel.txt"
+            sentinel.write_bytes(b"unchanged\n")
+            linked_state = root / ".codex"
+            try:
+                if os.name == "nt":
+                    result = subprocess.run(
+                        ["cmd", "/c", "mklink", "/J", str(linked_state), str(external)],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
+                    if result.returncode != 0:
+                        self.skipTest(f"Directory junctions are unavailable: {result.stderr or result.stdout}")
+                else:
+                    os.symlink(external, linked_state, target_is_directory=True)
+                refused = self.state.initialize(root, durable_reason="persistent")
+                self.assertFalse(refused["ok"])
+                self.assertEqual(refused["created"], [])
+                self.assertIn("symlink or junction", refused["errors"][0])
+                self.assertEqual(sentinel.read_bytes(), b"unchanged\n")
+                self.assertFalse((external / "PROJECT_OUTCOME.md").exists())
+                self.assertFalse((external / "ACCEPTANCE.json").exists())
+            finally:
+                if self.state.path_is_link_like(linked_state):
+                    if os.name == "nt":
+                        os.rmdir(linked_state)
+                    else:
+                        linked_state.unlink()
+
+    def test_causal_evidence_rejects_drive_relative_and_linked_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "project"
+            root.mkdir()
+            proof = root / "proof.json"
+            proof.write_text('{"proof":true}', encoding="utf-8")
+            self.assertTrue(
+                self.state.valid_fingerprint(
+                    self.state.calculate_causal_evidence_fingerprint(root, "proof.json")
+                )
+            )
+            self.assertIsNone(
+                self.state.calculate_causal_evidence_fingerprint(root, "D:proof.json")
+            )
+
+            external = Path(temporary) / "external-evidence"
+            external.mkdir()
+            (external / "proof.json").write_text('{"external":true}', encoding="utf-8")
+            linked = root / "evidence"
+            try:
+                if os.name == "nt":
+                    result = subprocess.run(
+                        ["cmd", "/c", "mklink", "/J", str(linked), str(external)],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
+                    if result.returncode != 0:
+                        self.skipTest(f"Directory junctions are unavailable: {result.stderr or result.stdout}")
+                else:
+                    os.symlink(external, linked, target_is_directory=True)
+                self.assertIsNone(
+                    self.state.calculate_causal_evidence_fingerprint(
+                        root, "evidence/proof.json"
+                    )
+                )
+            finally:
+                if self.state.path_is_link_like(linked):
+                    if os.name == "nt":
+                        os.rmdir(linked)
+                    else:
+                        linked.unlink()
 
     def test_valid_active_state_passes_validate_and_resume(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

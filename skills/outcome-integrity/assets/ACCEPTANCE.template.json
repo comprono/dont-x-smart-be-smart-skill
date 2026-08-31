@@ -109,6 +109,7 @@
     "diagnostic_evaluation_fingerprints": [],
     "prerequisites": [],
     "authorizations": [],
+    "attempt_admission_stops": [],
     "active_attempt": null,
     "stop_reason": null,
     "support_stop_reason": null

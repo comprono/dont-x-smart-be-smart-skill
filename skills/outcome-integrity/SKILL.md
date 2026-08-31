@@ -95,29 +95,37 @@ Match the explanation requested: state, mechanism, chronology, rationale, respon
 
 In reports, `Next` means an agent-owned action already started or the exact user-owned authority blocking it.
 
-## Keep Three Kinds Of State Separate
+## Choose Direct Delivery Before Durable State
 
-For nontrivial project work, use:
+Default to direct delivery for one deliverable and acceptance observation, one repository or surface, at most one production boundary, and local reversible work or one idempotent external write. It requires resolved identity and authority, low impact, and no dependent deliverables or recurring/unattended lifecycle. Default operating bounds: 8 total tool calls, 3 support calls before delivery, 6 files, 0 workers, 2 planned interim updates, one focused verification, and one causally changed retry. These are behavioral bounds until durable state exists.
+
+Use only `deliverable -> acceptance check`; create no `.codex` state, nested root, plan artifact, worker, custom framework, publisher, or control architecture. Under valid parent state, use one direct slice governed by its existing reservations and budgets; create no child state. Difficulty, failure, or desired architecture cannot promote a simple outcome. For an ambiguous external write, query authoritative state or an idempotency key before retrying.
+
+Promote only for multiple dependent deliverables, multiple repositories/external systems, persistence across turns/restarts, recurring/unattended operation, irreversible/high-impact effects, or explicit user-requested tracking. Otherwise simplify the method or state the blocker.
+
+## Keep Durable State Separate
+
+For admitted durable project work, use:
 
 - `.codex/PROJECT_OUTCOME.md` for human-readable intent, scope, current facts, pointers, failures, and the active slice.
 - `.codex/ACCEPTANCE.json` for project identity, north star, delivery stages, stage-parented capabilities and slices, exact identities, proof limits, evidence, counterevidence, statuses, and blockers.
-- Git history for chronology and recovery. Do not grow an append-only activity transcript.
+- Git history for chronology and recovery, never an activity transcript.
 
 In `PROJECT_OUTCOME.md` keep only `- Mutable execution-control ledger: .codex/ACCEPTANCE.json#execution_control (sole authority)`. Never duplicate mutable ledger state.
 
-Do not create these files for a trivial question, one-off command, or work outside a project.
-
-Initialize missing files after minimal observation:
+Initialize missing files only after minimum observation and name the intrinsic durable reason:
 
 ```powershell
-python <skill-dir>/scripts/project_outcome.py init --root <project-root>
+python <skill-dir>/scripts/project_outcome.py init --root <project-root> --durable-reason <reason>
 ```
 
-Fill all placeholders. Keep project state current rather than chronological and keep historical detail in Git.
+`<reason>` is `multi-deliverable`, `multi-system`, `persistent`, `recurring-unattended`, `irreversible-high-impact`, or `explicit-user-request`.
+
+Fill placeholders. Keep state current and history in Git.
 
 ## Start Or Resume Reliably
 
-At the start of nontrivial work, after compaction, or after interruption:
+For admitted durable work, after compaction, or after interruption:
 
 1. Read the latest user instruction.
 2. Read both project-state files.
@@ -128,36 +136,26 @@ python <skill-dir>/scripts/project_outcome.py resume --root <project-root>
 ```
 
 4. Verify `project_identity.root_markers` under the selected root before trusting either file; never borrow a nearby parent, child, plugin, or sibling project's state because its topic looks related.
-5. Inspect the current diff and the smallest authoritative source needed to check the state files.
-6. Reconcile stale intent, acceptance, identity, counterevidence, current-slice, or timestamp data before substantial planning or editing.
-7. Load only the relevant sources named under `Context Pointers`; do not rescan the full history or project by default.
+5. Inspect the diff and minimum authoritative source; reconcile stale intent, acceptance, identity, counterevidence, slice, or timestamps.
+6. Load only relevant `Context Pointers`; do not rescan history by default.
 
-Before an important or irreversible slice, confirm that the objective is remembered correctly, relevant state is restored, identity or authority conflicts are resolved, remaining uncertainty is tolerable and visible, and the next action is consciously owned. Do not demand certainty that the evidence cannot provide.
+Before important or irreversible work, confirm the objective, restored state, resolved identity/authority, owned next action, and that remaining uncertainty is tolerable and visible.
 
 The latest user correction must update intent immediately. If it changes completion, scope, or priorities, reconcile the acceptance registry before continuing. Conversation summaries never override these checks.
 
 ## Admit Material Actions Atomically
 
-Prose is not tool permission. Install enforcement with `scripts/install.py --enable-user-hooks` and review it in `/hooks`. In an initialized schema-v6 project, every covered material tool call needs one live reservation. When trusted, synchronous `PreToolUse` checks the host-observed tool, working directory, and canonical arguments before execution; `PostToolUse` reconciles the same `tool_use_id`. An unreserved, mismatched, reused, expired, over-budget, or out-of-scope call is denied.
+Prose is not permission. Install with `scripts/install.py --enable-user-hooks` and review `/hooks`. In initialized schema-v6 work, each covered material call needs one live reservation. Trusted `PreToolUse` checks the observed tool, cwd, and arguments; `PostToolUse` reconciles the same `tool_use_id`. Invalid, reused, expired, over-budget, or out-of-scope calls are denied.
 
-Create the request from `assets/ATTEMPT_REQUEST.template.json`, including structured `method_family_id`, `acceptance_outcome_id`, `boundary_id`, scope growth, allowed paths, and an exact single-use tool binding. Caller labels may raise risk but never lower the class derived from the actual call. Reserve immediately before proposing it:
+Create `assets/ATTEMPT_REQUEST.template.json` with structured family/outcome/boundary IDs, scope growth, allowed paths, and an exact single-use tool binding. Caller labels cannot lower derived risk. Reserve immediately before the call:
 
 ```powershell
 python <skill-dir>/scripts/project_outcome.py attempt-begin --root <project-root> --request <request.json> --expected-revision <n>
 ```
 
-The atomic reservation binds:
+The reservation binds lineage, candidate, outcome/boundary, method family, exact tool/cwd/input/use/paths, cumulative budgets and direct-delivery reserve, predecessor receipts, hard prerequisites, external target/effect authority, and evaluation exposure.
 
-- the current acceptance lineage, candidate, structured outcome/boundary, and method family;
-- one exact tool name, project-relative working directory, canonical input fingerprint when required, one use, and allowed project-relative paths;
-- the complete candidate fingerprint over relevant source, configuration, dependencies, generated artifacts, and declared external digests;
-- cumulative attempt, tool, support, no-progress, worker, scope-growth, path, hot-path, elapsed, and method-family limits, plus a direct-delivery reserve;
-- same-candidate predecessor receipts for every lower proof tier;
-- verified hard downstream identity, permission, callability, and input/output-capacity prerequisites, or a specific declaration that none apply;
-- the exact authorized action, targets, effects, principal, context, use limit, and expiry when effects leave the local reversible boundary;
-- evaluation identity and whether it is diagnostic or still prospective.
-
-The hook binds the host session to one exact initialized root, derives actual identity, consumes the claim once, and charges before execution. A different tool, input, cwd, candidate, lineage, path, or second use cannot ride the reservation. Post verifies the same call plus an external full-ledger snapshot; drift restores the preclaim ledger, stops recovery, and blocks a passing finish. Hook output must use only documented allow/deny shapes; internal failure in an initialized project fails closed.
+The hook binds one host session and initialized root, derives identity, consumes once, and charges first. Tool, input, cwd, candidate, lineage, path, or reuse mismatch is denied. Post compares an external full-ledger snapshot; drift restores preclaim state, enters recovery, and blocks passing. Internal failure fails closed.
 
 Candidate-changing local/support work may settle the candidate and invalidate old proof, but cannot mint a gate receipt. Only a matching observed proof call may do that. Rebind separately when needed:
 
