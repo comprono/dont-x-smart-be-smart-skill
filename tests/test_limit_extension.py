@@ -223,7 +223,7 @@ class LimitExtensionTests(unittest.TestCase):
             self.assertEqual(reconciled["status"], "ready")
             self.assertTrue(STATE.validate(root)["ok"], STATE.validate(root))
 
-    def test_exact_total_attempt_admission_stop_can_extend_but_manual_stop_cannot(self) -> None:
+    def test_exact_attempt_admission_stop_can_extend_but_manual_stop_cannot(self) -> None:
         with workspace_temporary_directory() as root:
             state = self.make_blocked_state(root)
             control = state["execution_control"]
@@ -254,10 +254,63 @@ class LimitExtensionTests(unittest.TestCase):
             self.assertTrue(blocked["ok"], blocked)
 
             blocked_state = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+            transition = blocked_state["execution_control"]["state_transitions"][-1]
+            self.assertEqual(
+                transition["source_stop_reason"],
+                "attempt admission exhausted: total_attempts",
+            )
+            self.assertEqual(
+                transition["source_stop_reason_fingerprint"],
+                STATE.canonical_fingerprint(transition["source_stop_reason"]),
+            )
             request_path = self.request(root, blocked_state, extension_id="LIMIT-EXT-TOTAL-001")
             result = STATE.limit_extend(root, request_path, 1)
             self.assertTrue(result["ok"], result)
             self.assertEqual(result["limits"]["total_attempts"], 4)
+
+        with workspace_temporary_directory() as root:
+            state = self.make_blocked_state(root)
+            control = state["execution_control"]
+            control["limits"]["total_attempts"] = 3
+            control["usage"]["no_progress_attempts"] = 0
+            control["usage"]["expensive_attempts"] = control["limits"]["expensive_attempts"]
+            control["status"] = "stopped"
+            control["stop_reason"] = "attempt admission exhausted: expensive_attempts"
+            state["project_state"] = "active"
+            SUPPORT.write_state(root, SUPPORT.project_text(state="active"), state)
+
+            evidence = root / ".codex" / "evidence"
+            evidence.mkdir(parents=True, exist_ok=True)
+            authorization = evidence / "expensive-attempt-approval.md"
+            authorization.write_text(
+                "Explicit expensive-attempt recovery authorization.\n",
+                encoding="utf-8",
+            )
+            block_request = {
+                "kind": STATE.STATE_TRANSITION_KIND,
+                "id": "EXPENSIVE-ATTEMPT-BLOCK-001",
+                "reason": "Record the exact expensive-attempt admission stop before bounded recovery.",
+                "authorization_ref": ".codex/evidence/expensive-attempt-approval.md",
+                "recovery_evidence_ref": None,
+                "target_project_state": "blocked",
+                "expected_lineage_id": control["lineage"]["id"],
+                "expected_candidate_fingerprint": control["candidate"]["fingerprint"],
+                "expected_scope_fingerprint": control["lineage"]["scope_fingerprint"],
+            }
+            block_path = root / ".codex" / "EXPENSIVE_ATTEMPT_BLOCK_REQUEST.json"
+            block_path.write_text(json.dumps(block_request, indent=2) + "\n", encoding="utf-8")
+            blocked = STATE.state_transition(root, block_path, 0)
+            self.assertTrue(blocked["ok"], blocked)
+
+            blocked_state = json.loads(
+                (root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8")
+            )
+            request_path = self.request(
+                root, blocked_state, extension_id="LIMIT-EXT-EXPENSIVE-001"
+            )
+            result = STATE.limit_extend(root, request_path, 1)
+            self.assertTrue(result["ok"], result)
+            self.assertEqual(result["limits"]["expensive_attempts"], 2)
 
         with workspace_temporary_directory() as root:
             state = self.make_blocked_state(root)
@@ -270,7 +323,59 @@ class LimitExtensionTests(unittest.TestCase):
             request_path = self.request(root, state, extension_id="LIMIT-EXT-TOTAL-MANUAL-001")
             result = STATE.limit_extend(root, request_path, 0)
             self.assertFalse(result["ok"])
-            self.assertIn("exact total-attempt admission exhaustion", " ".join(result["errors"]))
+            self.assertIn("exact attempt-admission exhaustion", " ".join(result["errors"]))
+
+        with workspace_temporary_directory() as root:
+            state = self.make_blocked_state(root)
+            control = state["execution_control"]
+            control["usage"]["no_progress_attempts"] = 0
+            control["status"] = "stopped"
+            control["stop_reason"] = "manual review is still unresolved"
+            state["project_state"] = "active"
+            SUPPORT.write_state(root, SUPPORT.project_text(state="active"), state)
+
+            evidence = root / ".codex" / "evidence"
+            evidence.mkdir(parents=True, exist_ok=True)
+            authorization = evidence / "manual-block-approval.md"
+            authorization.write_text(
+                "Authorization to record the unresolved manual stop as blocked.\n",
+                encoding="utf-8",
+            )
+            block_request = {
+                "kind": STATE.STATE_TRANSITION_KIND,
+                "id": "MANUAL-STOP-BLOCK-001",
+                "reason": "Record the unresolved manual stop without changing its cause.",
+                "authorization_ref": ".codex/evidence/manual-block-approval.md",
+                "recovery_evidence_ref": None,
+                "target_project_state": "blocked",
+                "expected_lineage_id": control["lineage"]["id"],
+                "expected_candidate_fingerprint": control["candidate"]["fingerprint"],
+                "expected_scope_fingerprint": control["lineage"]["scope_fingerprint"],
+            }
+            block_path = root / ".codex" / "MANUAL_STOP_BLOCK_REQUEST.json"
+            block_path.write_text(
+                json.dumps(block_request, indent=2) + "\n", encoding="utf-8"
+            )
+            blocked = STATE.state_transition(root, block_path, 0)
+            self.assertTrue(blocked["ok"], blocked)
+
+            blocked_state = json.loads(
+                (root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                blocked_state["execution_control"]["state_transitions"][-1][
+                    "source_stop_reason"
+                ],
+                "manual review is still unresolved",
+            )
+            request_path = self.request(
+                root, blocked_state, extension_id="LIMIT-EXT-MANUAL-BLOCKED-001"
+            )
+            result = STATE.limit_extend(root, request_path, 1)
+            self.assertFalse(result["ok"])
+            self.assertIn(
+                "exact attempt-admission exhaustion", " ".join(result["errors"])
+            )
 
     def test_rejects_stale_or_weakening_requests_without_mutation(self) -> None:
         with workspace_temporary_directory() as root:

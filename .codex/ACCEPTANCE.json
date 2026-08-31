@@ -1,6 +1,6 @@
 {
   "schema_version": 6,
-  "updated_utc": "2026-08-31T16:15:15Z",
+  "updated_utc": "2026-08-31T20:58:23Z",
   "project_state": "active",
   "project_identity": {
     "id": "outcome-integrity-skill",
@@ -62,7 +62,7 @@
       {
         "id": "STAGE-V6-INTERCEPTION",
         "parent_outcome_id": "OUTCOME-INTEGRITY",
-        "description": "Make bounded admission cross the real model-to-tool boundary and stop method-family churn before it consumes hours.",
+        "description": "Keep bounded reversible work direct while making complex-work admission cross the real model-to-tool boundary.",
         "required": true,
         "status": "active",
         "preserves_capability_ids": [
@@ -70,7 +70,8 @@
           "CAP-EFFICIENCY",
           "CAP-PACKAGE",
           "CAP-ADMISSION",
-          "CAP-INTERCEPTION"
+          "CAP-INTERCEPTION",
+          "CAP-DIRECT"
         ]
       }
     ],
@@ -108,6 +109,13 @@
     {
       "id": "CAP-INTERCEPTION",
       "description": "Intercept each covered material tool proposal, bind its actual identity and inputs, meter bounded work, and stop a disproven method family before execution continues.",
+      "required": true,
+      "stage_id": "STAGE-V6-INTERCEPTION",
+      "preservation": "permanent"
+    },
+    {
+      "id": "CAP-DIRECT",
+      "description": "Deliver bounded reversible work without letting setup, orchestration, proof, or recovery become a larger substitute outcome.",
       "required": true,
       "stage_id": "STAGE-V6-INTERCEPTION",
       "preservation": "permanent"
@@ -229,6 +237,30 @@
       },
       "optional_supporting_state": [],
       "independence_requirement_ids": []
+    },
+    {
+      "id": "FLOOR-DIRECT",
+      "capability_id": "CAP-DIRECT",
+      "invariant": "One bounded reversible deliverable stays direct unless observed properties of the user outcome require durable execution.",
+      "fitness_dimension_ids": [
+        "FIT-EFFECTIVENESS",
+        "FIT-QUALITY",
+        "FIT-EFFICIENCY",
+        "FIT-SAFETY"
+      ],
+      "proof_ladder": {
+        "change": [
+          "REQ-V6-FAST-CONTRACT"
+        ],
+        "pre-release": [
+          "REQ-V6-FAST-FORWARD"
+        ],
+        "release": [
+          "REQ-V6-FAST-PACKAGE"
+        ]
+      },
+      "optional_supporting_state": [],
+      "independence_requirement_ids": []
     }
   ],
   "identity_requirements": [
@@ -239,20 +271,23 @@
     }
   ],
   "execution_control": {
-    "revision": 18,
-    "reconciled_utc": "2026-08-31T16:15:15Z",
+    "revision": 42,
+    "reconciled_utc": "2026-08-31T20:58:23Z",
     "lineage": {
       "id": "LINEAGE-V6-INTERCEPTION",
       "stage_id": "STAGE-V6-INTERCEPTION",
       "acceptance_ids": [
+        "REQ-V6-FAST-CONTRACT",
+        "REQ-V6-FAST-FORWARD",
+        "REQ-V6-FAST-PACKAGE",
         "REQ-V6-HOOK-CONTRACT",
         "REQ-V6-HOOK-FORWARD",
         "REQ-V6-HOOK-PACKAGE"
       ],
-      "scope_fingerprint": "sha256:179e3a4ee47e9fba3e78ea8783204f5a21a6f02bd8ab4350049b5b5dc137bece"
+      "scope_fingerprint": "sha256:86ae3c8056c66b4b47a2ed7bd7ae67fc3e3a6d87f80d3b24021582fbd2d646fa"
     },
     "candidate": {
-      "fingerprint": "sha256:c4371feecb3ab6d93f83a4f36ef47c46e244b0de5960338a8994b2d81a9ca513",
+      "fingerprint": "sha256:bf5e1234e03c3b62a4092a838c991af13cd912b65cb639e8370fbe4895d2fe0d",
       "manifest_paths": [
         "skills/outcome-integrity",
         "global/AGENTS.snippet.md",
@@ -267,7 +302,7 @@
       "total_attempts": 8,
       "failed_attempts": 4,
       "equivalent_failures": 2,
-      "expensive_attempts": 2,
+      "expensive_attempts": 3,
       "support_attempts": 3,
       "no_progress_attempts": 2,
       "total_tool_calls": 24,
@@ -281,33 +316,212 @@
       "max_touches_per_path": 3
     },
     "usage": {
-      "total_attempts": 3,
+      "total_attempts": 6,
       "failed_attempts": 0,
-      "expensive_attempts": 2,
+      "expensive_attempts": 3,
       "support_attempts": 0,
       "no_progress_attempts": 0,
       "failure_classes": [],
-      "total_tool_calls": 0,
+      "total_tool_calls": 3,
       "support_tool_calls": 0,
       "support_no_progress_calls": 0,
       "spawned_workers": 0,
       "scope_growth_actions": 0,
       "path_touches": 0,
       "hot_path_touches": 0,
-      "active_attempt_seconds": 0,
+      "active_attempt_seconds": 29,
       "path_counts": {},
-      "method_families": []
+      "method_families": [
+        {
+          "id": "METHOD-RC2-DIRECT-CONTRACT",
+          "requirement_id": "REQ-V6-FAST-CONTRACT",
+          "acceptance_outcome_id": "OUTCOME-INTEGRITY",
+          "method_family_fingerprint": "sha256:3c70be45e4385e2281c2b35bdf5dd7ee90d2fc07d4ff6366b7d08d947eb96195",
+          "prior_method_family_id": null,
+          "method_change_evidence_ref": null,
+          "method_change_evidence_fingerprint": null,
+          "lower_complexity_comparison_ref": null,
+          "lower_complexity_comparison_fingerprint": null,
+          "stop_evidence_fingerprints": [],
+          "failed_attempts": 0,
+          "no_progress_attempts": 0,
+          "failures": [],
+          "status": "active",
+          "stop_reason": null
+        },
+        {
+          "id": "METHOD-RC2-DIRECT-FORWARD",
+          "requirement_id": "REQ-V6-FAST-FORWARD",
+          "acceptance_outcome_id": "OUTCOME-INTEGRITY",
+          "method_family_fingerprint": "sha256:c95052d5dc3acaaf73754182c23dec77867ab31ef018d5e879e5f2bfb75e62ec",
+          "prior_method_family_id": null,
+          "method_change_evidence_ref": null,
+          "method_change_evidence_fingerprint": null,
+          "lower_complexity_comparison_ref": null,
+          "lower_complexity_comparison_fingerprint": null,
+          "stop_evidence_fingerprints": [],
+          "failed_attempts": 0,
+          "no_progress_attempts": 0,
+          "failures": [],
+          "status": "active",
+          "stop_reason": null
+        }
+      ]
     },
     "gate_receipts": [],
     "diagnostic_evaluation_fingerprints": [
-      "sha256:e0744caf9d3ad8b071df2aeb9c7c1b2a869c9d99bf6f0dadb37cf998a11531a8"
+      "sha256:e0744caf9d3ad8b071df2aeb9c7c1b2a869c9d99bf6f0dadb37cf998a11531a8",
+      "sha256:4dac71df99f7ea848bfd7ffa7ea9a52448da0c5642e28f3984fe1cbf6ee88cdc"
     ],
     "prerequisites": [],
     "authorizations": [],
     "active_attempt": null,
-    "stop_reason": null
+    "stop_reason": null,
+    "state_transitions": [
+      {
+        "kind": "outcome-integrity-control-state-transition-v2",
+        "id": "RC2-EXPENSIVE-BLOCK-001",
+        "transitioned_utc": "2026-08-31T20:47:51Z",
+        "prior_revision": 27,
+        "result_revision": 28,
+        "reason": "Record the exact inherited expensive-attempt admission stop before one bounded RC2 recovery.",
+        "authorization_ref": ".codex/evidence/rc2-expensive-extension-authorization.md",
+        "authorization_fingerprint": "sha256:67c3fdd5c35bd76576f2cdb8a655e3d298a89ffbe360b72a0dff62d18a5ebb28",
+        "recovery_evidence_ref": null,
+        "target_project_state": "blocked",
+        "lineage_id": "LINEAGE-V6-INTERCEPTION",
+        "candidate_fingerprint": "sha256:22179ee2ec1677a2542bb20ec99d4f9aaaaae83eebeba210a96ceddf63ebb146",
+        "scope_fingerprint": "sha256:86ae3c8056c66b4b47a2ed7bd7ae67fc3e3a6d87f80d3b24021582fbd2d646fa",
+        "usage_fingerprint": "sha256:e27f55d0ea95c5eb30d1a61fc49dd11c6e42c3208ac4e06a821df75b3254a320",
+        "usage_anchor": {
+          "total_attempts": 4,
+          "failed_attempts": 0,
+          "expensive_attempts": 2,
+          "support_attempts": 0,
+          "no_progress_attempts": 0,
+          "total_tool_calls": 1,
+          "support_tool_calls": 0,
+          "support_no_progress_calls": 0,
+          "active_attempt_seconds": 8,
+          "spawned_workers": 0,
+          "scope_growth_actions": 0,
+          "path_touches": 0,
+          "hot_path_touches": 0,
+          "failure_class_count": 0,
+          "method_family_count": 1,
+          "path_count": 0
+        },
+        "transition_fingerprint": "sha256:a0769f4858e7ff44ac36c8497918c842b1d5bbba53eb206b4c7c00169448529c"
+      },
+      {
+        "kind": "outcome-integrity-control-state-transition-v2",
+        "id": "RC2-REACTIVATE-001",
+        "transitioned_utc": "2026-08-31T20:48:50Z",
+        "prior_revision": 29,
+        "result_revision": 30,
+        "reason": "Resume only the final RC2 forward proof after the exact one-ceiling extension was recorded.",
+        "authorization_ref": ".codex/evidence/rc2-reactivation-authorization.md",
+        "authorization_fingerprint": "sha256:f26baba376ee0fbcb53a1985e5ec0a5b971a34f44a633ad87e03d45d2d851c8d",
+        "recovery_evidence_ref": ".codex/evidence/rc2-expensive-extension-receipt.json",
+        "target_project_state": "active",
+        "lineage_id": "LINEAGE-V6-INTERCEPTION",
+        "candidate_fingerprint": "sha256:22179ee2ec1677a2542bb20ec99d4f9aaaaae83eebeba210a96ceddf63ebb146",
+        "scope_fingerprint": "sha256:86ae3c8056c66b4b47a2ed7bd7ae67fc3e3a6d87f80d3b24021582fbd2d646fa",
+        "usage_fingerprint": "sha256:e27f55d0ea95c5eb30d1a61fc49dd11c6e42c3208ac4e06a821df75b3254a320",
+        "usage_anchor": {
+          "total_attempts": 4,
+          "failed_attempts": 0,
+          "expensive_attempts": 2,
+          "support_attempts": 0,
+          "no_progress_attempts": 0,
+          "total_tool_calls": 1,
+          "support_tool_calls": 0,
+          "support_no_progress_calls": 0,
+          "active_attempt_seconds": 8,
+          "spawned_workers": 0,
+          "scope_growth_actions": 0,
+          "path_touches": 0,
+          "hot_path_touches": 0,
+          "failure_class_count": 0,
+          "method_family_count": 1,
+          "path_count": 0
+        },
+        "transition_fingerprint": "sha256:e7bba95b1f6bbf280e342ddd95324863d8c8c72f0a8cc5bb0c3b0e537ff7edde"
+      }
+    ],
+    "limit_extensions": [
+      {
+        "kind": "outcome-integrity-limit-extension-v2",
+        "id": "LIMIT-EXT-RC2-EXPENSIVE-001",
+        "applied_utc": "2026-08-31T20:48:30Z",
+        "prior_revision": 28,
+        "result_revision": 29,
+        "reason": "Permit exactly one final expensive RC2 forward proof after inherited RC1 work exhausted the prior ceiling.",
+        "authorization_ref": ".codex/evidence/rc2-expensive-limit-authorization.md",
+        "authorization_fingerprint": "sha256:f509a56ce15e219e62512bb5dd246f43beca98ef59314fcfc3ac48811675d5bd",
+        "receipt_ref": ".codex/evidence/rc2-expensive-extension-receipt.json",
+        "lineage_id": "LINEAGE-V6-INTERCEPTION",
+        "candidate_fingerprint": "sha256:22179ee2ec1677a2542bb20ec99d4f9aaaaae83eebeba210a96ceddf63ebb146",
+        "scope_fingerprint": "sha256:86ae3c8056c66b4b47a2ed7bd7ae67fc3e3a6d87f80d3b24021582fbd2d646fa",
+        "usage_fingerprint": "sha256:e27f55d0ea95c5eb30d1a61fc49dd11c6e42c3208ac4e06a821df75b3254a320",
+        "usage_anchor": {
+          "total_attempts": 4,
+          "failed_attempts": 0,
+          "expensive_attempts": 2,
+          "support_attempts": 0,
+          "no_progress_attempts": 0,
+          "total_tool_calls": 1,
+          "support_tool_calls": 0,
+          "support_no_progress_calls": 0,
+          "active_attempt_seconds": 8,
+          "spawned_workers": 0,
+          "scope_growth_actions": 0,
+          "path_touches": 0,
+          "hot_path_touches": 0,
+          "failure_class_count": 0,
+          "method_family_count": 1,
+          "path_count": 0
+        },
+        "prior_limits": {
+          "total_attempts": 8,
+          "failed_attempts": 4,
+          "equivalent_failures": 2,
+          "expensive_attempts": 2,
+          "support_attempts": 3,
+          "no_progress_attempts": 2,
+          "total_tool_calls": 24,
+          "support_tool_calls": 8,
+          "support_no_progress_calls": 4,
+          "active_attempt_seconds": 3600,
+          "spawned_workers": 2,
+          "scope_growth_actions": 1,
+          "direct_delivery_reserved_calls": 6,
+          "max_path_touches": 12,
+          "max_touches_per_path": 3
+        },
+        "new_limits": {
+          "total_attempts": 8,
+          "failed_attempts": 4,
+          "equivalent_failures": 2,
+          "expensive_attempts": 3,
+          "support_attempts": 3,
+          "no_progress_attempts": 2,
+          "total_tool_calls": 24,
+          "support_tool_calls": 8,
+          "support_no_progress_calls": 4,
+          "active_attempt_seconds": 3600,
+          "spawned_workers": 2,
+          "scope_growth_actions": 1,
+          "direct_delivery_reserved_calls": 6,
+          "max_path_touches": 12,
+          "max_touches_per_path": 3
+        },
+        "extension_fingerprint": "sha256:234eed84cfee91944443c41d8cf26db7b04fbe76004c34a747dc0dc06e83b729"
+      }
+    ],
+    "last_recovery_evidence_ref": ".codex/evidence/rc2-expensive-extension-receipt.json"
   },
-  "current_slice_requirement_id": "REQ-V6-HOOK-CONTRACT",
+  "current_slice_requirement_id": "REQ-V6-FAST-PACKAGE",
   "requirements": [
     {
       "id": "REQ-V4-CONTRACT",
@@ -1160,7 +1374,8 @@
         "CAP-EFFICIENCY",
         "CAP-PACKAGE",
         "CAP-ADMISSION",
-        "CAP-INTERCEPTION"
+        "CAP-INTERCEPTION",
+        "CAP-DIRECT"
       ],
       "identity_ids": [
         "ENTITY-STANDALONE-SKILL"
@@ -1170,7 +1385,9 @@
       ],
       "predecessor_requirement_ids": [
         "REQ-V6-HOOK-CONTRACT",
-        "REQ-V6-HOOK-FORWARD"
+        "REQ-V6-HOOK-FORWARD",
+        "REQ-V6-FAST-CONTRACT",
+        "REQ-V6-FAST-FORWARD"
       ],
       "system_scope": "end-to-end",
       "proof_path": {
@@ -1199,6 +1416,157 @@
         {
           "id": "STEP-HOOK-PACKAGE-LIMIT",
           "description": "Document hosted/specialized coverage gaps and never present the guardrail as absolute platform enforcement."
+        }
+      ],
+      "evidence": [],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V6-FAST-CONTRACT",
+      "description": "A bounded reversible single deliverable stays state-free unless an intrinsic durable condition or explicit tracking request exists.",
+      "required": true,
+      "stage_id": "STAGE-V6-INTERCEPTION",
+      "capability_ids": [
+        "CAP-DIRECT"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "change"
+      ],
+      "predecessor_requirement_ids": [],
+      "system_scope": "interaction",
+      "proof_path": {
+        "origin": "A bounded single-deliverable request with an existing reversible delivery mechanism",
+        "boundary": "Outcome Integrity direct-versus-durable admission and fail-closed initialization",
+        "observation": "Direct work creates no child state; missing, invalid, drive-relative, or link-backed durable inputs are refused without target writes",
+        "fidelity": "production-shaped"
+      },
+      "proof_scope": "Deterministic contract tests cover direct classification, advisory operating bounds, no-write admission refusal, the durable-reason allowlist, idempotence, Windows junctions, drive-relative evidence, and ambiguous-write recovery.",
+      "proof_limits": "Instruction and package tests do not prove every host loads or obeys the skill.",
+      "status": "failing",
+      "minimum_evidence_level": "focused-test",
+      "acceptance_steps": [
+        {
+          "id": "STEP-FAST-CLASSIFY",
+          "description": "Default one bounded reversible deliverable with an existing mechanism to direct delivery without durable state."
+        },
+        {
+          "id": "STEP-FAST-BUDGET",
+          "description": "Declare small behavioral operating bounds for direct work without presenting them as an uninitialized ledger guarantee."
+        },
+        {
+          "id": "STEP-FAST-PROMOTE",
+          "description": "Promote only on an observed durable-work condition or explicit user request, never merely because the task has an external write."
+        },
+        {
+          "id": "STEP-FAST-INIT",
+          "description": "Create durable state only for an allowed intrinsic reason and fail closed on link-backed or non-project evidence paths."
+        }
+      ],
+      "evidence": [],
+      "counterevidence": [
+        {
+          "id": "COUNTER-FAST-LANE-MISSING",
+          "description": "A bounded reversible deliverable passed content checks but accumulated control actions, workers, waits, and custom delivery machinery before completion.",
+          "status": "resolved",
+          "ref": "complete generic single-deliverable incident replay",
+          "summary": "The direct lane now forbids child state and orchestration, while initialization creates nothing without an allowed durable reason.",
+          "observed_utc": "2026-09-01T00:00:00Z",
+          "resolution": "Deterministic no-write, bogus-reason, idempotence, drive-relative, and Windows-junction canaries pass on the current source."
+        }
+      ],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V6-FAST-FORWARD",
+      "description": "Fresh agents deliver bounded reversible work directly, promote genuinely durable work, and query authoritative state after ambiguous writes without inventing a control plane.",
+      "required": true,
+      "stage_id": "STAGE-V6-INTERCEPTION",
+      "capability_ids": [
+        "CAP-DIRECT"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "pre-release"
+      ],
+      "predecessor_requirement_ids": [
+        "REQ-V6-FAST-CONTRACT"
+      ],
+      "system_scope": "interaction",
+      "proof_path": {
+        "origin": "Fresh agents given raw bounded, durable, and ambiguous-write scenarios",
+        "boundary": "Updated Outcome Integrity instructions without the motivating diagnosis",
+        "observation": "Each agent chooses the smallest delivery path and respects the promotion boundary",
+        "fidelity": "production-shaped"
+      },
+      "proof_scope": "Held-out scenarios cover a bounded reversible deliverable, a recurring cross-system service, and a timed-out external write.",
+      "proof_limits": "Finite stochastic scenarios cannot guarantee every model or domain.",
+      "status": "failing",
+      "minimum_evidence_level": "integration",
+      "acceptance_steps": [
+        {
+          "id": "STEP-FAST-FORWARD-DIRECT",
+          "description": "Deliver the bounded task without durable state, workers, or custom orchestration."
+        },
+        {
+          "id": "STEP-FAST-FORWARD-DURABLE",
+          "description": "Promote recurring or multi-stage work to durable controls with a named reason."
+        },
+        {
+          "id": "STEP-FAST-FORWARD-AMBIGUOUS",
+          "description": "Query authoritative write state before retrying or changing delivery architecture."
+        }
+      ],
+      "evidence": [],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V6-FAST-PACKAGE",
+      "description": "The exact fast-lane source passes full validation, isolated installation parity, generic-source checks, and prerelease publication without claiming stable live-hook enforcement.",
+      "required": true,
+      "stage_id": "STAGE-V6-INTERCEPTION",
+      "capability_ids": [
+        "CAP-DIRECT"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "release"
+      ],
+      "predecessor_requirement_ids": [
+        "REQ-V6-FAST-CONTRACT",
+        "REQ-V6-FAST-FORWARD"
+      ],
+      "system_scope": "end-to-end",
+      "proof_path": {
+        "origin": "Exact generic fast-lane source candidate",
+        "boundary": "Full tests, official validation, isolated installer parity, and GitHub prerelease workflow",
+        "observation": "Verified source is installed and published as a prerelease while stable live-hook proof remains open",
+        "fidelity": "production"
+      },
+      "proof_scope": "Full deterministic suite, compilation, skill validation, state gates, isolated install parity, generic-source scan, CI, merge, tag, and public prerelease.",
+      "proof_limits": "Publication and installation do not establish active hook trust or universal future behavior.",
+      "status": "failing",
+      "minimum_evidence_level": "end-to-end",
+      "acceptance_steps": [
+        {
+          "id": "STEP-FAST-PACKAGE-TEST",
+          "description": "Pass deterministic, compilation, official-skill, and project-state gates."
+        },
+        {
+          "id": "STEP-FAST-PACKAGE-INSTALL",
+          "description": "Install idempotently and match the managed source tree and global rule block."
+        },
+        {
+          "id": "STEP-FAST-PACKAGE-RELEASE",
+          "description": "Pass CI and publish the exact merge commit as a non-stable prerelease."
         }
       ],
       "evidence": [],

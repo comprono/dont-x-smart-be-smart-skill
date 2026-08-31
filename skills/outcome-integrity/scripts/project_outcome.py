@@ -10,10 +10,11 @@ import json
 import os
 import re
 import shutil
+import stat
 import sys
 import tempfile
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 
@@ -66,6 +67,14 @@ SCOPE_GROWTH_VALUES = {
     "architecture",
     "operations",
     "custody",
+}
+DURABLE_INIT_REASONS = {
+    "multi-deliverable",
+    "multi-system",
+    "persistent",
+    "recurring-unattended",
+    "irreversible-high-impact",
+    "explicit-user-request",
 }
 TOOL_OBSERVATION_OUTCOMES = {"completed", "failed", "aborted"}
 READ_ONLY_TOOL_NAMES = {
@@ -403,7 +412,22 @@ def project_paths(root: str | Path) -> tuple[Path, Path]:
     return resolved / PROJECT_RELATIVE_PATH, resolved / ACCEPTANCE_RELATIVE_PATH
 
 
-def initialize(root: str | Path) -> dict[str, object]:
+def path_is_link_like(path: Path) -> bool:
+    try:
+        metadata = os.lstat(path)
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return True
+    return stat.S_ISLNK(metadata.st_mode) or bool(
+        getattr(metadata, "st_file_attributes", 0)
+        & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    )
+
+
+def initialize(
+    root: str | Path, *, durable_reason: str | None = None
+) -> dict[str, object]:
     project_path, acceptance_path = project_paths(root)
     asset_root = Path(__file__).resolve().parent.parent / "assets"
     templates = {
@@ -411,6 +435,40 @@ def initialize(root: str | Path) -> dict[str, object]:
         acceptance_path: asset_root / "ACCEPTANCE.template.json",
     }
     created: list[str] = []
+
+    state_directory = project_path.parent
+    unsafe_state_paths = [
+        path for path in (state_directory, *templates) if path_is_link_like(path)
+    ]
+    if unsafe_state_paths:
+        return {
+            "ok": False,
+            "paths": paths_payload(project_path, acceptance_path),
+            "created": created,
+            "errors": [
+                "durable project state refuses symlink or junction paths: "
+                + ", ".join(str(path) for path in unsafe_state_paths)
+            ],
+        }
+
+    missing = [target for target in templates if not target.exists()]
+    if not missing:
+        return {
+            "ok": True,
+            "paths": paths_payload(project_path, acceptance_path),
+            "created": created,
+            "durable_reason": None,
+        }
+    if durable_reason not in DURABLE_INIT_REASONS:
+        return {
+            "ok": False,
+            "paths": paths_payload(project_path, acceptance_path),
+            "created": created,
+            "errors": [
+                "durable project state requires --durable-reason naming an intrinsic outcome property; bounded reversible work must stay on the direct-delivery lane"
+            ],
+            "allowed_durable_reasons": sorted(DURABLE_INIT_REASONS),
+        }
 
     for target, template in templates.items():
         if target.exists():
@@ -430,6 +488,7 @@ def initialize(root: str | Path) -> dict[str, object]:
         "ok": True,
         "paths": paths_payload(project_path, acceptance_path),
         "created": created,
+        "durable_reason": durable_reason,
     }
 
 
@@ -4184,7 +4243,13 @@ def normalize_declared_relative_path(value: object) -> str | None:
         return None
     normalized = value.strip().replace("\\", "/")
     path = Path(normalized)
-    if path.is_absolute() or ".." in path.parts:
+    windows_path = PureWindowsPath(normalized)
+    if (
+        path.is_absolute()
+        or windows_path.is_absolute()
+        or bool(windows_path.drive)
+        or ".." in path.parts
+    ):
         return None
     cleaned = path.as_posix().strip("/")
     return cleaned or "."
@@ -4333,6 +4398,20 @@ def path_resolves_within_root(root: Path, relative_path: str) -> bool:
         return True
     except (OSError, ValueError):
         return False
+
+
+def path_has_link_component(root: Path, relative_path: str) -> bool:
+    normalized = normalize_declared_relative_path(relative_path)
+    if normalized is None:
+        return True
+    current = root.resolve()
+    if normalized == ".":
+        return path_is_link_like(current)
+    for part in Path(normalized).parts:
+        current = current / part
+        if (current.exists() or current.is_symlink()) and path_is_link_like(current):
+            return True
+    return False
 
 
 def path_is_allowed(path: str, allowed_paths: list[str]) -> bool:
@@ -4506,7 +4585,11 @@ def calculate_causal_evidence_fingerprint(
         return None
     path = root / Path(normalized)
     try:
-        if not path.is_file():
+        if (
+            not path.is_file()
+            or not path_resolves_within_root(root, normalized)
+            or path_has_link_component(root, normalized)
+        ):
             return None
         return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
     except OSError:
@@ -6102,6 +6185,42 @@ def stopped_limit_has_fired(control: dict[str, Any]) -> bool:
     )
 
 
+def exhausted_attempt_admission_limits(control: dict[str, Any]) -> list[str]:
+    limits = control.get("limits") if isinstance(control.get("limits"), dict) else {}
+    usage = control.get("usage") if isinstance(control.get("usage"), dict) else {}
+    fields = (
+        "total_attempts",
+        "expensive_attempts",
+        "support_attempts",
+        "active_attempt_seconds",
+    )
+    return [
+        field
+        for field in fields
+        if isinstance(usage.get(field), int)
+        and isinstance(limits.get(field), int)
+        and usage[field] >= limits[field]
+    ]
+
+
+def parsed_attempt_admission_stop(
+    stop_reason: object, exhausted_limits: list[str]
+) -> list[str]:
+    prefix = "attempt admission exhausted: "
+    if not isinstance(stop_reason, str) or not stop_reason.startswith(prefix):
+        return []
+    declared = [field.strip() for field in stop_reason[len(prefix) :].split(",")]
+    if (
+        not declared
+        or any(not field for field in declared)
+        or len(declared) != len(set(declared))
+        or stop_reason != prefix + ", ".join(declared)
+        or any(field not in exhausted_limits for field in declared)
+    ):
+        return []
+    return declared
+
+
 def validate_limit_extension_request(
     data: dict[str, Any], request: dict[str, Any], root: Path
 ) -> tuple[dict[str, Any] | None, list[str]]:
@@ -6616,7 +6735,8 @@ def state_transition(root: str | Path, request_path: str | Path, expected_revisi
             if len(PROJECT_UPDATED_PATTERN.findall(text)) != 1 or len(PROJECT_STATE_PATTERN.findall(text)) != 1:
                 return {"ok": False, "command": "state-transition", "errors": ["PROJECT_OUTCOME state markers are invalid"]}
             proposed = json.loads(json.dumps(data)); proposed_control = proposed["execution_control"]; now = utc_now()
-            record = {"kind": STATE_TRANSITION_KIND, "id": request["id"], "transitioned_utc": now, "prior_revision": expected_revision, "result_revision": expected_revision + 1, "reason": request["reason"].strip(), "authorization_ref": auth_ref, "authorization_fingerprint": authorization_fingerprint, "recovery_evidence_ref": recovery_ref, "target_project_state": target, "lineage_id": lineage.get("id"), "candidate_fingerprint": candidate.get("fingerprint"), "scope_fingerprint": lineage.get("scope_fingerprint"), "usage_fingerprint": canonical_fingerprint(control["usage"]), "usage_anchor": compact_usage_anchor(control["usage"])}
+            source_stop_reason = control.get("stop_reason")
+            record = {"kind": STATE_TRANSITION_KIND, "id": request["id"], "transitioned_utc": now, "prior_revision": expected_revision, "result_revision": expected_revision + 1, "reason": request["reason"].strip(), "authorization_ref": auth_ref, "authorization_fingerprint": authorization_fingerprint, "recovery_evidence_ref": recovery_ref, "target_project_state": target, "lineage_id": lineage.get("id"), "candidate_fingerprint": candidate.get("fingerprint"), "scope_fingerprint": lineage.get("scope_fingerprint"), "usage_fingerprint": canonical_fingerprint(control["usage"]), "usage_anchor": compact_usage_anchor(control["usage"]), "source_stop_reason": source_stop_reason, "source_stop_reason_fingerprint": canonical_fingerprint(source_stop_reason)}
             record["transition_fingerprint"] = canonical_fingerprint(record)
             proposed_control.setdefault("state_transitions", []).append(record)
             proposed["project_state"] = target; proposed["updated_utc"] = now; proposed_control["reconciled_utc"] = now; proposed_control["revision"] = expected_revision + 1
@@ -6693,41 +6813,54 @@ def limit_extend(
                     "command": "limit-extend",
                     "errors": ["limit extension requires a stopped control with no active attempt"],
                 }
-            total_attempts_exhausted = (
-                control.get("usage", {}).get("total_attempts", 0)
-                >= control.get("limits", {}).get("total_attempts", 1)
-            )
-            direct_total_attempt_admission_stop = (
-                control.get("stop_reason") == "attempt admission exhausted: total_attempts"
+            exhausted_admission_limits = exhausted_attempt_admission_limits(control)
+            stop_reason = control.get("stop_reason")
+            direct_attempt_admission_stop = bool(
+                parsed_attempt_admission_stop(stop_reason, exhausted_admission_limits)
             )
             transitions = control.get("state_transitions")
             last_transition = transitions[-1] if isinstance(transitions, list) and transitions else {}
-            blocked_total_attempt_admission_stop = (
+            source_stop_reason = (
+                last_transition.get("source_stop_reason")
+                if isinstance(last_transition, dict)
+                else None
+            )
+            transition_payload = (
+                {
+                    field: value
+                    for field, value in last_transition.items()
+                    if field != "transition_fingerprint"
+                }
+                if isinstance(last_transition, dict)
+                else {}
+            )
+            blocked_attempt_admission_stop = (
                 isinstance(last_transition, dict)
+                and last_transition.get("kind") == STATE_TRANSITION_KIND
                 and last_transition.get("target_project_state") == "blocked"
                 and last_transition.get("result_revision") == control.get("revision")
                 and last_transition.get("usage_fingerprint") == canonical_fingerprint(control.get("usage"))
-                and (
-                    (
-                        last_transition.get("kind") == LEGACY_STATE_TRANSITION_KIND
-                        and last_transition.get("usage_snapshot") == control.get("usage")
-                    )
-                    or (
-                        last_transition.get("kind") == STATE_TRANSITION_KIND
-                        and last_transition.get("usage_anchor")
-                        == compact_usage_anchor(control.get("usage"))
+                and last_transition.get("usage_anchor")
+                == compact_usage_anchor(control.get("usage"))
+                and last_transition.get("source_stop_reason_fingerprint")
+                == canonical_fingerprint(source_stop_reason)
+                and bool(
+                    parsed_attempt_admission_stop(
+                        source_stop_reason, exhausted_admission_limits
                     )
                 )
+                and last_transition.get("transition_fingerprint")
+                == canonical_fingerprint(transition_payload)
                 and control.get("stop_reason") == "project state transitioned to blocked: " + str(last_transition.get("reason", ""))
             )
-            total_attempt_admission_exhausted = total_attempts_exhausted and (
-                direct_total_attempt_admission_stop or blocked_total_attempt_admission_stop
+            attempt_admission_exhausted = bool(exhausted_admission_limits) and (
+                direct_attempt_admission_stop or blocked_attempt_admission_stop
             )
-            if not stopped_limit_has_fired(control) and not total_attempt_admission_exhausted:
+            if not stopped_limit_has_fired(control) and not attempt_admission_exhausted:
                 return {
                     "ok": False,
                     "command": "limit-extend",
-                    "errors": ["limit extension requires a fired failure/no-progress limit or exact total-attempt admission exhaustion"],
+                    "errors": ["limit extension requires a fired failure/no-progress limit or exact attempt-admission exhaustion"],
                 }
             normalized_request, request_errors = validate_limit_extension_request(
                 data, request, resolved_root
@@ -7358,6 +7491,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--payload", help="JSON host-hook payload file")
     parser.add_argument("--expected-revision", type=int, help="Required optimistic control revision")
     parser.add_argument(
+        "--durable-reason",
+        help=(
+            "Required to initialize durable state: multi-deliverable, multi-system, "
+            "persistent, recurring-unattended, irreversible-high-impact, or explicit-user-request"
+        ),
+    )
+    parser.add_argument(
         "--observed-evaluation-fingerprint",
         action="append",
         default=[],
@@ -7369,7 +7509,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     if args.command == "init":
-        result = initialize(args.root)
+        result = initialize(args.root, durable_reason=args.durable_reason)
     elif args.command == "path":
         project_path, acceptance_path = project_paths(args.root)
         result = {"ok": True, "paths": paths_payload(project_path, acceptance_path)}

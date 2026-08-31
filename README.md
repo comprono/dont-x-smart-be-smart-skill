@@ -7,8 +7,8 @@ A community Codex skill for keeping long, complicated project work aligned with 
 
 Long agent sessions can drift after context compaction, promote an add-on into the main objective, mistake momentum for focus, fixate on a method, confuse activity with progress, repeat the same failed patch, or spend more tokens coordinating work than completing it. This repository provides three layers:
 
-1. A concise global Codex rule block that activates outcome integrity for nontrivial project work.
-2. The `outcome-integrity` skill, which maintains bounded human intent and machine-verifiable acceptance inside each active project.
+1. A concise global Codex rule block that keeps bounded work direct and activates durable controls only when the outcome requires them.
+2. The `outcome-integrity` skill, which maintains bounded intent and machine-verifiable acceptance for admitted durable projects.
 3. An optional synchronous Codex hook that denies covered material tool calls unless the real tool proposal consumes an exact, bounded schema-v6 reservation.
 
 `PROJECT_OUTCOME.md` preserves the north star, current stage, active slice, user intent, causal boundary, stop constraints, facts, failures, and next action. Schema-v6 `ACCEPTANCE.json` owns the parent chain plus permanent capability floors, balanced fitness dimensions, proof ladders, exact identities, evidence, and a candidate-bound atomic attempt ledger. Git owns history; neither state file is an activity transcript.
@@ -90,6 +90,16 @@ python scripts/install.py --skip-global-rules
 
 ## How It Works
 
+### Direct delivery first
+
+One bounded, reversible deliverable stays state-free when it has one acceptance observation, one repository or surface, at most one production boundary, resolved identity and authority, and no recurring or unattended lifecycle. Its default operating bounds are 8 tool calls, 3 support calls before delivery, 6 files, 0 workers, 2 planned interim updates, one focused verification, and one retry only after a causal boundary change. These are behavioral bounds, not ledger enforcement before durable state exists.
+
+That lane uses only `deliverable -> acceptance check`. It does not create `.codex` state, a nested project root, a plan artifact, workers, a custom framework, a publisher, or control-plane architecture. Difficulty, a failed preferred method, or an attractive architecture cannot promote a simple outcome. An ambiguous external write is resolved by querying authoritative state or an idempotency key before retrying.
+
+Durable control is admitted only when the outcome intrinsically needs dependent deliverables, multiple repositories or external systems, persistence across turns or restarts, recurring or unattended operation, irreversible or high-impact effects, or the user explicitly requests durable tracking. Under an existing valid parent, the bounded feature is one direct slice governed by that parent's reservations and budgets; a child project is never initialized for it.
+
+### Durable project control
+
 Before substantive work, Codex forms a parented outcome stack: enduring north star, current delivery stage, capability milestone, acceptance slice, and next action. Every action must close a named descendant gap. A passing slice cannot complete its stage, and a complete stage cannot achieve the north star without declared coverage.
 
 Accepted behavior that later work must not break becomes a permanent capability floor. Each floor gets a cheap deterministic change gate, a representative pre-release canary, and a whole-system release checkpoint. The cheap gate must start at the real upstream producer and cross the same decision boundary; a fixture cannot inject the already-correct state whose creation is under test. The fitness function keeps useful output, quality, efficiency, and safety visible together, while optional profiles, caches, and learned history must pass a clean-state independence gate.
@@ -106,7 +116,7 @@ Before recurring or unattended work is enabled, Codex records a proportional ope
 
 Explicitly named people, accounts, tools, providers, runtimes, repositories, credentials, sessions, systems, files, and resources remain distinct until substitution is authorized or equivalence is proven. Conflicting observations are retained as counterevidence and reconciled on the same identity and access surface; a convenient alternative does not erase the conflict.
 
-For a nontrivial project, Codex reads or creates:
+For an admitted durable project, Codex reads or creates:
 
 ```text
 <project-root>/.codex/
@@ -115,6 +125,14 @@ For a nontrivial project, Codex reads or creates:
 ```
 
 Codex first verifies that declared root markers belong to the selected project, then reconciles both files with the latest user instruction and current evidence. The newest explicit correction wins. Contradictions remain visible until resolved. Add-ons and proof slices stay separate from the product outcome.
+
+New durable state requires an intrinsic admission reason:
+
+```powershell
+python ~/.codex/skills/outcome-integrity/scripts/project_outcome.py init --root . --durable-reason multi-deliverable
+```
+
+Accepted reasons are `multi-deliverable`, `multi-system`, `persistent`, `recurring-unattended`, `irreversible-high-impact`, and `explicit-user-request`. Calling `init` without one creates nothing; an already initialized project remains idempotent. The allowlist prevents accidental initialization but cannot prove that a caller's asserted reason is semantically true.
 
 Project state updates only after a material transition: changed intent, verified progress, a disproven assumption, a confirmed root cause, a changed recovery path, or a new current slice. Routine status and tool activity are excluded.
 
