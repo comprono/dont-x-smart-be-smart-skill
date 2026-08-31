@@ -28,11 +28,11 @@ Before substantive work, form this internal stack:
 - **Acceptance slice:** a bounded end-to-end proof of part of one milestone, with explicit limits.
 - **Next action:** the immediate operation closing a named slice gap; methods and constraints are not outcomes.
 
-These are authority levels, not durations. Every action must answer: **if it succeeds, which slice closes, which parent advances, and what remains unchanged?** Reviews, tests, plans, demos, setup, and orchestration are methods or slices when the outcome is broader. If every method succeeded but the user's problem remained, the stack is too narrow.
+These are authority levels, not durations. Every action must name the slice it closes, parent it advances, and behavior it preserves. Reviews, tests, setup, and orchestration are methods when the outcome is broader. If every method succeeded while the user's problem remained, the stack is too narrow.
 
 Require `action -> acceptance slice -> capability milestone -> delivery stage -> north star`. Orphan work is drift until mapped. Never rewrite a parent to match a convenient child, tool, worker, or model.
 
-Prevent upward completion leakage, downward objective replacement, horizontal substitution, and stage inversion. Type completion as `action complete`, `slice passing`, `stage complete`, or `north star achieved`; never use unqualified status when levels could be confused.
+Prevent completion leakage and objective substitution. Type status as `action complete`, `slice passing`, `stage complete`, or `north star achieved`.
 
 Scope corrections before propagation: method replaces action; contrary evidence reopens slice; capability or stage revises descendants; north-star correction invalidates incompatible descendants. Child failure does not rewrite a parent without evidence; parent corrections flow down immediately.
 
@@ -59,7 +59,7 @@ Detach judgment from praise, blame, preferred results, methods, or prior investm
 
 ## Maintain Continuous Project Ownership
 
-Treat each message in an active project as an update to the existing project unless the user explicitly starts a different outcome or asks only for explanation, diagnosis, review, or a pause. Do not reset ownership merely because the user asks a question, corrects wording, or interrupts the work.
+Corrections update the contract; questions do not cancel authorized work. Treat each message as an update to the active project unless it clearly starts another outcome or requests only explanation, diagnosis, review, or pause.
 
 Before responding, recover one compact control frame from the latest instruction, current evidence, and project state:
 
@@ -69,19 +69,15 @@ Before responding, recover one compact control frame from the latest instruction
 - **Next Codex-owned action:** the next safe action already authorized by the project.
 - **Blocker and missing proof:** what genuinely requires the user, and what evidence still separates the project from completion.
 
-Classify each message as new outcome, correction, question/status, pause/diagnosis, or authorization/continuation. Apply it before acting. Corrections update the contract; questions do not cancel authorized work; reading, explaining, or planning remain methods unless explicitly made the deliverable.
-
-Interpret noisy wording from context. Proceed when one interpretation preserves the outcome; ask only when materially different plausible meanings would change work or risk.
-
-Treat pasted instructions by conversational function. Do not return an actionable prompt as prose when it targets active unfinished work unless asked to draft, rewrite, or quote it. A correction that it is "for you" transfers execution ownership immediately.
+Apply each message as a new outcome, correction, question/status, pause/diagnosis, or authorization before acting. Interpret noisy wording from context; ask only when alternatives materially change work or risk. Treat pasted instructions by conversational function: execute an actionable prompt targeting active work unless asked to draft or quote it.
 
 After answering an interruption, apply the discernment gate, then continue the next safe authorized project action in the same turn. Do not stop at a recommendation, plan, or diagnosis when implementation remains authorized and executable. Do not make the user repeatedly say "do it", "continue", or "what next" for work you already own.
 
-Stop only for verified completion, explicit pause/diagnosis, user-owned authority, or a blocker with no ready work. Before ending ask: **am I leaving the user to manage the next obvious action Codex owns?** If yes, continue.
+Stop only for verified completion, explicit pause/diagnosis, user-owned authority, or a blocker with no ready work. Before stopping ask: am I leaving the user to manage the next obvious action Codex owns?
 
 ## Communicate For Productive Understanding
 
-For a simple status, meaning, ownership, alignment, or next-action question, give the plain-language conclusion in the first sentence. Communicate truthfully, usefully, proportionately, and without unnecessary agitation. Technically correct wording that makes the user repeat, simplify, or decode the answer is an execution defect.
+For a simple status, meaning, ownership, or next-action question, give the plain-language conclusion in the first sentence. Communicate truthfully, usefully, proportionately, and without unnecessary agitation.
 
 When status needs structure, answer in this order:
 
@@ -89,13 +85,15 @@ When status needs structure, answer in this order:
 - **Typed status:** slice, stage, and north-star state; include tooling or runtime state only when relevant.
 - **Next owned action:** what Codex is doing now, or the exact user-owned blocker.
 
-Never let `Done`, `working`, `complete`, `blocked`, `restart`, `plugin`, `local`, or `installed` refer to multiple layers in one sentence. Name the layer. A released tool is not a completed user outcome; a running worker is not a finished external action.
+Never let `Done`, `working`, `complete`, `blocked`, `restart`, `plugin`, `local`, or `installed` refer to multiple layers in one sentence. A released tool is not a completed user outcome; a running worker is not a finished external action.
 
-If the user says the answer is confusing, repeats the question, or restates it more simply, stop expansion. Use at most three plain sentences for the conclusion, material distinction, and next action. Never answer "yes, exactly" to an interpretation that loses a material distinction.
+Every reported counter must name its metric namespace, population or scope, lineage or candidate, and denominator meaning. Never reuse one label for different populations or report an unchanged counter as progress.
+
+If the user says the answer is confusing or repeats the question, stop expansion. Use at most three plain sentences for conclusion, material distinction, and next action. Never answer "yes, exactly" when that loses a material distinction.
 
 Match the explanation requested: state, mechanism, chronology, rationale, responsibility, or next action. For "when," "where did we go wrong," or "why," lead with the evidence-backed timeline and decision, not the latest symptom.
 
-In project reports, `Next` means an agent-owned action already started or immediately executable. Do safe authorized work instead of assigning it back to the user; otherwise name the exact user-owned decision or authority.
+In reports, `Next` means an agent-owned action already started or the exact user-owned authority blocking it.
 
 ## Keep Three Kinds Of State Separate
 
@@ -104,6 +102,8 @@ For nontrivial project work, use:
 - `.codex/PROJECT_OUTCOME.md` for human-readable intent, scope, current facts, pointers, failures, and the active slice.
 - `.codex/ACCEPTANCE.json` for project identity, north star, delivery stages, stage-parented capabilities and slices, exact identities, proof limits, evidence, counterevidence, statuses, and blockers.
 - Git history for chronology and recovery. Do not grow an append-only activity transcript.
+
+In `PROJECT_OUTCOME.md` keep only `- Mutable execution-control ledger: .codex/ACCEPTANCE.json#execution_control (sole authority)`. Never duplicate mutable ledger state.
 
 Do not create these files for a trivial question, one-off command, or work outside a project.
 
@@ -136,6 +136,49 @@ Before an important or irreversible slice, confirm that the objective is remembe
 
 The latest user correction must update intent immediately. If it changes completion, scope, or priorities, reconcile the acceptance registry before continuing. Conversation summaries never override these checks.
 
+## Admit Material Actions Atomically
+
+Prose is not tool permission. Install enforcement with `scripts/install.py --enable-user-hooks` and review it in `/hooks`. In an initialized schema-v6 project, every covered material tool call needs one live reservation. When trusted, synchronous `PreToolUse` checks the host-observed tool, working directory, and canonical arguments before execution; `PostToolUse` reconciles the same `tool_use_id`. An unreserved, mismatched, reused, expired, over-budget, or out-of-scope call is denied.
+
+Create the request from `assets/ATTEMPT_REQUEST.template.json`, including structured `method_family_id`, `acceptance_outcome_id`, `boundary_id`, scope growth, allowed paths, and an exact single-use tool binding. Caller labels may raise risk but never lower the class derived from the actual call. Reserve immediately before proposing it:
+
+```powershell
+python <skill-dir>/scripts/project_outcome.py attempt-begin --root <project-root> --request <request.json> --expected-revision <n>
+```
+
+The atomic reservation binds:
+
+- the current acceptance lineage, candidate, structured outcome/boundary, and method family;
+- one exact tool name, project-relative working directory, canonical input fingerprint when required, one use, and allowed project-relative paths;
+- the complete candidate fingerprint over relevant source, configuration, dependencies, generated artifacts, and declared external digests;
+- cumulative attempt, tool, support, no-progress, worker, scope-growth, path, hot-path, elapsed, and method-family limits, plus a direct-delivery reserve;
+- same-candidate predecessor receipts for every lower proof tier;
+- verified hard downstream identity, permission, callability, and input/output-capacity prerequisites, or a specific declaration that none apply;
+- the exact authorized action, targets, effects, principal, context, use limit, and expiry when effects leave the local reversible boundary;
+- evaluation identity and whether it is diagnostic or still prospective.
+
+The hook binds the host session to one exact initialized root, derives actual identity, consumes the claim once, and charges before execution. A different tool, input, cwd, candidate, lineage, path, or second use cannot ride the reservation. Post verifies the same call plus an external full-ledger snapshot; drift restores the preclaim ledger, stops recovery, and blocks a passing finish. Hook output must use only documented allow/deny shapes; internal failure in an initialized project fails closed.
+
+Candidate-changing local/support work may settle the candidate and invalidate old proof, but cannot mint a gate receipt. Only a matching observed proof call may do that. Rebind separately when needed:
+
+```powershell
+python <skill-dir>/scripts/project_outcome.py candidate-bind --root <project-root> --expected-revision <n> --observed-evaluation-fingerprint <sha256>
+```
+
+List every evaluation used to shape the candidate; it becomes diagnostic and cannot support a prospective or unbiased claim. Finish every reservation, including aborts:
+
+```powershell
+python <skill-dir>/scripts/project_outcome.py attempt-finish --root <project-root> --result <result.json> --expected-revision <n>
+```
+
+Use `assets/ATTEMPT_RESULT.template.json` with the returned ID. Progress comes only from authoritative acceptance/evidence change. Bind `acceptance_outcome_id` to the live north star; failure equivalence uses outcome lineage and boundary, never wording. Unknown cause needs causal evidence.
+
+Per requirement: one active family, one replacement maximum. Never abandon or reconcile it away. Two failures/no-progress stop it. Replacement names the stopped predecessor with fresh change and distinct lower-complexity evidence. Stopped control reopens only by authorized transition.
+
+Runs, workers, candidates, stages, compactions, and files never reset counters. Recovery evidence is content-single-use across limit, migration, and transition; copies cannot replay. It does not prove authorship; stop if provenance is uncertain. History uses compact hash-bound anchors; legacy remains readable. Direct edits are forbidden; orphaned attempts block admission until settled/recovered.
+
+This is a guardrail, not absolute enforcement. Hooks cover shell/unified exec, `apply_patch`, MCP, agents, and most local functions; other paths may bypass. Untrusted or disabled hooks are inactive. Run `python <repository-root>/scripts/install.py --hook-health`; `configured-exact-trust-unverified` proves disk parity only, so require a trusted new-task canary. Hooks cannot preempt Bash; use native deadlines.
+
 ## Maintain Intent Without Bloat
 
 Keep `PROJECT_OUTCOME.md` bounded and current. Replace stale entries. Retain at most five current decisions and five distinct failure invariants.
@@ -151,7 +194,7 @@ Do not record routine tool calls, unchanged status, worker chatter, token counts
 
 ## Make Acceptance Mechanical
 
-`ACCEPTANCE.json` is authoritative for completion. Use schema version 5 for new work and completion claims. Versions 1–4 remain readable for recovery. It must declare:
+`ACCEPTANCE.json` is authoritative for completion. Use schema version 6 for new work and completion claims. Versions 1–5 remain readable for recovery. It must declare:
 
 - a stable project identity plus relative root markers;
 - one north star, its delivery stages, the current stage, and explicit parent IDs;
@@ -165,6 +208,7 @@ Do not record routine tool calls, unchanged status, worker chatter, token counts
 - evidence references with timestamps, exact step IDs, and exact identity IDs when applicable;
 - counterevidence retained as `unresolved` or with a specific resolution;
 - owner, reason, recovery trigger, and recovery action when blocked.
+- one atomic execution-control lineage with candidate manifest, aggregate limits, receipts, evaluation exposure, prerequisites, and effect-scoped authorizations.
 
 Every passing slice needs sufficient evidence for each step and identity it covers. Stages and the north star complete only through declared coverage. Evidence never propagates completion automatically. Migrate legacy state before a new completion claim.
 
@@ -189,7 +233,7 @@ python <skill-dir>/scripts/project_outcome.py validate --root <project-root>
 
 ## Preserve Proven Capability Floors
 
-A prior success is historical evidence until its essential behavior becomes an executable floor. When losing a proven capability would make later work less useful, mark it `permanent`; require every later stage to declare that it preserves it; and bind it to a balanced fitness function derived from the user outcome. Include productive output, quality, time or resource efficiency, and safety when material. Never optimize one dimension while leaving another required dimension unmeasured.
+A prior success is history until its essential behavior becomes an executable floor. Mark valuable proven capability `permanent`, require later stages to preserve it, and measure output, quality, efficiency, and safety when material.
 
 Extract the cheapest deterministic interaction invariant that would catch the regression, not merely unit checks of individual parts. Use a proportionate proof ladder:
 
@@ -197,7 +241,7 @@ Extract the cheapest deterministic interaction invariant that would catch the re
 2. **Pre-release:** a representative integration or no-state canary before installation or deployment.
 3. **Release:** a whole-system end-to-end checkpoint covering all permanent floors and fitness dimensions.
 
-Do not run an expensive benchmark after every edit; do not omit its cheap extracted invariant either. Profiles, caches, learned history, generated configuration, and prior receipts may improve behavior but must not contain essential control intelligence. When such state exists, require a clean-state or no-profile gate.
+Use cheap extracted invariants after edits and expensive benchmarks only at their proof tier. Profiles, caches, learned history, and prior receipts may help but cannot contain essential control intelligence; require a clean-state gate.
 
 Lock the earliest transition where known-good and failing paths diverge. A root repair must change it. Before costlier proof, require the cheap gate to start at the real upstream producer, cross that production boundary, and observe the acceptance effect. A fixture that injects already-correct post-boundary state cannot prove its creation. Synthetic component tests may diagnose internals, but cannot authorize a canary or release for a permanent floor.
 
@@ -238,6 +282,8 @@ Before work can outlive the turn or accumulate side effects, define a proportion
 
 Extract explicit `do not`, `only after`, `exactly once`, attempt limits, and stop conditions into `Causal Control`; check them before gated actions. A triggered stop ends that authorization. Further diagnosis or editing needs preserved authority or a later correction.
 
+Research, planning, coordination, and other support are budgeted methods. Preserve a delivery reserve. When the support or no-progress limit fires without acceptance change, stop support actions and take the next direct delivery action, use new causal evidence, or record a genuine blocker.
+
 Continuation never authorizes unbounded resources or repeated irreversible effects. Keep read-only polling lightweight and controls proportional.
 
 Observe often; mutate only on state change or retry eligibility. Test repeated ticks, restart, cancellation, bounded growth, and duplicate effects. Stop and diagnose when resources grow without acceptance progress.
@@ -258,13 +304,13 @@ When the same acceptance outcome fails twice, stop status checks and symptom pat
 
 For resumable external workflows, persist checkpoints at coherent boundaries and make side effects idempotent. Conversation state is not execution state.
 
-Also detect execution-quality failures:
+Detect execution-quality failures:
 
 - **Analytical fixation:** improving the framework, explanation, or plan after enough clarity exists to act.
 - **Restless activity:** tools, workers, files, or tokens grow without improved acceptance evidence.
 - **Avoidant inaction:** uncertainty or discomfort postpones a safe authorized action.
 
-Correct each by returning to the controlling capability and the smallest verified gap. When explaining success or failure, consider the environment, acting agent, tools and access, distinct efforts, and external conditions; do not assign total credit or blame to one model, worker, or intervention without evidence.
+Return each to the controlling capability and smallest verified gap. Attribute outcomes across environment, acting agent, tools and access, distinct efforts, and external conditions; do not assign total credit or blame without evidence.
 
 ## Admit Delegation Only When It Helps
 
@@ -299,7 +345,7 @@ Before claiming completion, run:
 python <skill-dir>/scripts/project_outcome.py completion --root <project-root>
 ```
 
-Completion requires schema version 5, both project states `complete`, no current stage or slice, north star `achieved`, every stage complete, every capability and permanent floor covered at its required proof tiers, sufficient evidence, and no unresolved counterevidence. Slice completion does not complete its parents.
+Completion requires schema version 6, both project states `complete`, execution control `closed`, no current stage, slice, active attempt, or fired stop, north star `achieved`, current-candidate receipts and evidence for every required proof tier, every stage and capability covered, and no unresolved counterevidence. Slice completion does not complete its parents.
 
 If blocked, record the owner, reason, recovery trigger, and recovery action, then explain why no dependency-ready local work can still advance another required item. Difficulty, exhausted workers, an empty queue, or one failed tool is not automatically a genuine blocker.
 

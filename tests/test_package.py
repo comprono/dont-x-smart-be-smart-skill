@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
+import os
+import shutil
+import socket
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
@@ -20,6 +25,27 @@ PROJECT_TEMPLATE = (
     / "outcome-integrity"
     / "assets"
     / "PROJECT_OUTCOME.template.md"
+)
+ACCEPTANCE_TEMPLATE = (
+    REPOSITORY_ROOT
+    / "skills"
+    / "outcome-integrity"
+    / "assets"
+    / "ACCEPTANCE.template.json"
+)
+ATTEMPT_REQUEST_TEMPLATE = (
+    REPOSITORY_ROOT
+    / "skills"
+    / "outcome-integrity"
+    / "assets"
+    / "ATTEMPT_REQUEST.template.json"
+)
+ATTEMPT_RESULT_TEMPLATE = (
+    REPOSITORY_ROOT
+    / "skills"
+    / "outcome-integrity"
+    / "assets"
+    / "ATTEMPT_RESULT.template.json"
 )
 OPENAI_YAML = (
     REPOSITORY_ROOT / "skills" / "outcome-integrity" / "agents" / "openai.yaml"
@@ -100,6 +126,7 @@ State: {state}
 - Production-path proof: Real producer to decision boundary to acceptance observation.
 - Stop conditions and attempt limits: Stop after two equivalent acceptance failures.
 - Forbidden bypasses: Do not inject already-correct post-boundary state.
+- Mutable execution-control ledger: .codex/ACCEPTANCE.json#execution_control (sole authority)
 
 ## Current Slice
 - Delivery Stage ID: {'none' if state == 'complete' else 'STAGE-001'}
@@ -125,7 +152,7 @@ def acceptance_data(
     minimum_level: str = "end-to-end",
     evidence_level: str | None = None,
     blocker: dict[str, str] | None = None,
-    schema_version: int = 5,
+    schema_version: int = 6,
 ) -> dict[str, object]:
     evidence = []
     if evidence_level:
@@ -271,22 +298,236 @@ def acceptance_data(
                 "independence_requirement_ids": [],
             }
         ]
+    if schema_version >= 6:
+        requirement["predecessor_requirement_ids"] = []
+        pre_release["predecessor_requirement_ids"] = ["REQ-001"]
+        release["predecessor_requirement_ids"] = ["REQ-001", "REQ-PRE-RELEASE"]
+        placeholder = "sha256:" + "0" * 64
+        receipts = []
+        if evidence_level:
+            receipt_specs = (
+                (requirement, "RECEIPT-CHANGE", "change"),
+                (pre_release, "RECEIPT-PRE-RELEASE", "pre-release"),
+                (release, "RECEIPT-RELEASE", "release"),
+            )
+            for gate, receipt_id, tier in receipt_specs:
+                gate["evidence"][0].update({
+                    "candidate_fingerprint": placeholder,
+                    "lineage_id": "LINEAGE-001",
+                    "gate_receipt_id": receipt_id,
+                    "evaluation_fingerprint": None,
+                    "evaluation_role": "none",
+                })
+                receipts.append({
+                    "id": receipt_id,
+                    "requirement_id": gate["id"],
+                    "tier": tier,
+                    "lineage_id": "LINEAGE-001",
+                    "candidate_fingerprint": placeholder,
+                    "evidence_ref": "tests/evidence/result.json",
+                    "summary": "The declared gate passed on the bound candidate.",
+                    "verified_utc": updated,
+                    "evaluation_fingerprint": None,
+                    "evaluation_role": "none",
+                })
+        data["execution_control"] = {
+            "revision": 0,
+            "reconciled_utc": updated,
+            "lineage": {
+                "id": "LINEAGE-001",
+                "stage_id": "STAGE-001",
+                "acceptance_ids": ["REQ-001", "REQ-PRE-RELEASE", "REQ-RELEASE"],
+                "scope_fingerprint": placeholder,
+            },
+            "candidate": {
+                "fingerprint": placeholder,
+                "manifest_paths": ["project.marker"],
+                "external_fingerprints": [],
+            },
+            "status": "closed" if project_state == "complete" else "ready",
+            "limits": {
+                "total_attempts": 6,
+                "failed_attempts": 4,
+                "equivalent_failures": 2,
+                "expensive_attempts": 2,
+                "support_attempts": 2,
+                "no_progress_attempts": 2,
+                "total_tool_calls": 24,
+                "support_tool_calls": 8,
+                "support_no_progress_calls": 4,
+                "active_attempt_seconds": 3600,
+                "spawned_workers": 2,
+                "scope_growth_actions": 1,
+                "direct_delivery_reserved_calls": 6,
+                "max_path_touches": 12,
+                "max_touches_per_path": 3,
+            },
+            "usage": {
+                "total_attempts": 0,
+                "failed_attempts": 0,
+                "expensive_attempts": 0,
+                "support_attempts": 0,
+                "no_progress_attempts": 0,
+                "total_tool_calls": 0,
+                "support_tool_calls": 0,
+                "support_no_progress_calls": 0,
+                "active_attempt_seconds": 0,
+                "spawned_workers": 0,
+                "scope_growth_actions": 0,
+                "path_touches": 0,
+                "hot_path_touches": 0,
+                "path_counts": {},
+                "method_families": [],
+                "failure_classes": [],
+            },
+            "gate_receipts": receipts,
+            "diagnostic_evaluation_fingerprints": [],
+            "prerequisites": [],
+            "authorizations": [],
+            "active_attempt": None,
+            "stop_reason": None,
+            "support_stop_reason": None,
+        }
     return data
 
-def write_state(root: Path, project: str, acceptance: dict[str, object]) -> None:
+def write_state(
+    root: Path,
+    project: str,
+    acceptance: dict[str, object],
+    *,
+    refresh_control: bool = True,
+) -> None:
     state_dir = root / ".codex"
     state_dir.mkdir(parents=True, exist_ok=True)
     (root / "project.marker").write_text("test project\n", encoding="utf-8")
+    if acceptance.get("schema_version") == 6 and refresh_control:
+        state_module = load_module(STATE_SCRIPT, "project_outcome_fixture")
+        control = acceptance["execution_control"]
+        candidate_fingerprint = state_module.calculate_candidate_fingerprint(
+            root, control["candidate"]
+        )
+        control["candidate"]["fingerprint"] = candidate_fingerprint
+        control["lineage"]["scope_fingerprint"] = state_module.calculate_scope_fingerprint(
+            acceptance
+        )
+        for receipt in control["gate_receipts"]:
+            receipt["candidate_fingerprint"] = candidate_fingerprint
+        for requirement in acceptance["requirements"]:
+            for evidence in requirement.get("evidence", []):
+                if "candidate_fingerprint" in evidence:
+                    evidence["candidate_fingerprint"] = candidate_fingerprint
     (state_dir / "PROJECT_OUTCOME.md").write_text(project, encoding="utf-8")
     (state_dir / "ACCEPTANCE.json").write_text(
         json.dumps(acceptance, indent=2) + "\n", encoding="utf-8"
     )
 
 
+def attempt_request(
+    state: dict[str, object],
+    *,
+    principal: str = "Codex",
+    requirement_id: str = "REQ-001",
+    tier: str = "change",
+    method_family_id: str = "METHOD-001",
+    prior_method_family_id: str | None = None,
+    method_change_evidence_ref: str | None = None,
+    lower_complexity_comparison_ref: str | None = None,
+    acceptance_outcome_id: str = "OUTCOME-001",
+    boundary_id: str = "BOUNDARY-001",
+    cost_class: str = "cheap",
+    action_classes: list[str] | None = None,
+    scope_growth: str = "none",
+    allowed_paths: list[str] | None = None,
+    tool_name: str = "exec_command",
+    cwd_relative: str = ".",
+    tool_input: object = None,
+    tool_input_fingerprint: str | None = None,
+    external_run_id: str | None = "run-a",
+    evaluation_fingerprint: str | None = None,
+    evaluation_role: str = "none",
+    prerequisite_ids: list[str] | None = None,
+    no_prerequisites_reason: str | None = "No hard downstream dependency applies to this local gate.",
+    authorization_id: str | None = None,
+    target_identity_ids: list[str] | None = None,
+    action: str = "Run the declared generic gate.",
+    effect: str = "Read-only local proof.",
+    context_fingerprint: str = "sha256:" + "1" * 64,
+    causal_evidence_ref: str | None = "tests/evidence/attempt.json",
+) -> dict[str, object]:
+    if tool_input is None:
+        tool_input = {"cmd": "run-generic-gate"}
+    if tool_input_fingerprint is None:
+        encoded = json.dumps(
+            tool_input, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+        tool_input_fingerprint = "sha256:" + hashlib.sha256(encoded).hexdigest()
+    return {
+        "principal": principal,
+        "requirement_id": requirement_id,
+        "tier": tier,
+        "method_family_id": method_family_id,
+        "prior_method_family_id": prior_method_family_id,
+        "method_change_evidence_ref": method_change_evidence_ref,
+        "lower_complexity_comparison_ref": lower_complexity_comparison_ref,
+        "acceptance_outcome_id": acceptance_outcome_id,
+        "boundary_id": boundary_id,
+        "cost_class": cost_class,
+        "action_classes": action_classes or ["local", "proof"],
+        "scope_growth": scope_growth,
+        "allowed_paths": allowed_paths or [],
+        "tool_binding": {
+            "tool_name": tool_name,
+            "cwd_relative": cwd_relative,
+            "tool_input_fingerprint": tool_input_fingerprint,
+            "max_uses": 1,
+        },
+        "candidate_fingerprint": state["execution_control"]["candidate"]["fingerprint"],
+        "prerequisite_ids": prerequisite_ids or [],
+        "no_prerequisites_reason": no_prerequisites_reason,
+        "authorization_id": authorization_id,
+        "target_identity_ids": target_identity_ids or [],
+        "action": action,
+        "effect": effect,
+        "context_fingerprint": context_fingerprint,
+        "evaluation_fingerprint": evaluation_fingerprint,
+        "evaluation_role": evaluation_role,
+        "external_run_id": external_run_id,
+        "causal_evidence_ref": causal_evidence_ref,
+    }
+
+
+def attempt_result(
+    *,
+    attempt_id: str,
+    outcome: str,
+    progress: bool,
+    failure_class: str | None = None,
+    earliest_divergence: str = "The declared transition produced the wrong acceptance effect.",
+) -> dict[str, object]:
+    result: dict[str, object] = {
+        "attempt_id": attempt_id,
+        "outcome": outcome,
+        "acceptance_progress": progress,
+        "summary": f"Generic attempt {outcome}.",
+        "evidence_ref": "tests/evidence/attempt.json" if outcome != "aborted" else None,
+    }
+    if outcome == "failed":
+        result.update({
+            "failure_class": failure_class or "semantic",
+            "earliest_divergence": earliest_divergence,
+        })
+    return result
+
+
+def write_json(path: Path, data: dict[str, object]) -> None:
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+
 class PackageTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.state = load_module(STATE_SCRIPT, "project_outcome")
+        cls.installer = load_module(INSTALLER, "outcome_integrity_installer")
 
     def test_skill_metadata_and_required_policies_are_present(self) -> None:
         text = SKILL.read_text(encoding="utf-8")
@@ -503,23 +744,17 @@ class PackageTests(unittest.TestCase):
         ):
             self.assertIn(phrase, global_rules)
 
-        self.assertLessEqual(len(skill.split()), 3420)
-        self.assertLessEqual(len(global_rules.split()), 700)
+        self.assertLessEqual(len(skill.split()), 3800)
+        self.assertLessEqual(len(global_rules.split()), 760)
         for project_specific in ("Bhagavad", "Krishna", "Arjuna", "Claude", "Antigravity"):
             self.assertNotIn(project_specific.casefold(), skill.casefold())
             self.assertNotIn(project_specific.casefold(), global_rules.casefold())
 
 
-    def test_schema_v5_template_declares_capability_and_proof_path_fields(self) -> None:
-        acceptance_template = (
-            REPOSITORY_ROOT
-            / "skills"
-            / "outcome-integrity"
-            / "assets"
-            / "ACCEPTANCE.template.json"
-        ).read_text(encoding="utf-8")
+    def test_schema_v6_template_declares_proof_and_execution_control_fields(self) -> None:
+        acceptance_template = ACCEPTANCE_TEMPLATE.read_text(encoding="utf-8")
         for phrase in (
-            '"schema_version": 5',
+            '"schema_version": 6',
             '"project_identity"',
             '"outcome_hierarchy"',
             '"delivery_stages"',
@@ -545,26 +780,347 @@ class PackageTests(unittest.TestCase):
             '"proof_scope"',
             '"proof_limits"',
             '"counterevidence"',
+            '"execution_control"',
+            '"scope_fingerprint"',
+            '"candidate"',
+            '"predecessor_requirement_ids"',
+            '"gate_receipts"',
+            '"diagnostic_evaluation_fingerprints"',
+            '"prerequisites"',
+            '"authorizations"',
+            '"active_attempt"',
         ):
             self.assertIn(phrase, acceptance_template)
-    def test_installer_is_idempotent_and_preserves_existing_rules(self) -> None:
+
+    def test_attempt_templates_expose_the_complete_atomic_contract(self) -> None:
+        request = json.loads(ATTEMPT_REQUEST_TEMPLATE.read_text(encoding="utf-8"))
+        result = json.loads(ATTEMPT_RESULT_TEMPLATE.read_text(encoding="utf-8"))
+        self.assertEqual(
+            set(request),
+            {
+                "requirement_id",
+                "tier",
+                "method_family_id",
+                "prior_method_family_id",
+                "method_change_evidence_ref",
+                "lower_complexity_comparison_ref",
+                "acceptance_outcome_id",
+                "boundary_id",
+                "cost_class",
+                "action_classes",
+                "scope_growth",
+                "allowed_paths",
+                "tool_binding",
+                "candidate_fingerprint",
+                "prerequisite_ids",
+                "no_prerequisites_reason",
+                "authorization_id",
+                "target_identity_ids",
+                "action",
+                "effect",
+                "principal",
+                "context_fingerprint",
+                "evaluation_fingerprint",
+                "evaluation_role",
+                "external_run_id",
+                "causal_evidence_ref",
+            },
+        )
+        self.assertEqual(
+            set(result),
+            {
+                "attempt_id",
+                "outcome",
+                "acceptance_progress",
+                "summary",
+                "evidence_ref",
+                "failure_class",
+                "failure_fingerprint",
+                "earliest_divergence",
+            },
+        )
+        skill = SKILL.read_text(encoding="utf-8")
+        readme = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
+        for name in (ATTEMPT_REQUEST_TEMPLATE.name, ATTEMPT_RESULT_TEMPLATE.name):
+            self.assertIn(name, skill)
+            self.assertIn(name, readme)
+
+    def test_project_and_acceptance_templates_share_the_initial_slice(self) -> None:
+        acceptance = json.loads(ACCEPTANCE_TEMPLATE.read_text(encoding="utf-8"))
+        project = PROJECT_TEMPLATE.read_text(encoding="utf-8")
+        expected = acceptance["current_slice_requirement_id"]
+        self.assertIn(f"- Acceptance ID: {expected}", project)
+        ledger_pointer = (
+            "- Mutable execution-control ledger: "
+            ".codex/ACCEPTANCE.json#execution_control (sole authority)"
+        )
+        self.assertIn(ledger_pointer, project)
+        self.assertIn(ledger_pointer, SKILL.read_text(encoding="utf-8"))
+        self.assertIn(
+            ledger_pointer, (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
+        )
+
+    def assert_no_installer_artifacts(self, codex_home: Path) -> None:
+        skills = codex_home / "skills"
+        skill_artifacts = list(skills.glob(".outcome-integrity.*")) if skills.exists() else []
+        global_artifacts = list(codex_home.glob(".AGENTS.md.*"))
+        lock_artifacts = list(codex_home.glob(".outcome-integrity-install.lock*"))
+        self.assertEqual(skill_artifacts + global_artifacts + lock_artifacts, [])
+
+    def test_installer_is_idempotent_prunes_stale_entries_and_has_exact_parity(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             codex_home = Path(temporary) / ".codex"
             codex_home.mkdir()
             agents = codex_home / "AGENTS.md"
-            agents.write_text("# Existing rule\n\nKeep this line.\n", encoding="utf-8")
+            agents.write_bytes(b"# Existing rule\r\n\r\nKeep this line.\r\n")
 
             command = [sys.executable, str(INSTALLER), "--codex-home", str(codex_home)]
             subprocess.run(command, check=True, capture_output=True, text=True)
+            installed = codex_home / "skills" / "outcome-integrity"
+            (installed / "stale-managed-file.txt").write_text("obsolete\n", encoding="utf-8")
+            (installed / "stale-empty-directory").mkdir()
             subprocess.run(command, check=True, capture_output=True, text=True)
 
-            installed = codex_home / "skills" / "outcome-integrity"
-            merged = agents.read_text(encoding="utf-8")
+            merged = agents.read_bytes().decode("utf-8")
             self.assertTrue((installed / "SKILL.md").is_file())
             self.assertTrue((installed / "assets" / "ACCEPTANCE.template.json").is_file())
+            self.assertTrue((installed / "assets" / "ATTEMPT_REQUEST.template.json").is_file())
+            self.assertTrue((installed / "assets" / "ATTEMPT_RESULT.template.json").is_file())
+            self.assertFalse((installed / "stale-managed-file.txt").exists())
+            self.assertFalse((installed / "stale-empty-directory").exists())
+            source = REPOSITORY_ROOT / "skills" / "outcome-integrity"
+            self.assertEqual(
+                self.installer.canonical_tree_manifest(installed),
+                self.installer.canonical_tree_manifest(source),
+            )
             self.assertIn("Keep this line.", merged)
             self.assertEqual(merged.count("<!-- outcome-integrity:start -->"), 1)
             self.assertEqual(merged.count("<!-- outcome-integrity:end -->"), 1)
+            start = merged.index("<!-- outcome-integrity:start -->")
+            end = merged.index("<!-- outcome-integrity:end -->", start) + len("<!-- outcome-integrity:end -->")
+            self.assertEqual(
+                merged[start:end].replace("\r\n", "\n"),
+                GLOBAL_RULES.read_text(encoding="utf-8").strip().replace("\r\n", "\n"),
+            )
+            self.assert_no_installer_artifacts(codex_home)
+
+    def test_managed_block_update_preserves_unrelated_crlf_bytes_and_collapses_duplicates(self) -> None:
+        snippet = GLOBAL_RULES.read_text(encoding="utf-8")
+        old_block = (
+            "<!-- outcome-integrity:start -->\r\n"
+            "old managed rule\r\n"
+            "<!-- outcome-integrity:end -->"
+        )
+        prefix = "# Before  \r\n\r\n"
+        middle = "\r\n  \t\r\n# Between  \r\n\r\n"
+        suffix = "\r\n \t\r\n# After  \r\n"
+        merged = self.installer.merge_managed_block(
+            prefix + old_block + middle + old_block + suffix,
+            snippet,
+        )
+        start = merged.index("<!-- outcome-integrity:start -->")
+        end = merged.index("<!-- outcome-integrity:end -->", start) + len(
+            "<!-- outcome-integrity:end -->"
+        )
+        self.assertEqual(merged[:start], prefix)
+        self.assertEqual(merged[end:], middle + suffix)
+        self.assertEqual(merged.count("<!-- outcome-integrity:start -->"), 1)
+        self.assertNotIn("\n", merged[start:end].replace("\r\n", ""))
+
+    def test_installer_rejects_source_target_overlap_before_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            package_root = Path(temporary) / "package"
+            source = package_root / "skills" / "outcome-integrity"
+            source.mkdir(parents=True)
+            (source / "SKILL.md").write_text("generic skill\n", encoding="utf-8")
+            before = self.installer.canonical_tree_manifest(source)
+            with mock.patch.object(self.installer, "_repository_root", return_value=package_root):
+                with self.assertRaisesRegex(ValueError, "overlap"):
+                    self.installer.install(package_root, skip_global_rules=True)
+            self.assertEqual(self.installer.canonical_tree_manifest(source), before)
+            self.assertFalse((package_root / "AGENTS.md").exists())
+
+    def test_installer_refuses_linked_skill_file_without_touching_external_target(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            codex_home = root / ".codex"
+            self.installer.install(codex_home)
+            installed = codex_home / "skills" / "outcome-integrity"
+            external = root / "external-sentinel.txt"
+            external.write_bytes(b"must stay unchanged\n")
+            linked_file = installed / "SKILL.md"
+            linked_file.unlink()
+            try:
+                os.symlink(external, linked_file)
+            except OSError as exc:
+                self.skipTest(f"File symlinks are unavailable in this environment: {exc}")
+            agents_before = (codex_home / "AGENTS.md").read_bytes()
+            with self.assertRaisesRegex(ValueError, "symlink|junction|reparse"):
+                self.installer.install(codex_home)
+            self.assertEqual(external.read_bytes(), b"must stay unchanged\n")
+            self.assertEqual((codex_home / "AGENTS.md").read_bytes(), agents_before)
+
+    def test_installer_refuses_nested_directory_junction_without_touching_external_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            codex_home = root / ".codex"
+            self.installer.install(codex_home)
+            installed = codex_home / "skills" / "outcome-integrity"
+            external = root / "external-directory"
+            external.mkdir()
+            sentinel = external / "sentinel.txt"
+            sentinel.write_bytes(b"must stay unchanged\n")
+            linked_directory = installed / "assets"
+            shutil.rmtree(linked_directory)
+            try:
+                if os.name == "nt":
+                    result = subprocess.run(
+                        ["cmd", "/c", "mklink", "/J", str(linked_directory), str(external)],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
+                    if result.returncode != 0:
+                        self.skipTest(f"Directory junctions are unavailable: {result.stderr or result.stdout}")
+                else:
+                    os.symlink(external, linked_directory, target_is_directory=True)
+            except OSError as exc:
+                self.skipTest(f"Directory links are unavailable in this environment: {exc}")
+            with self.assertRaisesRegex(ValueError, "symlink|junction|reparse"):
+                self.installer.install(codex_home)
+            self.assertEqual(sentinel.read_bytes(), b"must stay unchanged\n")
+            self.assertFalse((external / "ACCEPTANCE.template.json").exists())
+
+    def test_installer_refuses_linked_agents_file_without_touching_external_target(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            codex_home = root / ".codex"
+            self.installer.install(codex_home)
+            installed = codex_home / "skills" / "outcome-integrity"
+            installed_before = self.installer.canonical_tree_manifest(installed)
+            agents = codex_home / "AGENTS.md"
+            agents.unlink()
+            external = root / "external-agents.md"
+            external.write_bytes(b"external rules\n")
+            try:
+                os.symlink(external, agents)
+            except OSError as exc:
+                self.skipTest(f"File symlinks are unavailable in this environment: {exc}")
+            with self.assertRaisesRegex(ValueError, "symlink|junction|reparse"):
+                self.installer.install(codex_home)
+            self.assertEqual(external.read_bytes(), b"external rules\n")
+            self.assertEqual(self.installer.canonical_tree_manifest(installed), installed_before)
+
+    def test_staging_failure_preserves_previous_installation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            codex_home = Path(temporary) / ".codex"
+            self.installer.install(codex_home)
+            installed = codex_home / "skills" / "outcome-integrity"
+            (installed / "previous-only.txt").write_bytes(b"previous installation\n")
+            before = self.installer.canonical_tree_manifest(installed)
+            agents_before = (codex_home / "AGENTS.md").read_bytes()
+            with mock.patch.object(
+                self.installer.shutil, "copytree", side_effect=OSError("injected staging failure")
+            ):
+                with self.assertRaisesRegex(OSError, "injected staging failure"):
+                    self.installer.install(codex_home)
+            self.assertEqual(self.installer.canonical_tree_manifest(installed), before)
+            self.assertEqual((codex_home / "AGENTS.md").read_bytes(), agents_before)
+            self.assert_no_installer_artifacts(codex_home)
+
+    def test_skill_activation_failure_rolls_back_previous_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            codex_home = Path(temporary) / ".codex"
+            self.installer.install(codex_home)
+            installed = codex_home / "skills" / "outcome-integrity"
+            (installed / "previous-only.txt").write_bytes(b"previous installation\n")
+            before = self.installer.canonical_tree_manifest(installed)
+            agents_before = (codex_home / "AGENTS.md").read_bytes()
+            real_replace = self.installer._replace_path
+
+            def fail_skill_stage(source: Path, target: Path) -> None:
+                if target == installed and ".stage." in source.name:
+                    raise OSError("injected skill activation failure")
+                real_replace(source, target)
+
+            with mock.patch.object(self.installer, "_replace_path", side_effect=fail_skill_stage):
+                with self.assertRaisesRegex(OSError, "injected skill activation failure"):
+                    self.installer.install(codex_home)
+            self.assertEqual(self.installer.canonical_tree_manifest(installed), before)
+            self.assertEqual((codex_home / "AGENTS.md").read_bytes(), agents_before)
+            self.assert_no_installer_artifacts(codex_home)
+
+    def test_global_activation_failure_rolls_back_skill_and_global_rules(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            codex_home = Path(temporary) / ".codex"
+            self.installer.install(codex_home)
+            installed = codex_home / "skills" / "outcome-integrity"
+            (installed / "previous-only.txt").write_bytes(b"previous installation\n")
+            agents = codex_home / "AGENTS.md"
+            agents.write_bytes(
+                b"# Existing\r\n\r\n<!-- outcome-integrity:start -->\r\nold\r\n"
+                b"<!-- outcome-integrity:end -->\r\n"
+            )
+            before = self.installer.canonical_tree_manifest(installed)
+            agents_before = agents.read_bytes()
+            real_replace = self.installer._replace_path
+
+            def fail_global_stage(source: Path, target: Path) -> None:
+                if target == agents and ".stage." in source.name:
+                    raise OSError("injected global activation failure")
+                real_replace(source, target)
+
+            with mock.patch.object(self.installer, "_replace_path", side_effect=fail_global_stage):
+                with self.assertRaisesRegex(OSError, "injected global activation failure"):
+                    self.installer.install(codex_home)
+            self.assertEqual(self.installer.canonical_tree_manifest(installed), before)
+            self.assertEqual(agents.read_bytes(), agents_before)
+            self.assert_no_installer_artifacts(codex_home)
+
+            self.installer.install(codex_home)
+            self.assertFalse((installed / "previous-only.txt").exists())
+            self.assertNotEqual(agents.read_bytes(), agents_before)
+            self.assert_no_installer_artifacts(codex_home)
+
+    def test_active_install_lock_fails_closed_before_installation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            codex_home = Path(temporary) / ".codex"
+            codex_home.mkdir()
+            lock = codex_home / self.installer.LOCK_NAME
+            lock.mkdir()
+            owner = {
+                "pid": os.getpid(),
+                "hostname": socket.gethostname(),
+                "token": "active-owner",
+                "created_unix": 0,
+            }
+            (lock / self.installer.LOCK_OWNER_NAME).write_text(
+                json.dumps(owner), encoding="utf-8"
+            )
+            with self.assertRaisesRegex(OSError, "holds the lock"):
+                self.installer.install(codex_home)
+            self.assertFalse((codex_home / "skills").exists())
+            self.assertFalse((codex_home / "AGENTS.md").exists())
+
+    def test_stale_dead_install_lock_is_recovered_once(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            codex_home = Path(temporary) / ".codex"
+            codex_home.mkdir()
+            lock = codex_home / self.installer.LOCK_NAME
+            lock.mkdir()
+            owner = {
+                "pid": 2_147_483_647,
+                "hostname": socket.gethostname(),
+                "token": "dead-owner",
+                "created_unix": 0,
+            }
+            (lock / self.installer.LOCK_OWNER_NAME).write_text(
+                json.dumps(owner), encoding="utf-8"
+            )
+            os.utime(lock, (0, 0))
+            self.installer.install(codex_home)
+            self.assertTrue((codex_home / "skills" / "outcome-integrity" / "SKILL.md").is_file())
+            self.assert_no_installer_artifacts(codex_home)
 
     def test_initialize_creates_both_files_without_overwriting(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -610,7 +1166,7 @@ class PackageTests(unittest.TestCase):
             write_state(root, project_text(updated="2026-07-16T10:00:00Z"), stale)
             result = self.state.validate(root, mode="resume")
             self.assertFalse(result["ok"])
-            self.assertTrue(any("older" in error for error in result["errors"]))
+            self.assertTrue(any("reconciliation timestamps" in error for error in result["errors"]))
             self.assertTrue(any("current slice mismatch" in error for error in result["errors"]))
 
     def test_resume_reports_unknown_current_id_without_crashing(self) -> None:
@@ -641,7 +1197,7 @@ class PackageTests(unittest.TestCase):
             write_state(root, project_text(state="complete", current_id="none"), completed)
             result = self.state.validate(root, mode="completion")
             self.assertFalse(result["ok"])
-            self.assertTrue(any("schema_version 5" in error for error in result["errors"]))
+            self.assertTrue(any("schema_version 6" in error for error in result["errors"]))
 
     def test_completion_requires_every_product_capability(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -770,7 +1326,7 @@ class PackageTests(unittest.TestCase):
             )
             result = self.state.validate(root, mode="completion")
             self.assertFalse(result["ok"])
-            self.assertTrue(any("schema_version 5" in error for error in result["errors"]))
+            self.assertTrue(any("schema_version 6" in error for error in result["errors"]))
 
     def test_cross_stage_capability_substitution_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -791,7 +1347,7 @@ class PackageTests(unittest.TestCase):
             write_state(root, project_text(), state)
             result = self.state.validate(root)
             self.assertFalse(result["ok"])
-            self.assertTrue(any("must belong to its delivery stage" in error for error in result["errors"]))
+            self.assertTrue(any("belong to or be explicitly preserved" in error for error in result["errors"]))
 
     def test_stage_completion_does_not_leak_from_one_passing_slice(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -941,7 +1497,7 @@ class PackageTests(unittest.TestCase):
             write_state(root, project_text(state="complete", current_id="none"), completed)
             result = self.state.validate(root, mode="completion")
             self.assertFalse(result["ok"])
-            self.assertTrue(any("schema_version 5" in error for error in result["errors"]))
+            self.assertTrue(any("schema_version 6" in error for error in result["errors"]))
 
     def test_optional_supporting_state_requires_no_state_integration_gate(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -986,6 +1542,474 @@ class PackageTests(unittest.TestCase):
             result = self.state.validate(root)
             self.assertFalse(result["ok"])
             self.assertTrue(any("gate requirement REQ-001 must be required" in error for error in result["errors"]))
+
+    def test_atomic_reservation_charges_one_lineage_across_external_run_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            write_state(root, project_text(), state)
+            request_path = root / "request.json"
+            write_json(request_path, attempt_request(state, external_run_id="run-alpha"))
+            first = self.state.attempt_begin(root, request_path, 0)
+            self.assertTrue(first["ok"], first)
+            result_path = root / "result.json"
+            write_json(
+                result_path,
+                attempt_result(
+                    attempt_id=first["attempt"]["id"], outcome="aborted", progress=False
+                ),
+            )
+            finished = self.state.attempt_finish(root, result_path, 1)
+            self.assertTrue(finished["ok"], finished)
+
+            current = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+            write_json(request_path, attempt_request(current, external_run_id="run-beta"))
+            second = self.state.attempt_begin(root, request_path, 2)
+            self.assertTrue(second["ok"], second)
+            current = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+            self.assertEqual(current["execution_control"]["usage"]["total_attempts"], 2)
+            self.assertEqual(second["attempt"]["lineage_id"], "LINEAGE-001")
+
+    def test_cli_entrypoint_reserves_and_finishes_the_atomic_attempt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            write_state(root, project_text(), state)
+            request_path = root / "request.json"
+            result_path = root / "result.json"
+            write_json(request_path, attempt_request(state))
+            begun = subprocess.run(
+                [
+                    sys.executable,
+                    str(STATE_SCRIPT),
+                    "attempt-begin",
+                    "--root",
+                    str(root),
+                    "--request",
+                    str(request_path),
+                    "--expected-revision",
+                    "0",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(begun.returncode, 0, begun.stderr or begun.stdout)
+            begun_payload = json.loads(begun.stdout)
+            self.assertEqual(begun_payload["revision"], 1)
+            write_json(
+                result_path,
+                attempt_result(
+                    attempt_id=begun_payload["attempt"]["id"],
+                    outcome="aborted",
+                    progress=False,
+                ),
+            )
+            finished = subprocess.run(
+                [
+                    sys.executable,
+                    str(STATE_SCRIPT),
+                    "attempt-finish",
+                    "--root",
+                    str(root),
+                    "--result",
+                    str(result_path),
+                    "--expected-revision",
+                    "1",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(finished.returncode, 0, finished.stderr or finished.stdout)
+            payload = json.loads(finished.stdout)
+            self.assertIsNone(payload["receipt"])
+
+    def test_distinct_failures_consume_the_aggregate_failure_budget(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["execution_control"]["limits"]["failed_attempts"] = 2
+            state["execution_control"]["limits"]["no_progress_attempts"] = 5
+            write_state(root, project_text(), state)
+            request_path = root / "request.json"
+            result_path = root / "result.json"
+            revision = 0
+            for boundary in ("decoder-output", "storage-commit"):
+                current = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+                write_json(
+                    request_path,
+                    attempt_request(
+                        current,
+                        external_run_id=f"run-{boundary}",
+                        boundary_id="BOUNDARY-" + boundary.upper().replace("-", "_"),
+                    ),
+                )
+                begun = self.state.attempt_begin(root, request_path, revision)
+                self.assertTrue(begun["ok"], begun)
+                revision = begun["revision"]
+                write_json(
+                    result_path,
+                    attempt_result(
+                        attempt_id=begun["attempt"]["id"],
+                        outcome="failed",
+                        progress=False,
+                        earliest_divergence=f"The {boundary} boundary diverged.",
+                    ),
+                )
+                finished = self.state.attempt_finish(root, result_path, revision)
+                self.assertTrue(finished["ok"], finished)
+                revision = finished["revision"]
+            self.assertEqual(finished["status"], "stopped")
+            current = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(current["execution_control"]["usage"]["failure_classes"]), 2)
+
+    def test_equivalent_failures_stop_despite_changed_run_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["execution_control"]["limits"]["failed_attempts"] = 4
+            state["execution_control"]["limits"]["no_progress_attempts"] = 5
+            write_state(root, project_text(), state)
+            request_path = root / "request.json"
+            result_path = root / "result.json"
+            revision = 0
+            for run_id in ("process-one", "process-two"):
+                current = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+                write_json(request_path, attempt_request(current, external_run_id=run_id))
+                begun = self.state.attempt_begin(root, request_path, revision)
+                revision = begun["revision"]
+                write_json(
+                    result_path,
+                    attempt_result(
+                        attempt_id=begun["attempt"]["id"],
+                        outcome="failed",
+                        progress=False,
+                    ),
+                )
+                finished = self.state.attempt_finish(root, result_path, revision)
+                revision = finished["revision"]
+            self.assertEqual(finished["status"], "stopped")
+            current = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+            self.assertEqual(current["execution_control"]["usage"]["failure_classes"][0]["count"], 2)
+
+    def test_active_attempt_blocks_restart_or_parallel_begin(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            write_state(root, project_text(), state)
+            request_path = root / "request.json"
+            write_json(request_path, attempt_request(state))
+            first = self.state.attempt_begin(root, request_path, 0)
+            self.assertTrue(first["ok"], first)
+            second = self.state.attempt_begin(root, request_path, 1)
+            self.assertFalse(second["ok"])
+            self.assertTrue(any("no new attempt" in error for error in second["errors"]))
+
+    def test_stale_result_cannot_finish_a_new_active_attempt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            write_state(root, project_text(), state)
+            request_path = root / "request.json"
+            result_path = root / "result.json"
+
+            write_json(request_path, attempt_request(state, external_run_id="run-one"))
+            first = self.state.attempt_begin(root, request_path, 0)
+            write_json(
+                result_path,
+                attempt_result(
+                    attempt_id=first["attempt"]["id"], outcome="aborted", progress=False
+                ),
+            )
+            first_finished = self.state.attempt_finish(
+                root, result_path, first["revision"]
+            )
+            self.assertTrue(first_finished["ok"], first_finished)
+
+            current = json.loads(
+                (root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8")
+            )
+            write_json(request_path, attempt_request(current, external_run_id="run-two"))
+            second = self.state.attempt_begin(
+                root, request_path, first_finished["revision"]
+            )
+            self.assertTrue(second["ok"], second)
+
+            write_json(
+                result_path,
+                attempt_result(
+                    attempt_id=first["attempt"]["id"], outcome="passed", progress=True
+                ),
+            )
+            refused = self.state.attempt_finish(root, result_path, second["revision"])
+            self.assertFalse(refused["ok"])
+            self.assertTrue(any("attempt_id" in error for error in refused["errors"]))
+            persisted = json.loads(
+                (root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                persisted["execution_control"]["active_attempt"]["id"],
+                second["attempt"]["id"],
+            )
+
+    def test_higher_tier_requires_same_candidate_predecessor_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data(current_id="REQ-PRE-RELEASE")
+            write_state(root, project_text(current_id="REQ-PRE-RELEASE"), state)
+            request_path = root / "request.json"
+            write_json(
+                request_path,
+                attempt_request(
+                    state, requirement_id="REQ-PRE-RELEASE", tier="pre-release"
+                ),
+            )
+            result = self.state.attempt_begin(root, request_path, 0)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("predecessor receipts" in error for error in result["errors"]))
+
+    def test_candidate_rebind_invalidates_receipts_but_preserves_counters(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["execution_control"]["usage"].update({
+                "total_attempts": 1,
+                "failed_attempts": 1,
+            })
+            failure_identity = {
+                "lineage_id": "LINEAGE-001",
+                "acceptance_outcome_id": "OUTCOME-001",
+                "boundary_id": "BOUNDARY-001",
+            }
+            failure_fingerprint = "sha256:" + hashlib.sha256(
+                json.dumps(
+                    failure_identity, sort_keys=True, separators=(",", ":")
+                ).encode("utf-8")
+            ).hexdigest()
+            state["execution_control"]["usage"]["failure_classes"] = [{
+                "fingerprint": failure_fingerprint,
+                "lineage_id": "LINEAGE-001",
+                "acceptance_outcome_id": "OUTCOME-001",
+                "boundary_id": "BOUNDARY-001",
+                "failure_class": "semantic",
+                "earliest_divergence": "The acceptance transition diverged.",
+                "candidate_fingerprint": "sha256:" + "0" * 64,
+                "count": 1,
+                "last_observed_utc": "2026-07-16T10:00:00Z",
+            }]
+            write_state(root, project_text(), state)
+            state["execution_control"]["gate_receipts"] = [{
+                "id": "RECEIPT-OLD",
+                "requirement_id": "REQ-001",
+                "tier": "change",
+                "lineage_id": "LINEAGE-001",
+                "candidate_fingerprint": state["execution_control"]["candidate"]["fingerprint"],
+                "evidence_ref": "tests/evidence/old.json",
+                "summary": "Old candidate passed.",
+                "verified_utc": "2026-07-16T10:00:00Z",
+                "evaluation_fingerprint": None,
+                "evaluation_role": "none",
+            }]
+            write_json(root / ".codex" / "ACCEPTANCE.json", state)
+            (root / "project.marker").write_text("changed candidate\n", encoding="utf-8")
+            rebound = self.state.candidate_bind(root, 0, [])
+            self.assertTrue(rebound["ok"], rebound)
+            current = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+            self.assertEqual(current["execution_control"]["gate_receipts"], [])
+            self.assertEqual(current["execution_control"]["usage"]["total_attempts"], 1)
+            self.assertEqual(current["execution_control"]["usage"]["failed_attempts"], 1)
+
+    def test_exposed_evaluation_cannot_be_reused_as_prospective(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            write_state(root, project_text(), state)
+            exposed = "sha256:" + "6" * 64
+            rebound = self.state.candidate_bind(root, 0, [exposed])
+            self.assertTrue(rebound["ok"], rebound)
+            current = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+            request_path = root / "request.json"
+            write_json(
+                request_path,
+                attempt_request(
+                    current,
+                    evaluation_fingerprint=exposed,
+                    evaluation_role="prospective",
+                ),
+            )
+            result = self.state.attempt_begin(root, request_path, 1)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("exposed evaluation" in error for error in result["errors"]))
+
+    def test_fresh_evaluation_remains_prospective_after_other_input_is_exposed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            write_state(root, project_text(), state)
+            self.state.candidate_bind(root, 0, ["sha256:" + "7" * 64])
+            current = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+            request_path = root / "request.json"
+            write_json(
+                request_path,
+                attempt_request(
+                    current,
+                    evaluation_fingerprint="sha256:" + "8" * 64,
+                    evaluation_role="prospective",
+                ),
+            )
+            result = self.state.attempt_begin(root, request_path, 1)
+            self.assertTrue(result["ok"], result)
+
+    def test_missing_hard_downstream_prerequisite_blocks_admission(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["execution_control"]["prerequisites"] = [{
+                "id": "PREREQ-OUTPUT",
+                "description": "The downstream output envelope is callable and large enough.",
+                "status": "missing",
+                "evidence_ref": None,
+                "verified_utc": None,
+                "expires_utc": None,
+                "context_fingerprint": "sha256:" + "1" * 64,
+                "requirement_ids": ["REQ-001"],
+                "action_classes": ["proof"],
+                "gate_tiers": ["change"],
+            }]
+            write_state(root, project_text(), state)
+            request_path = root / "request.json"
+            write_json(request_path, attempt_request(state))
+            result = self.state.attempt_begin(root, request_path, 0)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("prerequisites are omitted" in error for error in result["errors"]))
+
+    def test_authorization_for_one_target_cannot_admit_another(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["identity_requirements"].append({
+                "id": "ENTITY-002",
+                "description": "A different exact target.",
+                "substitutable": False,
+            })
+            context = "sha256:" + "9" * 64
+            state["execution_control"]["authorizations"] = [{
+                "id": "AUTH-001",
+                "action": "Stop the named worker.",
+                "effect": "Terminate only the named target.",
+                "target_identity_ids": ["ENTITY-001"],
+                "principal": "The user.",
+                "context_fingerprint": context,
+                "authorized_utc": "2026-07-16T10:00:00Z",
+                "expires_utc": "2099-07-16T10:00:00Z",
+                "uses_remaining": 1,
+                "status": "active",
+            }]
+            write_state(root, project_text(), state)
+            request_path = root / "request.json"
+            write_json(
+                request_path,
+                attempt_request(
+                    state,
+                    principal="The user.",
+                    action_classes=["local", "external-write"],
+                    authorization_id="AUTH-001",
+                    target_identity_ids=["ENTITY-002"],
+                    action="Stop the named worker.",
+                    effect="Terminate only the named target.",
+                    context_fingerprint=context,
+                ),
+            )
+            result = self.state.attempt_begin(root, request_path, 0)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("target/effect set" in error for error in result["errors"]))
+
+    def test_exact_authorization_is_consumed_at_reservation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            context = "sha256:" + "a" * 64
+            state["execution_control"]["authorizations"] = [{
+                "id": "AUTH-001",
+                "action": "Apply the exact external update.",
+                "effect": "Change only the declared target.",
+                "target_identity_ids": ["ENTITY-001"],
+                "principal": "The user.",
+                "context_fingerprint": context,
+                "authorized_utc": "2026-07-16T10:00:00Z",
+                "expires_utc": "2099-07-16T10:00:00Z",
+                "uses_remaining": 1,
+                "status": "active",
+            }]
+            write_state(root, project_text(), state)
+            request_path = root / "request.json"
+            write_json(
+                request_path,
+                attempt_request(
+                    state,
+                    principal="The user.",
+                    action_classes=["local", "external-write"],
+                    authorization_id="AUTH-001",
+                    target_identity_ids=["ENTITY-001"],
+                    action="Apply the exact external update.",
+                    effect="Change only the declared target.",
+                    context_fingerprint=context,
+                ),
+            )
+            result = self.state.attempt_begin(root, request_path, 0)
+            self.assertTrue(result["ok"], result)
+            current = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+            authorization = current["execution_control"]["authorizations"][0]
+            self.assertEqual(authorization["uses_remaining"], 0)
+            self.assertEqual(authorization["status"], "consumed")
+
+    def test_support_and_no_progress_limits_stop_more_support(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            state["execution_control"]["limits"]["support_attempts"] = 1
+            state["execution_control"]["limits"]["no_progress_attempts"] = 1
+            write_state(root, project_text(), state)
+            request_path = root / "request.json"
+            write_json(request_path, attempt_request(state, action_classes=["local", "support"]))
+            begun = self.state.attempt_begin(root, request_path, 0)
+            result_path = root / "result.json"
+            write_json(
+                result_path,
+                attempt_result(
+                    attempt_id=begun["attempt"]["id"], outcome="aborted", progress=False
+                ),
+            )
+            finished = self.state.attempt_finish(root, result_path, begun["revision"])
+            self.assertEqual(finished["status"], "stopped")
+            current = json.loads((root / ".codex" / "ACCEPTANCE.json").read_text(encoding="utf-8"))
+            write_json(request_path, attempt_request(current, action_classes=["local", "support"]))
+            refused = self.state.attempt_begin(root, request_path, finished["revision"])
+            self.assertFalse(refused["ok"])
+
+    def test_stale_expected_revision_cannot_mutate_control(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            write_state(root, project_text(), state)
+            request_path = root / "request.json"
+            write_json(request_path, attempt_request(state))
+            result = self.state.attempt_begin(root, request_path, 9)
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("stale expected revision" in error for error in result["errors"]))
+
+    def test_acceptance_semantic_change_makes_scope_fingerprint_stale(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = acceptance_data()
+            write_state(root, project_text(), state)
+            state["requirements"][0]["description"] = "A materially different acceptance promise."
+            write_json(root / ".codex" / "ACCEPTANCE.json", state)
+            result = self.state.validate(root, mode="resume")
+            self.assertFalse(result["ok"])
+            self.assertTrue(any("scope_fingerprint is stale" in error for error in result["errors"]))
+
     def test_completion_rejects_incomplete_and_accepts_evidence_backed_state(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -1,5 +1,5 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "updated_utc": "REPLACE_ME_UTC",
   "project_state": "active",
   "project_identity": {
@@ -55,6 +55,64 @@
     }
   ],
   "identity_requirements": [],
+  "execution_control": {
+    "revision": 0,
+    "reconciled_utc": "REPLACE_ME_UTC",
+    "lineage": {
+      "id": "LINEAGE-001",
+      "stage_id": "STAGE-001",
+      "acceptance_ids": ["REQ-CHANGE", "REQ-PRE-RELEASE", "REQ-RELEASE"],
+      "scope_fingerprint": "REPLACE_ME_SHA256_SCOPE_FINGERPRINT"
+    },
+    "candidate": {
+      "fingerprint": "REPLACE_ME_SHA256_CANDIDATE_FINGERPRINT",
+      "manifest_paths": ["REPLACE_ME_RELATIVE_CANDIDATE_INPUT"],
+      "external_fingerprints": []
+    },
+    "status": "ready",
+    "limits": {
+      "total_attempts": 6,
+      "failed_attempts": 4,
+      "equivalent_failures": 2,
+      "expensive_attempts": 2,
+      "support_attempts": 2,
+      "no_progress_attempts": 2,
+      "total_tool_calls": 24,
+      "support_tool_calls": 8,
+      "support_no_progress_calls": 4,
+      "active_attempt_seconds": 900,
+      "spawned_workers": 2,
+      "scope_growth_actions": 1,
+      "direct_delivery_reserved_calls": 6,
+      "max_path_touches": 12,
+      "max_touches_per_path": 3
+    },
+    "usage": {
+      "total_attempts": 0,
+      "failed_attempts": 0,
+      "expensive_attempts": 0,
+      "support_attempts": 0,
+      "no_progress_attempts": 0,
+      "total_tool_calls": 0,
+      "support_tool_calls": 0,
+      "support_no_progress_calls": 0,
+      "active_attempt_seconds": 0,
+      "spawned_workers": 0,
+      "scope_growth_actions": 0,
+      "path_touches": 0,
+      "hot_path_touches": 0,
+      "path_counts": {},
+      "method_families": [],
+      "failure_classes": []
+    },
+    "gate_receipts": [],
+    "diagnostic_evaluation_fingerprints": [],
+    "prerequisites": [],
+    "authorizations": [],
+    "active_attempt": null,
+    "stop_reason": null,
+    "support_stop_reason": null
+  },
   "current_slice_requirement_id": "REQ-CHANGE",
   "requirements": [
     {
@@ -65,6 +123,7 @@
       "capability_ids": ["CAP-001"],
       "identity_ids": [],
       "gate_tiers": ["change"],
+      "predecessor_requirement_ids": [],
       "system_scope": "interaction",
       "proof_path": {
         "origin": "REPLACE_ME_WITH_THE_REAL_UPSTREAM_INPUT_PRODUCER",
@@ -89,6 +148,7 @@
       "capability_ids": ["CAP-001"],
       "identity_ids": [],
       "gate_tiers": ["pre-release"],
+      "predecessor_requirement_ids": ["REQ-CHANGE"],
       "system_scope": "interaction",
       "proof_path": {
         "origin": "REPLACE_ME_WITH_THE_REPRESENTATIVE_REAL_INPUT_OR_CLEAN_STATE",
@@ -113,6 +173,7 @@
       "capability_ids": ["CAP-001"],
       "identity_ids": [],
       "gate_tiers": ["release"],
+      "predecessor_requirement_ids": ["REQ-CHANGE", "REQ-PRE-RELEASE"],
       "system_scope": "end-to-end",
       "proof_path": {
         "origin": "REPLACE_ME_WITH_THE_REAL_USER_OR_SYSTEM_ENTRYPOINT",

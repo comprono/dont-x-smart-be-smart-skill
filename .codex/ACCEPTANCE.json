@@ -1,21 +1,36 @@
 {
-  "schema_version": 5,
-  "updated_utc": "2026-08-14T08:44:37Z",
-  "project_state": "complete",
+  "schema_version": 6,
+  "updated_utc": "2026-08-31T16:08:40Z",
+  "project_state": "active",
   "project_identity": {
     "id": "outcome-integrity-skill",
-    "root_markers": ["skills/outcome-integrity/SKILL.md", "scripts/install.py"]
+    "root_markers": [
+      "skills/outcome-integrity/SKILL.md",
+      "scripts/install.py"
+    ]
   },
   "outcome_hierarchy": {
     "north_star": {
       "id": "OUTCOME-INTEGRITY",
       "description": "Maintain a concise standalone skill that preserves outcomes and proven capability fitness across evolution.",
-      "status": "achieved",
+      "status": "active",
       "fitness_dimensions": [
-        {"id": "FIT-EFFECTIVENESS", "description": "Useful verified outcome progress."},
-        {"id": "FIT-QUALITY", "description": "Correct, clear, user-comprehensible behavior."},
-        {"id": "FIT-EFFICIENCY", "description": "Proportionate time, tokens, tools, and proof cost."},
-        {"id": "FIT-SAFETY", "description": "Authority, evidence integrity, bounded effects, and recovery."}
+        {
+          "id": "FIT-EFFECTIVENESS",
+          "description": "Useful verified outcome progress."
+        },
+        {
+          "id": "FIT-QUALITY",
+          "description": "Correct, clear, user-comprehensible behavior."
+        },
+        {
+          "id": "FIT-EFFICIENCY",
+          "description": "Proportionate time, tokens, tools, and proof cost."
+        },
+        {
+          "id": "FIT-SAFETY",
+          "description": "Authority, evidence integrity, bounded effects, and recovery."
+        }
       ]
     },
     "delivery_stages": [
@@ -25,23 +40,100 @@
         "description": "Verify and publish the generic schema-v4 capability-floor contract.",
         "required": true,
         "status": "complete",
-        "preserves_capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"]
+        "preserves_capability_ids": [
+          "CAP-OUTCOME",
+          "CAP-EFFICIENCY",
+          "CAP-PACKAGE"
+        ]
+      },
+      {
+        "id": "STAGE-V6-CONTROL",
+        "parent_outcome_id": "OUTCOME-INTEGRITY",
+        "description": "Add generic atomic action admission and candidate-bound proof without regressing released behavior.",
+        "required": true,
+        "status": "complete",
+        "preserves_capability_ids": [
+          "CAP-OUTCOME",
+          "CAP-EFFICIENCY",
+          "CAP-PACKAGE",
+          "CAP-ADMISSION"
+        ]
+      },
+      {
+        "id": "STAGE-V6-INTERCEPTION",
+        "parent_outcome_id": "OUTCOME-INTEGRITY",
+        "description": "Make bounded admission cross the real model-to-tool boundary and stop method-family churn before it consumes hours.",
+        "required": true,
+        "status": "active",
+        "preserves_capability_ids": [
+          "CAP-OUTCOME",
+          "CAP-EFFICIENCY",
+          "CAP-PACKAGE",
+          "CAP-ADMISSION",
+          "CAP-INTERCEPTION"
+        ]
       }
     ],
-    "current_stage_id": null
+    "current_stage_id": "STAGE-V6-INTERCEPTION"
   },
   "outcome_capabilities": [
-    {"id": "CAP-OUTCOME", "description": "Preserve parented outcomes, accepted behavior, and honest evidence.", "required": true, "stage_id": "STAGE-V4-LOCAL", "preservation": "permanent"},
-    {"id": "CAP-EFFICIENCY", "description": "Keep execution, proof, and communication proportionate and productive.", "required": true, "stage_id": "STAGE-V4-LOCAL", "preservation": "permanent"},
-    {"id": "CAP-PACKAGE", "description": "Remain generic, backward-readable, valid, tested, and idempotently installable.", "required": true, "stage_id": "STAGE-V4-LOCAL", "preservation": "permanent"}
+    {
+      "id": "CAP-OUTCOME",
+      "description": "Preserve parented outcomes, accepted behavior, and honest evidence.",
+      "required": true,
+      "stage_id": "STAGE-V4-LOCAL",
+      "preservation": "permanent"
+    },
+    {
+      "id": "CAP-EFFICIENCY",
+      "description": "Keep execution, proof, and communication proportionate and productive.",
+      "required": true,
+      "stage_id": "STAGE-V4-LOCAL",
+      "preservation": "permanent"
+    },
+    {
+      "id": "CAP-PACKAGE",
+      "description": "Remain generic, backward-readable, valid, tested, and idempotently installable.",
+      "required": true,
+      "stage_id": "STAGE-V4-LOCAL",
+      "preservation": "permanent"
+    },
+    {
+      "id": "CAP-ADMISSION",
+      "description": "Refuse material work before stable lineage, candidate proof, prerequisites, budgets, and exact effects are atomically admitted.",
+      "required": true,
+      "stage_id": "STAGE-V6-CONTROL",
+      "preservation": "permanent"
+    },
+    {
+      "id": "CAP-INTERCEPTION",
+      "description": "Intercept each covered material tool proposal, bind its actual identity and inputs, meter bounded work, and stop a disproven method family before execution continues.",
+      "required": true,
+      "stage_id": "STAGE-V6-INTERCEPTION",
+      "preservation": "permanent"
+    }
   ],
   "capability_floors": [
     {
       "id": "FLOOR-OUTCOME",
       "capability_id": "CAP-OUTCOME",
       "invariant": "Later stages preserve every declared permanent behavior and reject completion without whole-system evidence.",
-      "fitness_dimension_ids": ["FIT-EFFECTIVENESS", "FIT-QUALITY", "FIT-SAFETY"],
-      "proof_ladder": {"change": ["REQ-V5-CONTRACT"], "pre-release": ["REQ-V5-FORWARD"], "release": ["REQ-V5-PACKAGE", "REQ-V5-PUBLISH"]},
+      "fitness_dimension_ids": [
+        "FIT-EFFECTIVENESS",
+        "FIT-QUALITY",
+        "FIT-SAFETY"
+      ],
+      "proof_ladder": {
+        "change": [
+          "REQ-V6-HOOK-CONTRACT"
+        ],
+        "pre-release": [
+          "REQ-V6-HOOK-FORWARD"
+        ],
+        "release": [
+          "REQ-V6-HOOK-PACKAGE"
+        ]
+      },
       "optional_supporting_state": [],
       "independence_requirement_ids": []
     },
@@ -49,8 +141,21 @@
       "id": "FLOOR-EFFICIENCY",
       "capability_id": "CAP-EFFICIENCY",
       "invariant": "Ordinary changes use cheap deterministic gates while stronger proof is reserved for installation and release boundaries.",
-      "fitness_dimension_ids": ["FIT-EFFECTIVENESS", "FIT-EFFICIENCY"],
-      "proof_ladder": {"change": ["REQ-V5-CONTRACT"], "pre-release": ["REQ-V5-FORWARD"], "release": ["REQ-V5-PACKAGE", "REQ-V5-PUBLISH"]},
+      "fitness_dimension_ids": [
+        "FIT-EFFECTIVENESS",
+        "FIT-EFFICIENCY"
+      ],
+      "proof_ladder": {
+        "change": [
+          "REQ-V6-HOOK-CONTRACT"
+        ],
+        "pre-release": [
+          "REQ-V6-HOOK-FORWARD"
+        ],
+        "release": [
+          "REQ-V6-HOOK-PACKAGE"
+        ]
+      },
       "optional_supporting_state": [],
       "independence_requirement_ids": []
     },
@@ -58,45 +163,214 @@
       "id": "FLOOR-PACKAGE",
       "capability_id": "CAP-PACKAGE",
       "invariant": "The exact generic source remains valid, backward-readable, isolated, and equal to the installed copy.",
-      "fitness_dimension_ids": ["FIT-QUALITY", "FIT-EFFICIENCY", "FIT-SAFETY"],
-      "proof_ladder": {"change": ["REQ-V5-CONTRACT"], "pre-release": ["REQ-V5-FORWARD"], "release": ["REQ-V5-PACKAGE", "REQ-V5-PUBLISH"]},
+      "fitness_dimension_ids": [
+        "FIT-QUALITY",
+        "FIT-EFFICIENCY",
+        "FIT-SAFETY"
+      ],
+      "proof_ladder": {
+        "change": [
+          "REQ-V6-HOOK-CONTRACT"
+        ],
+        "pre-release": [
+          "REQ-V6-HOOK-FORWARD"
+        ],
+        "release": [
+          "REQ-V6-HOOK-PACKAGE"
+        ]
+      },
+      "optional_supporting_state": [],
+      "independence_requirement_ids": []
+    },
+    {
+      "id": "FLOOR-ADMISSION",
+      "capability_id": "CAP-ADMISSION",
+      "invariant": "Every material attempt is atomically reserved against stable lineage, a complete candidate, aggregate budgets, prerequisite evidence, and exact effect authority before it starts.",
+      "fitness_dimension_ids": [
+        "FIT-EFFECTIVENESS",
+        "FIT-QUALITY",
+        "FIT-EFFICIENCY",
+        "FIT-SAFETY"
+      ],
+      "proof_ladder": {
+        "change": [
+          "REQ-V6-HOOK-CONTRACT"
+        ],
+        "pre-release": [
+          "REQ-V6-HOOK-FORWARD"
+        ],
+        "release": [
+          "REQ-V6-HOOK-PACKAGE"
+        ]
+      },
+      "optional_supporting_state": [],
+      "independence_requirement_ids": []
+    },
+    {
+      "id": "FLOOR-INTERCEPTION",
+      "capability_id": "CAP-INTERCEPTION",
+      "invariant": "A covered material tool call cannot execute without a live single-use reservation for its actual tool, inputs, method family, scope, and remaining bounded-work budget.",
+      "fitness_dimension_ids": [
+        "FIT-EFFECTIVENESS",
+        "FIT-QUALITY",
+        "FIT-EFFICIENCY",
+        "FIT-SAFETY"
+      ],
+      "proof_ladder": {
+        "change": [
+          "REQ-V6-HOOK-CONTRACT"
+        ],
+        "pre-release": [
+          "REQ-V6-HOOK-FORWARD"
+        ],
+        "release": [
+          "REQ-V6-HOOK-PACKAGE"
+        ]
+      },
       "optional_supporting_state": [],
       "independence_requirement_ids": []
     }
   ],
   "identity_requirements": [
-    {"id": "ENTITY-STANDALONE-SKILL", "description": "The standalone skill repository and active installed outcome-integrity skill.", "substitutable": false}
+    {
+      "id": "ENTITY-STANDALONE-SKILL",
+      "description": "The standalone skill repository and active installed outcome-integrity skill.",
+      "substitutable": false
+    }
   ],
-  "current_slice_requirement_id": null,
+  "execution_control": {
+    "revision": 17,
+    "reconciled_utc": "2026-08-31T16:08:40Z",
+    "lineage": {
+      "id": "LINEAGE-V6-INTERCEPTION",
+      "stage_id": "STAGE-V6-INTERCEPTION",
+      "acceptance_ids": [
+        "REQ-V6-HOOK-CONTRACT",
+        "REQ-V6-HOOK-FORWARD",
+        "REQ-V6-HOOK-PACKAGE"
+      ],
+      "scope_fingerprint": "sha256:179e3a4ee47e9fba3e78ea8783204f5a21a6f02bd8ab4350049b5b5dc137bece"
+    },
+    "candidate": {
+      "fingerprint": "sha256:6491868b0566d116aff089ac2688ba04d5c86a9bcdbbca01e22aa52d25d0ad1a",
+      "manifest_paths": [
+        "skills/outcome-integrity",
+        "global/AGENTS.snippet.md",
+        "scripts/install.py",
+        "tests",
+        "README.md"
+      ],
+      "external_fingerprints": []
+    },
+    "status": "ready",
+    "limits": {
+      "total_attempts": 8,
+      "failed_attempts": 4,
+      "equivalent_failures": 2,
+      "expensive_attempts": 2,
+      "support_attempts": 3,
+      "no_progress_attempts": 2,
+      "total_tool_calls": 24,
+      "support_tool_calls": 8,
+      "support_no_progress_calls": 4,
+      "active_attempt_seconds": 3600,
+      "spawned_workers": 2,
+      "scope_growth_actions": 1,
+      "direct_delivery_reserved_calls": 6,
+      "max_path_touches": 12,
+      "max_touches_per_path": 3
+    },
+    "usage": {
+      "total_attempts": 3,
+      "failed_attempts": 0,
+      "expensive_attempts": 2,
+      "support_attempts": 0,
+      "no_progress_attempts": 0,
+      "failure_classes": [],
+      "total_tool_calls": 0,
+      "support_tool_calls": 0,
+      "support_no_progress_calls": 0,
+      "spawned_workers": 0,
+      "scope_growth_actions": 0,
+      "path_touches": 0,
+      "hot_path_touches": 0,
+      "active_attempt_seconds": 0,
+      "path_counts": {},
+      "method_families": []
+    },
+    "gate_receipts": [],
+    "diagnostic_evaluation_fingerprints": [
+      "sha256:e0744caf9d3ad8b071df2aeb9c7c1b2a869c9d99bf6f0dadb37cf998a11531a8"
+    ],
+    "prerequisites": [],
+    "authorizations": [],
+    "active_attempt": null,
+    "stop_reason": null
+  },
+  "current_slice_requirement_id": "REQ-V6-HOOK-CONTRACT",
   "requirements": [
     {
       "id": "REQ-V4-CONTRACT",
       "description": "Cheap deterministic tests enforce the generic capability-floor contract after relevant changes.",
       "required": true,
       "stage_id": "STAGE-V4-LOCAL",
-      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
-      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
-      "gate_tiers": ["change"],
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "change"
+      ],
       "system_scope": "interaction",
-      "proof_path": {"origin": "Schema-v4 source fixtures", "boundary": "schema-v4 validator contract", "observation": "adversarial capability-floor rejection", "fidelity": "production-shaped"},
+      "proof_path": {
+        "origin": "Schema-v4 source fixtures",
+        "boundary": "schema-v4 validator contract",
+        "observation": "adversarial capability-floor rejection",
+        "fidelity": "production-shaped"
+      },
       "proof_scope": "Source assertions and adversarial fixtures cover inheritance, fitness, proof cost, state independence, and whole-system gates.",
       "proof_limits": "Deterministic tests do not prove independent model transfer or active installation.",
       "status": "passing",
       "minimum_evidence_level": "focused-test",
       "acceptance_steps": [
-        {"id": "STEP-CONTRACT-INHERIT", "description": "Reject stages that omit permanent inherited capabilities."},
-        {"id": "STEP-CONTRACT-FITNESS", "description": "Reject unbalanced fitness or safety-only completion."},
-        {"id": "STEP-CONTRACT-LADDER", "description": "Require distinct cheap, pre-release, and whole-system proof tiers."},
-        {"id": "STEP-CONTRACT-STATE", "description": "Require independence proof when optional supporting state exists."}
+        {
+          "id": "STEP-CONTRACT-INHERIT",
+          "description": "Reject stages that omit permanent inherited capabilities."
+        },
+        {
+          "id": "STEP-CONTRACT-FITNESS",
+          "description": "Reject unbalanced fitness or safety-only completion."
+        },
+        {
+          "id": "STEP-CONTRACT-LADDER",
+          "description": "Require distinct cheap, pre-release, and whole-system proof tiers."
+        },
+        {
+          "id": "STEP-CONTRACT-STATE",
+          "description": "Require independence proof when optional supporting state exists."
+        }
       ],
-      "evidence": [{
-        "level": "focused-test",
-        "ref": "tests/test_package.py; skills/outcome-integrity/scripts/project_outcome.py",
-        "summary": "Thirty-six deterministic tests pass, including seven adversarial capability-preservation cases; skill size decreased to 3,120 words.",
-        "verified_utc": "2026-08-13T18:04:27Z",
-        "step_ids": ["STEP-CONTRACT-INHERIT", "STEP-CONTRACT-FITNESS", "STEP-CONTRACT-LADDER", "STEP-CONTRACT-STATE"],
-        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
-      }],
+      "evidence": [
+        {
+          "level": "focused-test",
+          "ref": "tests/test_package.py; skills/outcome-integrity/scripts/project_outcome.py",
+          "summary": "Thirty-six deterministic tests pass, including seven adversarial capability-preservation cases; skill size decreased to 3,120 words.",
+          "verified_utc": "2026-08-13T18:04:27Z",
+          "step_ids": [
+            "STEP-CONTRACT-INHERIT",
+            "STEP-CONTRACT-FITNESS",
+            "STEP-CONTRACT-LADDER",
+            "STEP-CONTRACT-STATE"
+          ],
+          "identity_ids": [
+            "ENTITY-STANDALONE-SKILL"
+          ]
+        }
+      ],
       "counterevidence": [],
       "blocker": null
     },
@@ -105,29 +379,63 @@
       "description": "Independent generic scenarios apply permanent floors and proportional verification without leaking the motivating diagnosis.",
       "required": true,
       "stage_id": "STAGE-V4-LOCAL",
-      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
-      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
-      "gate_tiers": ["pre-release"],
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "pre-release"
+      ],
       "system_scope": "interaction",
-      "proof_path": {"origin": "Fresh generic agent prompts", "boundary": "invoked Outcome Integrity v4 instructions", "observation": "independent preservation decisions", "fidelity": "production-shaped"},
+      "proof_path": {
+        "origin": "Fresh generic agent prompts",
+        "boundary": "invoked Outcome Integrity v4 instructions",
+        "observation": "independent preservation decisions",
+        "fidelity": "production-shaped"
+      },
       "proof_scope": "Fresh agents receive only the updated skill and generic raw project situations.",
       "proof_limits": "Two scenarios do not guarantee every future model or domain.",
       "status": "passing",
-      "minimum_evidence_level": "integration",
+      "minimum_evidence_level": "focused-test",
       "acceptance_steps": [
-        {"id": "STEP-FORWARD-PRESERVE", "description": "Preserve prior useful behavior as an inherited executable floor."},
-        {"id": "STEP-FORWARD-EFFICIENT", "description": "Choose cheap change gates and reserve full benchmarks for release."},
-        {"id": "STEP-FORWARD-STATE", "description": "Require clean-state behavior when optional learned state exists."},
-        {"id": "STEP-FORWARD-WHOLE", "description": "Require balanced whole-system delivery evidence."}
+        {
+          "id": "STEP-FORWARD-PRESERVE",
+          "description": "Preserve prior useful behavior as an inherited executable floor."
+        },
+        {
+          "id": "STEP-FORWARD-EFFICIENT",
+          "description": "Choose cheap change gates and reserve full benchmarks for release."
+        },
+        {
+          "id": "STEP-FORWARD-STATE",
+          "description": "Require clean-state behavior when optional learned state exists."
+        },
+        {
+          "id": "STEP-FORWARD-WHOLE",
+          "description": "Require balanced whole-system delivery evidence."
+        }
       ],
-      "evidence": [{
-        "level": "integration",
-        "ref": "independent forward_test_controller and forward_test_pipeline responses",
-        "summary": "Fresh agents given only the updated skill and generic raw scenarios preserved old useful behavior as a permanent floor, required clean-state independence, selected cheap deterministic change gates and bounded higher tiers, and withheld release for missing whole-system balanced-fitness evidence.",
-        "verified_utc": "2026-08-13T18:00:54Z",
-        "step_ids": ["STEP-FORWARD-PRESERVE", "STEP-FORWARD-EFFICIENT", "STEP-FORWARD-STATE", "STEP-FORWARD-WHOLE"],
-        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
-      }],
+      "evidence": [
+        {
+          "level": "integration",
+          "ref": "independent forward_test_controller and forward_test_pipeline responses",
+          "summary": "Fresh agents given only the updated skill and generic raw scenarios preserved old useful behavior as a permanent floor, required clean-state independence, selected cheap deterministic change gates and bounded higher tiers, and withheld release for missing whole-system balanced-fitness evidence.",
+          "verified_utc": "2026-08-13T18:00:54Z",
+          "step_ids": [
+            "STEP-FORWARD-PRESERVE",
+            "STEP-FORWARD-EFFICIENT",
+            "STEP-FORWARD-STATE",
+            "STEP-FORWARD-WHOLE"
+          ],
+          "identity_ids": [
+            "ENTITY-STANDALONE-SKILL"
+          ]
+        }
+      ],
       "counterevidence": [],
       "blocker": null
     },
@@ -136,29 +444,63 @@
       "description": "The exact generic source passes full local validation and installation parity.",
       "required": true,
       "stage_id": "STAGE-V4-LOCAL",
-      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
-      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
-      "gate_tiers": ["release"],
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "release"
+      ],
       "system_scope": "end-to-end",
-      "proof_path": {"origin": "Exact schema-v4 source checkout", "boundary": "validation and active installation flow", "observation": "installed-source parity and completion", "fidelity": "production"},
+      "proof_path": {
+        "origin": "Exact schema-v4 source checkout",
+        "boundary": "validation and active installation flow",
+        "observation": "installed-source parity and completion",
+        "fidelity": "production"
+      },
       "proof_scope": "Full tests, official validation, compilation, completion gate, isolated and active installation, exact hashes, and generic-source scan.",
       "proof_limits": "Local release proof does not publish GitHub or guarantee every future response.",
       "status": "passing",
       "minimum_evidence_level": "end-to-end",
       "acceptance_steps": [
-        {"id": "STEP-PACKAGE-VALIDATE", "description": "Pass all source, schema, compilation, and official validation gates."},
-        {"id": "STEP-PACKAGE-INSTALL", "description": "Install idempotently in isolation and the active Codex home."},
-        {"id": "STEP-PACKAGE-PARITY", "description": "Match installed source exactly with one managed global rule block."},
-        {"id": "STEP-PACKAGE-ISOLATE", "description": "Contain no project- or provider-specific correction."}
+        {
+          "id": "STEP-PACKAGE-VALIDATE",
+          "description": "Pass all source, schema, compilation, and official validation gates."
+        },
+        {
+          "id": "STEP-PACKAGE-INSTALL",
+          "description": "Install idempotently in isolation and the active Codex home."
+        },
+        {
+          "id": "STEP-PACKAGE-PARITY",
+          "description": "Match installed source exactly with one managed global rule block."
+        },
+        {
+          "id": "STEP-PACKAGE-ISOLATE",
+          "description": "Contain no project- or provider-specific correction."
+        }
       ],
-      "evidence": [{
-        "level": "end-to-end",
-        "ref": "36 deterministic tests; quick_validate.py; compileall; project validate/resume; isolated and active double-install; exact five-file SHA-256 parity; one managed global block; generic-source scan",
-        "summary": "The exact generic schema-v4 source passed every local gate, installed idempotently, matched all five active installed files exactly, retained one managed global block, and contained no motivating project/provider identity.",
-        "verified_utc": "2026-08-13T18:04:27Z",
-        "step_ids": ["STEP-PACKAGE-VALIDATE", "STEP-PACKAGE-INSTALL", "STEP-PACKAGE-PARITY", "STEP-PACKAGE-ISOLATE"],
-        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
-      }],
+      "evidence": [
+        {
+          "level": "end-to-end",
+          "ref": "36 deterministic tests; quick_validate.py; compileall; project validate/resume; isolated and active double-install; exact five-file SHA-256 parity; one managed global block; generic-source scan",
+          "summary": "The exact generic schema-v4 source passed every local gate, installed idempotently, matched all five active installed files exactly, retained one managed global block, and contained no motivating project/provider identity.",
+          "verified_utc": "2026-08-13T18:04:27Z",
+          "step_ids": [
+            "STEP-PACKAGE-VALIDATE",
+            "STEP-PACKAGE-INSTALL",
+            "STEP-PACKAGE-PARITY",
+            "STEP-PACKAGE-ISOLATE"
+          ],
+          "identity_ids": [
+            "ENTITY-STANDALONE-SKILL"
+          ]
+        }
+      ],
       "counterevidence": [],
       "blocker": null
     },
@@ -167,28 +509,58 @@
       "description": "The exact verified schema-v4 source is merged to the authoritative default branch and published as GitHub release v4.0.0.",
       "required": true,
       "stage_id": "STAGE-V4-LOCAL",
-      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
-      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
-      "gate_tiers": ["release"],
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "release"
+      ],
       "system_scope": "end-to-end",
-      "proof_path": {"origin": "Verified schema-v4 Git commit", "boundary": "authoritative GitHub merge, tag, and release flow", "observation": "public v4.0.0 release", "fidelity": "production"},
+      "proof_path": {
+        "origin": "Verified schema-v4 Git commit",
+        "boundary": "authoritative GitHub merge, tag, and release flow",
+        "observation": "public v4.0.0 release",
+        "fidelity": "production"
+      },
       "proof_scope": "Authoritative remote branch, merged commit, immutable tag, and published non-prerelease GitHub release.",
       "proof_limits": "Publication does not guarantee every future probabilistic response.",
       "status": "passing",
       "minimum_evidence_level": "user-visible",
       "acceptance_steps": [
-        {"id": "STEP-PUBLISH-MERGE", "description": "Merge the exact verified source to the authoritative default branch."},
-        {"id": "STEP-PUBLISH-TAG", "description": "Create v4.0.0 at the merged source commit."},
-        {"id": "STEP-PUBLISH-RELEASE", "description": "Publish a non-draft, non-prerelease GitHub release with accurate notes."}
+        {
+          "id": "STEP-PUBLISH-MERGE",
+          "description": "Merge the exact verified source to the authoritative default branch."
+        },
+        {
+          "id": "STEP-PUBLISH-TAG",
+          "description": "Create v4.0.0 at the merged source commit."
+        },
+        {
+          "id": "STEP-PUBLISH-RELEASE",
+          "description": "Publish a non-draft, non-prerelease GitHub release with accurate notes."
+        }
       ],
-      "evidence": [{
-        "level": "user-visible",
-        "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/pull/5; https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v4.0.0; commit d42fca19ba939b37a7ded27b0cb0ed1c70ed5372",
-        "summary": "Pull request #5 merged after two passing GitHub Actions runs; authoritative main and tag v4.0.0 resolve to the same merge commit; the public release is non-draft and non-prerelease.",
-        "verified_utc": "2026-08-13T18:37:04Z",
-        "step_ids": ["STEP-PUBLISH-MERGE", "STEP-PUBLISH-TAG", "STEP-PUBLISH-RELEASE"],
-        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
-      }],
+      "evidence": [
+        {
+          "level": "user-visible",
+          "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/pull/5; https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v4.0.0; commit d42fca19ba939b37a7ded27b0cb0ed1c70ed5372",
+          "summary": "Pull request #5 merged after two passing GitHub Actions runs; authoritative main and tag v4.0.0 resolve to the same merge commit; the public release is non-draft and non-prerelease.",
+          "verified_utc": "2026-08-13T18:37:04Z",
+          "step_ids": [
+            "STEP-PUBLISH-MERGE",
+            "STEP-PUBLISH-TAG",
+            "STEP-PUBLISH-RELEASE"
+          ],
+          "identity_ids": [
+            "ENTITY-STANDALONE-SKILL"
+          ]
+        }
+      ],
       "counterevidence": [],
       "blocker": null
     },
@@ -197,29 +569,63 @@
       "description": "Schema-v5 deterministically rejects proof that bypasses the causal production boundary.",
       "required": true,
       "stage_id": "STAGE-V4-LOCAL",
-      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
-      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
-      "gate_tiers": ["change"],
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "change"
+      ],
       "system_scope": "interaction",
-      "proof_path": {"origin": "Schema-v5 acceptance fixtures", "boundary": "project_outcome.py requirement and permanent-floor validation", "observation": "synthetic or component-only floor gates are rejected", "fidelity": "production-shaped"},
+      "proof_path": {
+        "origin": "Schema-v5 acceptance fixtures",
+        "boundary": "project_outcome.py requirement and permanent-floor validation",
+        "observation": "synthetic or component-only floor gates are rejected",
+        "fidelity": "production-shaped"
+      },
       "proof_scope": "Adversarial fixtures exercise the same parser and validation entrypoint used by real project state.",
       "proof_limits": "Does not prove independent model behavior, installation, CI, or publication.",
       "status": "passing",
       "minimum_evidence_level": "focused-test",
       "acceptance_steps": [
-        {"id": "STEP-V5-PATH", "description": "Require origin, boundary, observation, and fidelity for every schema-v5 requirement."},
-        {"id": "STEP-V5-FLOOR", "description": "Reject permanent-floor change gates that are synthetic or component-only."},
-        {"id": "STEP-V5-RELEASE", "description": "Require production-fidelity end-to-end release proof."},
-        {"id": "STEP-V5-CAUSAL", "description": "Require bounded causal-control and stop-condition state."}
+        {
+          "id": "STEP-V5-PATH",
+          "description": "Require origin, boundary, observation, and fidelity for every schema-v5 requirement."
+        },
+        {
+          "id": "STEP-V5-FLOOR",
+          "description": "Reject permanent-floor change gates that are synthetic or component-only."
+        },
+        {
+          "id": "STEP-V5-RELEASE",
+          "description": "Require production-fidelity end-to-end release proof."
+        },
+        {
+          "id": "STEP-V5-CAUSAL",
+          "description": "Require bounded causal-control and stop-condition state."
+        }
       ],
-      "evidence": [{
-        "level": "focused-test",
-        "ref": "tests/test_package.py; skills/outcome-integrity/scripts/project_outcome.py; skills/outcome-integrity/assets/ACCEPTANCE.template.json",
-        "summary": "Forty-three deterministic tests pass. Schema v5 requires explicit proof paths, rejects synthetic or component-only permanent-floor change gates, requires production-fidelity release proof, preserves schema v1-v4 recovery, and requires causal-control state.",
-        "verified_utc": "2026-08-14T08:40:58Z",
-        "step_ids": ["STEP-V5-PATH", "STEP-V5-FLOOR", "STEP-V5-RELEASE", "STEP-V5-CAUSAL"],
-        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
-      }],
+      "evidence": [
+        {
+          "level": "focused-test",
+          "ref": "tests/test_package.py; skills/outcome-integrity/scripts/project_outcome.py; skills/outcome-integrity/assets/ACCEPTANCE.template.json",
+          "summary": "Forty-three deterministic tests pass. Schema v5 requires explicit proof paths, rejects synthetic or component-only permanent-floor change gates, requires production-fidelity release proof, preserves schema v1-v4 recovery, and requires causal-control state.",
+          "verified_utc": "2026-08-14T08:40:58Z",
+          "step_ids": [
+            "STEP-V5-PATH",
+            "STEP-V5-FLOOR",
+            "STEP-V5-RELEASE",
+            "STEP-V5-CAUSAL"
+          ],
+          "identity_ids": [
+            "ENTITY-STANDALONE-SKILL"
+          ]
+        }
+      ],
       "counterevidence": [],
       "blocker": null
     },
@@ -228,28 +634,58 @@
       "description": "Fresh generic agents apply earliest-divergence, proof-fidelity, stop, prompt-ownership, and explanation-type rules.",
       "required": true,
       "stage_id": "STAGE-V4-LOCAL",
-      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
-      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
-      "gate_tiers": ["pre-release"],
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "pre-release"
+      ],
       "system_scope": "interaction",
-      "proof_path": {"origin": "Fresh agents given the exact updated skill and raw generic scenarios", "boundary": "independent reasoning under the invoked skill", "observation": "bounded decisions that reject bypasses and equivalent retries", "fidelity": "production-shaped"},
+      "proof_path": {
+        "origin": "Fresh agents given the exact updated skill and raw generic scenarios",
+        "boundary": "independent reasoning under the invoked skill",
+        "observation": "bounded decisions that reject bypasses and equivalent retries",
+        "fidelity": "production-shaped"
+      },
       "proof_scope": "Two non-product-specific scenarios with no leaked diagnosis test transfer of the new rules.",
       "proof_limits": "Two stochastic scenarios cannot guarantee every future response.",
       "status": "passing",
       "minimum_evidence_level": "integration",
       "acceptance_steps": [
-        {"id": "STEP-V5-FORWARD-BOUNDARY", "description": "Reject a downstream synthetic fixture and demand the real producer boundary."},
-        {"id": "STEP-V5-FORWARD-STOP", "description": "Treat equivalent failures and exact-once stop rules as controlling."},
-        {"id": "STEP-V5-FORWARD-COMMS", "description": "Distinguish execution prompts and chronological causal questions from adjacent requests."}
+        {
+          "id": "STEP-V5-FORWARD-BOUNDARY",
+          "description": "Reject a downstream synthetic fixture and demand the real producer boundary."
+        },
+        {
+          "id": "STEP-V5-FORWARD-STOP",
+          "description": "Treat equivalent failures and exact-once stop rules as controlling."
+        },
+        {
+          "id": "STEP-V5-FORWARD-COMMS",
+          "description": "Distinguish execution prompts and chronological causal questions from adjacent requests."
+        }
       ],
-      "evidence": [{
-        "level": "integration",
-        "ref": "fresh agents v5_forward_boundary and v5_forward_communication",
-        "summary": "With only the updated skill and raw generic facts, one agent rejected a synthetic post-boundary gate, classified changed-runtime failures as equivalent, and honored the fired stop; the other executed the corrected prompt ownership, answered the requested chronology, and selected a production-shaped boundary test instead of another costly run.",
-        "verified_utc": "2026-08-14T08:42:09Z",
-        "step_ids": ["STEP-V5-FORWARD-BOUNDARY", "STEP-V5-FORWARD-STOP", "STEP-V5-FORWARD-COMMS"],
-        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
-      }],
+      "evidence": [
+        {
+          "level": "integration",
+          "ref": "fresh agents v5_forward_boundary and v5_forward_communication",
+          "summary": "With only the updated skill and raw generic facts, one agent rejected a synthetic post-boundary gate, classified changed-runtime failures as equivalent, and honored the fired stop; the other executed the corrected prompt ownership, answered the requested chronology, and selected a production-shaped boundary test instead of another costly run.",
+          "verified_utc": "2026-08-14T08:42:09Z",
+          "step_ids": [
+            "STEP-V5-FORWARD-BOUNDARY",
+            "STEP-V5-FORWARD-STOP",
+            "STEP-V5-FORWARD-COMMS"
+          ],
+          "identity_ids": [
+            "ENTITY-STANDALONE-SKILL"
+          ]
+        }
+      ],
       "counterevidence": [],
       "blocker": null
     },
@@ -258,28 +694,58 @@
       "description": "The exact generic schema-v5 source passes validation and active installation parity.",
       "required": true,
       "stage_id": "STAGE-V4-LOCAL",
-      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
-      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
-      "gate_tiers": ["release"],
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "release"
+      ],
       "system_scope": "end-to-end",
-      "proof_path": {"origin": "Exact schema-v5 source checkout", "boundary": "full validation and installer flow", "observation": "completion and active installed-source parity", "fidelity": "production"},
+      "proof_path": {
+        "origin": "Exact schema-v5 source checkout",
+        "boundary": "full validation and installer flow",
+        "observation": "completion and active installed-source parity",
+        "fidelity": "production"
+      },
       "proof_scope": "Full tests, official validation, compilation, completion, idempotent installation, hashes, token bounds, and generic-source scan.",
       "proof_limits": "Local proof does not establish GitHub publication or universal probabilistic behavior.",
       "status": "passing",
       "minimum_evidence_level": "end-to-end",
       "acceptance_steps": [
-        {"id": "STEP-V5-PACKAGE-TEST", "description": "Pass all deterministic, compilation, and official skill validation gates."},
-        {"id": "STEP-V5-PACKAGE-INSTALL", "description": "Install idempotently and match the active installed source exactly."},
-        {"id": "STEP-V5-PACKAGE-ISOLATE", "description": "Keep the runtime skill generic and within token bounds."}
+        {
+          "id": "STEP-V5-PACKAGE-TEST",
+          "description": "Pass all deterministic, compilation, and official skill validation gates."
+        },
+        {
+          "id": "STEP-V5-PACKAGE-INSTALL",
+          "description": "Install idempotently and match the active installed source exactly."
+        },
+        {
+          "id": "STEP-V5-PACKAGE-ISOLATE",
+          "description": "Keep the runtime skill generic and within token bounds."
+        }
       ],
-      "evidence": [{
-        "level": "end-to-end",
-        "ref": "43 deterministic tests; compileall; quick_validate.py; schema-v5 validate; isolated installer test; active double-install; exact five-file SHA-256 parity; one managed global block; generic runtime scan",
-        "summary": "The exact generic schema-v5 source passed all local gates, remained within 3,327 invoked-skill words and 698 global words, installed idempotently, matched all five active installed files, and contained no motivating project or provider identity.",
-        "verified_utc": "2026-08-14T08:42:56Z",
-        "step_ids": ["STEP-V5-PACKAGE-TEST", "STEP-V5-PACKAGE-INSTALL", "STEP-V5-PACKAGE-ISOLATE"],
-        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
-      }],
+      "evidence": [
+        {
+          "level": "end-to-end",
+          "ref": "43 deterministic tests; compileall; quick_validate.py; schema-v5 validate; isolated installer test; active double-install; exact five-file SHA-256 parity; one managed global block; generic runtime scan",
+          "summary": "The exact generic schema-v5 source passed all local gates, remained within 3,327 invoked-skill words and 698 global words, installed idempotently, matched all five active installed files, and contained no motivating project or provider identity.",
+          "verified_utc": "2026-08-14T08:42:56Z",
+          "step_ids": [
+            "STEP-V5-PACKAGE-TEST",
+            "STEP-V5-PACKAGE-INSTALL",
+            "STEP-V5-PACKAGE-ISOLATE"
+          ],
+          "identity_ids": [
+            "ENTITY-STANDALONE-SKILL"
+          ]
+        }
+      ],
       "counterevidence": [],
       "blocker": null
     },
@@ -288,28 +754,454 @@
       "description": "The exact verified schema-v5 source is merged and published as GitHub release v5.0.0.",
       "required": true,
       "stage_id": "STAGE-V4-LOCAL",
-      "capability_ids": ["CAP-OUTCOME", "CAP-EFFICIENCY", "CAP-PACKAGE"],
-      "identity_ids": ["ENTITY-STANDALONE-SKILL"],
-      "gate_tiers": ["release"],
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "release"
+      ],
       "system_scope": "end-to-end",
-      "proof_path": {"origin": "Verified schema-v5 Git commit", "boundary": "authoritative GitHub CI, merge, tag, and release flow", "observation": "public non-prerelease v5.0.0", "fidelity": "production"},
+      "proof_path": {
+        "origin": "Verified schema-v5 Git commit",
+        "boundary": "authoritative GitHub CI, merge, tag, and release flow",
+        "observation": "public non-prerelease v5.0.0",
+        "fidelity": "production"
+      },
       "proof_scope": "Authoritative main branch, CI, immutable tag, and public GitHub release.",
       "proof_limits": "Publication does not guarantee every future response.",
       "status": "passing",
       "minimum_evidence_level": "user-visible",
       "acceptance_steps": [
-        {"id": "STEP-V5-PUBLISH-CI", "description": "Pass GitHub Actions for the exact release source."},
-        {"id": "STEP-V5-PUBLISH-MERGE", "description": "Merge the exact verified source to main."},
-        {"id": "STEP-V5-PUBLISH-RELEASE", "description": "Publish non-draft, non-prerelease v5.0.0 from the merge commit."}
+        {
+          "id": "STEP-V5-PUBLISH-CI",
+          "description": "Pass GitHub Actions for the exact release source."
+        },
+        {
+          "id": "STEP-V5-PUBLISH-MERGE",
+          "description": "Merge the exact verified source to main."
+        },
+        {
+          "id": "STEP-V5-PUBLISH-RELEASE",
+          "description": "Publish non-draft, non-prerelease v5.0.0 from the merge commit."
+        }
       ],
-      "evidence": [{
-        "level": "user-visible",
-        "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/pull/6; https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v5.0.0; commit 5e5566bb95106524f1f569e9f9d14fa78464cd6f",
-        "summary": "Pull request #6 merged after both GitHub Actions checks passed; authoritative main and tag v5.0.0 resolved to the same merge commit; the public release is non-draft and non-prerelease.",
-        "verified_utc": "2026-08-14T08:44:37Z",
-        "step_ids": ["STEP-V5-PUBLISH-CI", "STEP-V5-PUBLISH-MERGE", "STEP-V5-PUBLISH-RELEASE"],
-        "identity_ids": ["ENTITY-STANDALONE-SKILL"]
-      }],
+      "evidence": [
+        {
+          "level": "user-visible",
+          "ref": "https://github.com/comprono/dont-x-smart-be-smart-skill/pull/6; https://github.com/comprono/dont-x-smart-be-smart-skill/releases/tag/v5.0.0; commit 5e5566bb95106524f1f569e9f9d14fa78464cd6f",
+          "summary": "Pull request #6 merged after both GitHub Actions checks passed; authoritative main and tag v5.0.0 resolved to the same merge commit; the public release is non-draft and non-prerelease.",
+          "verified_utc": "2026-08-14T08:44:37Z",
+          "step_ids": [
+            "STEP-V5-PUBLISH-CI",
+            "STEP-V5-PUBLISH-MERGE",
+            "STEP-V5-PUBLISH-RELEASE"
+          ],
+          "identity_ids": [
+            "ENTITY-STANDALONE-SKILL"
+          ]
+        }
+      ],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V6-CONTRACT",
+      "description": "Schema-v6 atomically refuses stale, cross-candidate, over-budget, prerequisite-missing, contaminated, or effect-mismatched material attempts.",
+      "required": true,
+      "stage_id": "STAGE-V6-CONTROL",
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE",
+        "CAP-ADMISSION"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "change"
+      ],
+      "predecessor_requirement_ids": [],
+      "system_scope": "interaction",
+      "proof_path": {
+        "origin": "Generic schema-v6 state and attempt requests",
+        "boundary": "project_outcome.py validation and atomic ledger mutation",
+        "observation": "invalid reservation is refused before resource use or side effects",
+        "fidelity": "production-shaped"
+      },
+      "proof_scope": "The real parser, lock, revision check, budget charge, receipt ordering, evaluation exposure, prerequisite, and authorization comparisons are exercised with generic fixtures.",
+      "proof_limits": "Deterministic tests do not prove independent model transfer, active installation, publication, or universal behavior.",
+      "status": "passing",
+      "minimum_evidence_level": "focused-test",
+      "acceptance_steps": [
+        {
+          "id": "STEP-V6-LINEAGE",
+          "description": "Reject run-identity resets and aggregate distinct/equivalent failure budget evasion."
+        },
+        {
+          "id": "STEP-V6-CANDIDATE",
+          "description": "Reject stale candidate receipts and enforce lower-tier order on the same candidate."
+        },
+        {
+          "id": "STEP-V6-EVALUATION",
+          "description": "Reject exposed evaluation inputs as prospective evidence after candidate change."
+        },
+        {
+          "id": "STEP-V6-AUTHORITY",
+          "description": "Reject missing downstream prerequisites and any action, target, effect, context, use, or expiry mismatch."
+        },
+        {
+          "id": "STEP-V6-ATOMIC",
+          "description": "Reserve and finish attempts under a lock with stale-writer and crash-visible active-attempt controls."
+        }
+      ],
+      "evidence": [
+        {
+          "level": "focused-test",
+          "ref": "tests/test_execution_control.py; tests/test_package.py",
+          "summary": "The bound schema-v6 candidate passed 81 deterministic regressions; two file-symlink cases were skipped because this Windows account lacks symlink privilege, while the Windows junction escape case executed and passed.",
+          "verified_utc": "2026-08-17T22:33:29Z",
+          "step_ids": [
+            "STEP-V6-LINEAGE",
+            "STEP-V6-CANDIDATE",
+            "STEP-V6-EVALUATION",
+            "STEP-V6-AUTHORITY",
+            "STEP-V6-ATOMIC"
+          ],
+          "identity_ids": [
+            "ENTITY-STANDALONE-SKILL"
+          ],
+          "candidate_fingerprint": "sha256:6f65ba940d199283fcc51d141a8ecfc1cf644ba291553d79683f85f3024d0229",
+          "lineage_id": "LINEAGE-V6-CONTROL",
+          "gate_receipt_id": "RECEIPT-000004",
+          "evaluation_fingerprint": null,
+          "evaluation_role": "none"
+        }
+      ],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V6-FORWARD",
+      "description": "Fresh generic agents use atomic admission and refuse runtime-identity, candidate, evaluation, prerequisite, and authority bypasses without seeing the motivating diagnosis.",
+      "required": true,
+      "stage_id": "STAGE-V6-CONTROL",
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE",
+        "CAP-ADMISSION"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "pre-release"
+      ],
+      "predecessor_requirement_ids": [
+        "REQ-V6-CONTRACT"
+      ],
+      "system_scope": "interaction",
+      "proof_path": {
+        "origin": "Fresh agents given the exact updated skill and raw generic situations",
+        "boundary": "independent reasoning plus executable admission choice",
+        "observation": "the agent selects the bounded admitted action or stops before invalid work",
+        "fidelity": "production-shaped"
+      },
+      "proof_scope": "Two held-out non-product-specific scenarios test transfer of stable lineage, candidate receipts, evaluation exposure, downstream prerequisites, and exact effects.",
+      "proof_limits": "Two stochastic scenarios cannot guarantee every future model, domain, or response.",
+      "status": "passing",
+      "minimum_evidence_level": "integration",
+      "acceptance_steps": [
+        {
+          "id": "STEP-V6-FORWARD-LINEAGE",
+          "description": "Preserve aggregate attempt identity across new runs and distinct early failures."
+        },
+        {
+          "id": "STEP-V6-FORWARD-PROOF",
+          "description": "Invalidate changed-candidate receipts and exposed evaluation claims."
+        },
+        {
+          "id": "STEP-V6-FORWARD-EFFECT",
+          "description": "Require hard downstream evidence and exact target/effect authorization before material work."
+        }
+      ],
+      "evidence": [
+        {
+          "level": "integration",
+          "ref": "fresh agents v6_forward_compiler2 and v6_forward_storage2",
+          "summary": "Two fresh agents independently refused invalid material work, preserved cumulative lineage across run IDs, invalidated cross-candidate proof, treated exposed evaluation as diagnostic, failed closed on an ambiguous external effect, and required fresh prerequisites plus exact target/effect authority before retry.",
+          "verified_utc": "2026-08-17T22:41:14Z",
+          "step_ids": [
+            "STEP-V6-FORWARD-LINEAGE",
+            "STEP-V6-FORWARD-PROOF",
+            "STEP-V6-FORWARD-EFFECT"
+          ],
+          "identity_ids": [
+            "ENTITY-STANDALONE-SKILL"
+          ],
+          "candidate_fingerprint": "sha256:6f65ba940d199283fcc51d141a8ecfc1cf644ba291553d79683f85f3024d0229",
+          "lineage_id": "LINEAGE-V6-CONTROL",
+          "gate_receipt_id": "RECEIPT-000006",
+          "evaluation_fingerprint": "sha256:e0744caf9d3ad8b071df2aeb9c7c1b2a869c9d99bf6f0dadb37cf998a11531a8",
+          "evaluation_role": "prospective"
+        }
+      ],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V6-PACKAGE",
+      "description": "The exact generic schema-v6 source passes full validation and idempotent active installation parity without publication.",
+      "required": true,
+      "stage_id": "STAGE-V6-CONTROL",
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE",
+        "CAP-ADMISSION"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "release"
+      ],
+      "predecessor_requirement_ids": [
+        "REQ-V6-CONTRACT",
+        "REQ-V6-FORWARD"
+      ],
+      "system_scope": "end-to-end",
+      "proof_path": {
+        "origin": "Exact schema-v6 source candidate",
+        "boundary": "full validation, atomic control, and active installer flow",
+        "observation": "completion-ready local state and byte-identical installed package",
+        "fidelity": "production"
+      },
+      "proof_scope": "Full tests, compilation, official validation, state gates, double installation, exact managed-tree parity, one global block, bounds, and generic-source scan.",
+      "proof_limits": "Local proof does not establish remote publication or universal probabilistic behavior.",
+      "status": "passing",
+      "minimum_evidence_level": "end-to-end",
+      "acceptance_steps": [
+        {
+          "id": "STEP-V6-PACKAGE-TEST",
+          "description": "Pass deterministic, compilation, official skill, and project-state gates on the bound candidate."
+        },
+        {
+          "id": "STEP-V6-PACKAGE-INSTALL",
+          "description": "Install idempotently into the exact active skill target under exact effect-scoped authorization."
+        },
+        {
+          "id": "STEP-V6-PACKAGE-PARITY",
+          "description": "Match the complete managed source tree and global block exactly with no stale extras."
+        },
+        {
+          "id": "STEP-V6-PACKAGE-ISOLATE",
+          "description": "Keep all runtime controls generic and within proportional instruction bounds."
+        }
+      ],
+      "evidence": [
+        {
+          "level": "end-to-end",
+          "ref": "tests; compileall; quick_validate.py; project validate/resume; active double-install; exact source-installed manifest and managed-block parity",
+          "summary": "The exact bound generic source passed 81 regressions, compilation, official skill validation, project validation/resume, transactional rollback and junction tests, two active installations, exact 10-entry managed-tree parity, one exact managed global block, zero install artifacts, and generic-source isolation; two file-symlink tests were skipped only because this Windows account lacks symlink privilege.",
+          "verified_utc": "2026-08-17T22:45:01Z",
+          "step_ids": [
+            "STEP-V6-PACKAGE-TEST",
+            "STEP-V6-PACKAGE-INSTALL",
+            "STEP-V6-PACKAGE-PARITY",
+            "STEP-V6-PACKAGE-ISOLATE"
+          ],
+          "identity_ids": [
+            "ENTITY-STANDALONE-SKILL"
+          ],
+          "candidate_fingerprint": "sha256:6f65ba940d199283fcc51d141a8ecfc1cf644ba291553d79683f85f3024d0229",
+          "lineage_id": "LINEAGE-V6-CONTROL",
+          "gate_receipt_id": "RECEIPT-000008",
+          "evaluation_fingerprint": null,
+          "evaluation_role": "none"
+        }
+      ],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V6-HOOK-CONTRACT",
+      "description": "A synchronous hook crosses the real model-to-tool boundary and atomically denies unreserved, mismatched, reused, over-budget, or out-of-scope material calls.",
+      "required": true,
+      "stage_id": "STAGE-V6-INTERCEPTION",
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE",
+        "CAP-ADMISSION",
+        "CAP-INTERCEPTION"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "change"
+      ],
+      "predecessor_requirement_ids": [],
+      "system_scope": "interaction",
+      "proof_path": {
+        "origin": "Actual Codex PreToolUse and PostToolUse payloads",
+        "boundary": "installed hook plus atomic schema-v6 claim and observation transitions",
+        "observation": "the proposed tool call is denied before execution or charged exactly once to its bounded method family",
+        "fidelity": "production-shaped"
+      },
+      "proof_scope": "Exercises real hook payload shapes, exact tool/input/cwd identity, single-use claims, path scope, cumulative budgets, post observation, candidate settlement, structured failure identity, and method-family stops.",
+      "proof_limits": "Subprocess tests do not prove that a local non-managed hook is trusted and active in every Codex surface.",
+      "status": "failing",
+      "minimum_evidence_level": "focused-test",
+      "acceptance_steps": [
+        {
+          "id": "STEP-HOOK-BOUNDARY",
+          "description": "Deny a covered material call without a valid exact single-use claim at PreToolUse."
+        },
+        {
+          "id": "STEP-HOOK-BUDGET",
+          "description": "Charge cumulative call, support, worker, path, hot-path, scope-growth, and method-family limits before execution."
+        },
+        {
+          "id": "STEP-HOOK-SETTLE",
+          "description": "Require matching PostToolUse observation and safely settle candidate-changing local work without minting proof."
+        },
+        {
+          "id": "STEP-HOOK-CAUSAL",
+          "description": "Derive progress and structured failure identity, and stop disproven or causally unknown method families."
+        }
+      ],
+      "evidence": [],
+      "counterevidence": [
+        {
+          "id": "COUNTER-HOOK-MISSING",
+          "description": "Released v6 tests called attempt_begin directly and therefore injected the admission transition instead of proving the real dispatcher boundary.",
+          "status": "resolved",
+          "ref": "tests/test_hooks.py plus scripts/install.py --hook-health",
+          "summary": "The source now has synchronous Pre/Post interception, atomic claims, and exact installed parity.",
+          "observed_utc": "2026-08-19T05:20:00Z",
+          "resolution": "Resolved for source and installed-definition presence; live trust remains separate counterevidence."
+        },
+        {
+          "id": "COUNTER-HOOK-TRUST",
+          "description": "Exact installed hook configuration does not prove that this desktop has reviewed, trusted, and dispatched it in a fresh task.",
+          "status": "unresolved",
+          "ref": "scripts/install.py --hook-health",
+          "summary": "Health is configured-exact-trust-unverified with active_verified false.",
+          "observed_utc": "2026-08-31T00:00:00Z"
+        }
+      ],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V6-HOOK-FORWARD",
+      "description": "Generic incident replays stop scope expansion and method-family churn at the first disproven boundary while preserving a bounded direct-delivery route.",
+      "required": true,
+      "stage_id": "STAGE-V6-INTERCEPTION",
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE",
+        "CAP-ADMISSION",
+        "CAP-INTERCEPTION"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "pre-release"
+      ],
+      "predecessor_requirement_ids": [
+        "REQ-V6-HOOK-CONTRACT"
+      ],
+      "system_scope": "end-to-end",
+      "proof_path": {
+        "origin": "Generic sequences of repair, architecture invalidation, scope expansion, distinct failures, equivalent failures, delegation, and compaction",
+        "boundary": "hook-enforced tool admission and method-family circuit breaker",
+        "observation": "post-invalidation material work remains denied until an authorized lower-complexity replan opens a new bounded family",
+        "fidelity": "production-shaped"
+      },
+      "proof_scope": "Replays the causal structure without any motivating project, provider, model, file, or Windows-specific identity and verifies that new symptoms cannot reset the method-family stop.",
+      "proof_limits": "Finite generic replays cannot guarantee every future tool path or model behavior.",
+      "status": "failing",
+      "minimum_evidence_level": "integration",
+      "acceptance_steps": [
+        {
+          "id": "STEP-HOOK-REPLAY",
+          "description": "Stop before a full replacement after the current architecture is proven unable to reach its acceptance boundary."
+        },
+        {
+          "id": "STEP-HOOK-FAMILY",
+          "description": "Aggregate distinct and equivalent failures inside one method family and require causal evidence before a retry or family change."
+        },
+        {
+          "id": "STEP-HOOK-RESERVE",
+          "description": "Preserve a bounded direct-delivery reserve when support work exhausts its own lane."
+        }
+      ],
+      "evidence": [],
+      "counterevidence": [],
+      "blocker": null
+    },
+    {
+      "id": "REQ-V6-HOOK-PACKAGE",
+      "description": "The generic source, opt-in hook installer, active installed tree, shared-hook preservation, rollback, and live trusted denial canary pass without publication.",
+      "required": true,
+      "stage_id": "STAGE-V6-INTERCEPTION",
+      "capability_ids": [
+        "CAP-OUTCOME",
+        "CAP-EFFICIENCY",
+        "CAP-PACKAGE",
+        "CAP-ADMISSION",
+        "CAP-INTERCEPTION"
+      ],
+      "identity_ids": [
+        "ENTITY-STANDALONE-SKILL"
+      ],
+      "gate_tiers": [
+        "release"
+      ],
+      "predecessor_requirement_ids": [
+        "REQ-V6-HOOK-CONTRACT",
+        "REQ-V6-HOOK-FORWARD"
+      ],
+      "system_scope": "end-to-end",
+      "proof_path": {
+        "origin": "Exact generic source and an actual initialized schema-v6 canary project",
+        "boundary": "transactional opt-in install, Codex hook trust, real PreToolUse dispatch, and installed runtime",
+        "observation": "an unreserved mutation is denied before execution and unrelated user hook configuration remains intact",
+        "fidelity": "production"
+      },
+      "proof_scope": "Full tests, compilation, official validation, transaction rollback, double install/disable, exact installed parity, trust-state disclosure, and one live model-to-hook denial canary.",
+      "proof_limits": "Codex documents that hosted tools and specialized opt-out paths are outside complete hook coverage; this package cannot override user or administrator hook-disable policy.",
+      "status": "failing",
+      "minimum_evidence_level": "end-to-end",
+      "acceptance_steps": [
+        {
+          "id": "STEP-HOOK-PACKAGE-TEST",
+          "description": "Pass deterministic, compilation, official skill, generic-source, and state gates on one bound candidate."
+        },
+        {
+          "id": "STEP-HOOK-PACKAGE-INSTALL",
+          "description": "Merge and remove only owned Pre/Post handlers transactionally while preserving unrelated hook semantics."
+        },
+        {
+          "id": "STEP-HOOK-PACKAGE-TRUST",
+          "description": "Report non-managed trust honestly and prove one trusted live denial through the actual dispatcher."
+        },
+        {
+          "id": "STEP-HOOK-PACKAGE-LIMIT",
+          "description": "Document hosted/specialized coverage gaps and never present the guardrail as absolute platform enforcement."
+        }
+      ],
+      "evidence": [],
       "counterevidence": [],
       "blocker": null
     }

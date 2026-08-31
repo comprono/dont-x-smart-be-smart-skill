@@ -82,11 +82,12 @@ State: active
 - Production-path proof: REPLACE_ME_WITH_ORIGIN_BOUNDARY_AND_OBSERVATION
 - Stop conditions and attempt limits: REPLACE_ME_OR_NONE
 - Forbidden bypasses: REPLACE_ME_OR_NONE
+- Mutable execution-control ledger: .codex/ACCEPTANCE.json#execution_control (sole authority)
 
 ## Current Slice
 
 - Delivery Stage ID: STAGE-001
-- Acceptance ID: REQ-001
+- Acceptance ID: REQ-CHANGE
 - Objective: REPLACE_ME
 - Acceptance evidence: REPLACE_ME
 - Protect: REPLACE_ME
