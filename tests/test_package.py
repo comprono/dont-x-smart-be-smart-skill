@@ -67,6 +67,11 @@ def project_text(
     state: str = "active",
     current_id: str = "REQ-001",
 ) -> str:
+    requirement_status = {
+        "active": "failing",
+        "blocked": "blocked",
+        "complete": "passing",
+    }.get(state, state)
     return f"""<!-- Managed with the outcome-integrity skill. Keep this current, not chronological. -->
 # Project Outcome
 
@@ -134,7 +139,7 @@ State: {state}
 - Objective: Reproduce the invalid transition.
 - Acceptance evidence: Deterministic failure at one boundary.
 - Protect: Existing passing behavior.
-- Status: {state}
+- Status: {requirement_status}
 
 ## Next
 - Action: Trace the transition.
@@ -536,8 +541,8 @@ class PackageTests(unittest.TestCase):
         self.assertNotIn("REPLACE_ME", text)
         for phrase in (
             ".codex/ACCEPTANCE.json",
-            "Classify Failure Before Retrying",
-            "Admit Delegation Only When It Helps",
+            "Keep The Control Plane Off The Critical Path",
+            "Retry And Delegation Limits",
             "completion --root",
         ):
             self.assertIn(phrase, text)
@@ -549,18 +554,17 @@ class PackageTests(unittest.TestCase):
         openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
 
         for phrase in (
-            "Build A Parented Outcome Stack",
-            "If every method succeeded",
-            "Never rewrite a parent to match a convenient child",
-            "parent corrections flow down immediately",
-            "replan from the outcome",
+            "Preserve Outcome And Evidence",
+            "The latest explicit user correction outranks prior plans and state",
+            "next action -> acceptance slice -> capability -> delivery stage -> north star",
+            "Tests, hooks, receipts, workers, provider inactivity, and elapsed time are not substitutes",
         ):
             self.assertIn(phrase, skill)
 
         for phrase in (
-            "parented stack",
-            "A passing slice does not complete its stage",
-            "propagate them through dependent descendants",
+            "Keep the user's requested outcome controlling",
+            "Report product progress separately",
+            "Activity and safety checks are not delivery",
         ):
             self.assertIn(phrase, global_rules)
 
@@ -583,14 +587,13 @@ class PackageTests(unittest.TestCase):
         openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
 
         for phrase in (
-            "Communicate For Productive Understanding",
-            "plain-language conclusion in the first sentence",
-            "truthfully, usefully, proportionately, and without unnecessary agitation",
-            "Never answer \"yes, exactly\"",
+            "Communicate Proportionately",
+            "Lead with the product outcome and the material evidence change",
+            "return to the smallest authorized delivery action",
         ):
             self.assertIn(phrase, skill)
 
-        self.assertIn("plain conclusion first", global_rules)
+        self.assertIn("Report product progress separately", global_rules)
         self.assertIn("direct plain-language conclusion first", readme)
         self.assertIn("Use $outcome-integrity", openai_yaml)
 
@@ -600,28 +603,26 @@ class PackageTests(unittest.TestCase):
         readme = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
 
         for phrase in (
-            "Choose Direct Delivery Before Durable State",
-            "8 total tool calls",
-            "3 support calls before delivery",
-            "6 files, 0 workers, 2 planned interim updates",
-            "Difficulty, failure, or desired architecture cannot promote",
-            "query authoritative state or an idempotency key before retrying",
+            "Route To Direct Delivery First",
+            "This remains true when the repository already contains `.codex` files",
+            "do not require an atomic claim for reads, local reversible edits, local commands, tests, or support tools",
+            "Complexity, a failure, a resumed conversation, multi-agent work",
+            "query authoritative external state before retrying",
         ):
             self.assertIn(phrase, skill)
         for phrase in (
-            "Default to direct delivery",
-            "advisory until durable state exists",
-            "Create no `.codex` state, child root, plan, framework, publisher, or control plane",
-            "In an initialized parent, use one slice under controls",
-            "difficulty, failure, or desired architecture cannot promote",
-            "query authoritative state or idempotency before retrying",
+            "Default to direct execution",
+            "Existing `.codex` files do not activate custody",
+            "Hooks must bypass reads, local reversible edits, local shell commands, tests, and support tools",
+            "Complexity, failure, resumption, or multi-agent work alone is not admission",
+            "query authoritative state or an idempotency key before retrying",
         ):
             self.assertIn(phrase, global_rules)
         for phrase in (
             "Direct delivery first",
-            "That lane uses only `deliverable -> acceptance check`",
+            "stay state-free",
+            "This remains true when a repository already contains Outcome Integrity files",
             "Calling `init` without one creates nothing",
-            "behavioral bounds, not ledger enforcement before durable state exists",
             "cannot prove that a caller's asserted reason is semantically true",
         ):
             self.assertIn(phrase, readme)
@@ -633,26 +634,22 @@ class PackageTests(unittest.TestCase):
         openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
 
         for phrase in (
-            "Maintain Continuous Project Ownership",
-            "Corrections update the contract; questions do not cancel authorized work",
-            "Interpret noisy wording from context",
-            "continue the next safe authorized project action in the same turn",
-            'Do not make the user repeatedly say "do it", "continue", or "what next"',
-            "am I leaving the user to manage the next obvious action Codex owns",
+            "The latest explicit user correction outranks prior plans and state",
+            "continue safe work already authorized",
+            'making the user repeat "do it."',
         ):
             self.assertIn(phrase, skill)
 
         for phrase in (
-            "Treat each message as an update to the active objective",
-            "Maintain one compact parented stack",
-            "After answering an interruption, apply that discernment gate",
-            "do not make the user repeatedly say",
+            "Keep the user's requested outcome controlling",
+            "Never manufacture another approval request",
+            "permission already applicable to the same action",
         ):
             self.assertIn(phrase, global_rules)
 
         self.assertIn("Questions and corrections update that project", readme)
         self.assertIn('instead of waiting for another "do it" instruction', readme)
-        self.assertIn("advance the next efficient authorized slice", openai_yaml)
+        self.assertIn("advance the user's actual deliverable", openai_yaml)
 
     def test_confusing_reply_loops_are_stopped_and_status_layers_are_separated(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -661,21 +658,17 @@ class PackageTests(unittest.TestCase):
         openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
 
         for phrase in (
-            "Communicate For Productive Understanding",
-            "Material transition:",
-            "Typed status:",
-            "Next owned action:",
-            "Never let `Done`, `working`, `complete`, `blocked`, `restart`, `plugin`, `local`, or `installed` refer to multiple layers in one sentence",
-            "If the user says the answer is confusing",
-            "`Next` means an agent-owned action",
+            "Communicate Proportionately",
+            "Separate product state from hook, installer, model, restart, and communication state",
+            "If the user says the process is confusing or obstructive",
         ):
             self.assertIn(phrase, skill)
 
-        self.assertIn("Separate product, tooling, model/restart", global_rules)
-        self.assertIn("conclusion, material distinction, and next owned action", global_rules)
+        self.assertIn("Report product progress separately", global_rules)
+        self.assertIn("Activity and safety checks are not delivery", global_rules)
         self.assertIn("Continuing an explanation loop", readme)
         self.assertIn("short conclusion, distinction, and next-action frame", readme)
-        self.assertIn("preserve the parented outcome stack", openai_yaml)
+        self.assertIn("Keep ordinary local work on the direct lane", openai_yaml)
 
     def test_recurring_work_has_a_bounded_operational_envelope(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
@@ -685,17 +678,17 @@ class PackageTests(unittest.TestCase):
         openai_yaml = OPENAI_YAML.read_text(encoding="utf-8")
 
         for phrase in (
-            "Bound Autonomous And Recurring Work",
-            "Continuation never authorizes unbounded resources",
-            "Observe often; mutate only on state change",
-            "resources grow without acceptance progress",
+            "Admit Durable Control Narrowly",
+            "recurring or unattended execution",
+            "effects that must remain exactly-once across retries, turns, or restarts",
+            "Name the admission reason",
         ):
             self.assertIn(phrase, skill)
 
         for phrase in (
-            "Before recurring, unattended, retrying, or automatic work",
+            "recurring or unattended work",
             "idempotency",
-            "exact-once",
+            "exact-once state",
         ):
             self.assertIn(phrase, global_rules)
 
@@ -708,25 +701,22 @@ class PackageTests(unittest.TestCase):
             self.assertIn(phrase, template)
 
         self.assertIn("unattended loops consume storage", readme)
-        self.assertIn("earliest divergent transition", openai_yaml)
+        self.assertIn("recurring or unattended execution", openai_yaml)
 
     def test_causal_boundary_prompt_ownership_and_failure_equivalence_are_explicit(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
         global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
         for phrase in (
-            "Treat pasted instructions by conversational function",
-            "Match the explanation requested",
-            "Lock the earliest transition where known-good and failing paths diverge",
-            "fixture that injects already-correct post-boundary state",
-            "Equivalence is determined by the acceptance outcome and earliest divergent transition",
-            "A triggered stop ends that authorization",
+            "diagnose the earliest divergent transition",
+            "After two equivalent failures or no-progress attempts",
+            "A replacement needs new causal evidence and a materially changed boundary",
+            "a new revision, worker, prompt, or authorization sentence is not a new method",
         ):
             self.assertIn(phrase, skill)
         for phrase in (
-            "chronology, rationale, responsibility",
-            "cross the production boundary",
-            "earliest divergence match",
-            "Record explicit `do not`",
+            "Never rerun an external effect merely because a control step failed",
+            "query authoritative state or an idempotency key before retrying",
+            "keep only the unresolved real external effect blocked",
         ):
             self.assertIn(phrase, global_rules)
 
@@ -735,19 +725,17 @@ class PackageTests(unittest.TestCase):
         global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
 
         for phrase in (
-            "Preserve Exact Identity And Contradictory Evidence",
-            "A matching display name, interface, capability, output, or family is not proof of equivalence",
-            "preserve both observations as counterevidence",
-            "A fallback advances only requirements it independently satisfies",
+            "Preserve Outcome And Evidence",
+            "Treat named accounts, tools, providers, repositories, files, sessions, and targets as exact identities",
+            "a convenient alternative is not proof of equivalence",
+            "Keep contradictory evidence visible",
         ):
             self.assertIn(phrase, skill)
 
         for phrase in (
-            "parented stack",
-            "A passing slice does not complete its stage",
-            "Treat named people, accounts, tools, providers",
-            "preserve unresolved counterevidence",
-            "Verify root markers",
+            "Keep the user's requested outcome controlling",
+            "Report product progress separately",
+            "Root ambiguity or stale state must not block local reversible work",
         ):
             self.assertIn(phrase, global_rules)
 
@@ -756,24 +744,19 @@ class PackageTests(unittest.TestCase):
         global_rules = GLOBAL_RULES.read_text(encoding="utf-8")
 
         for phrase in (
-            "Discern Before Persisting",
-            "Do not confuse momentum with focus",
-            "This never reduces responsibility, acceptance, or evidence quality",
-            "return to the current acceptance gap",
-            "Analytical fixation",
-            "Restless activity",
-            "Avoidant inaction",
-            "environment, acting agent, tools and access, distinct efforts, and external conditions",
-            "remaining uncertainty is tolerable and visible",
+            "Keep The Control Plane Off The Critical Path",
+            "If two consecutive control-plane actions produce no user-visible delivery evidence",
+            "Continue authorized local reversible work directly",
+            "do not manufacture another authorization request from control metadata",
+            "Never use Outcome Integrity's own bookkeeping as the reason to stop local work",
         ):
             self.assertIn(phrase, skill)
 
         for phrase in (
-            "Discern before persisting",
-            "Non-attachment to a preferred result or method never weakens outcome accountability",
-            "Return wandering attention",
-            "truthfully, usefully, proportionately, and without unnecessary agitation",
-            "do not assign total credit or blame to one agent without evidence",
+            "Outcome Integrity is optional durable-work support",
+            "stop control repairs, revisions, migrations, resealing, rebinding, and canaries",
+            "Continue authorized local work directly",
+            "Never manufacture another approval request",
         ):
             self.assertIn(phrase, global_rules)
 
@@ -1304,6 +1287,62 @@ class PackageTests(unittest.TestCase):
             write_state(root, project_text(), acceptance_data())
             self.assertTrue(self.state.validate(root)["ok"])
             self.assertTrue(self.state.validate(root, mode="resume")["ok"])
+
+    def test_current_slice_status_must_match_authoritative_requirement(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            project = project_text().replace("- Status: failing", "- Status: passing")
+            write_state(root, project, acceptance_data())
+
+            result = self.state.validate(root)
+
+            self.assertFalse(result["ok"])
+            self.assertTrue(
+                any("current requirement status mismatch" in error for error in result["errors"]),
+                result,
+            )
+
+    def test_blocked_slice_reports_stale_no_blocker_prose_without_hindering_recovery(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            blocker = {
+                "owner": "user",
+                "reason": "A required credential is unavailable.",
+                "recovery_trigger": "The credential becomes available.",
+                "recovery_action": "Resume the declared slice.",
+            }
+            blocked = acceptance_data(
+                project_state="blocked", status="blocked", blocker=blocker
+            )
+            write_state(root, project_text(state="blocked"), blocked)
+
+            result = self.state.validate(root)
+
+            self.assertTrue(result["ok"], result)
+            self.assertTrue(
+                any("Blocker and recovery: None" in warning for warning in result["warnings"]),
+                result,
+            )
+
+    def test_opposing_current_state_claims_are_advisory(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            project = project_text().replace(
+                "- Real path fails | Evidence: reproduction | Verified: 2026-07-16T10:00:00Z",
+                "- C0 must be re-proved | Evidence: reproduction | Verified: 2026-07-16T10:00:00Z",
+            ).replace(
+                "- Why now: It tests the root cause.",
+                "- Why now: C0 remains valid while the root cause is tested.",
+            )
+            write_state(root, project, acceptance_data())
+
+            result = self.state.validate(root)
+
+            self.assertTrue(result["ok"], result)
+            self.assertTrue(
+                any("contradictory current-state prose" in warning for warning in result["warnings"]),
+                result,
+            )
 
     def test_passing_requires_sufficient_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

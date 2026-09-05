@@ -65,17 +65,23 @@ class HookInstallerTests(unittest.TestCase):
         codex_home: Path,
         *,
         enable: bool = False,
+        advisory_only: bool = False,
         warnings: list[str] | None = None,
     ) -> tuple[Path, Path | None]:
         with mock.patch.object(INSTALLER, "_repository_root", return_value=package):
             return INSTALLER.install(
                 codex_home,
                 enable_user_hooks=enable,
+                advisory_only=advisory_only,
                 warnings=warnings,
             )
 
     def hook_document(self, codex_home: Path) -> dict[str, object]:
         return json.loads((codex_home / "hooks.json").read_text(encoding="utf-8"))
+
+    def hook_health(self, package: Path, codex_home: Path) -> dict[str, object]:
+        with mock.patch.object(INSTALLER, "_repository_root", return_value=package):
+            return INSTALLER.inspect_hook_health(codex_home)
 
     def owner_groups(self, document: dict[str, object], event: str) -> list[object]:
         return [
@@ -92,6 +98,67 @@ class HookInstallerTests(unittest.TestCase):
             or path.name.startswith(INSTALLER.LOCK_NAME)
         ]
         self.assertEqual(artifacts, [])
+
+    def test_repository_skill_tree_is_project_neutral(self) -> None:
+        INSTALLER.validate_reusable_skill_tree(
+            REPOSITORY_ROOT / "skills" / "outcome-integrity"
+        )
+
+    def test_project_specific_content_is_rejected_before_install_mutates_target(self) -> None:
+        cases = (
+            ("absolute-path", "notes.md", r"C:\Users\specific-user\Documents\project"),
+            (
+                "task-identity",
+                "notes.md",
+                "codex://threads/01a05813-84f8-70e1-b475-89cbb017e3f0",
+            ),
+            ("evidence-hash", "notes.md", "a" * 64),
+            ("authorization", "notes.md", "I explicitly authorize this install."),
+            (
+                "instance-id",
+                "scripts/project_outcome.py",
+                "RECOVERY-SPECIFIC-PROJECT-R42 = True\n",
+            ),
+            (
+                "pinned-project",
+                "scripts/project_outcome.py",
+                "SPECIFIC_PROJECT_ID = 'project-42'\n",
+            ),
+        )
+        for label, relative, content in cases:
+            with self.subTest(label=label), workspace_temporary_directory() as temporary:
+                root = Path(temporary)
+                package = self.make_package(root)
+                skill = package / "skills" / "outcome-integrity"
+                target = skill / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(content, encoding="utf-8")
+                codex_home = root / ".codex"
+                installed = codex_home / "skills" / "outcome-integrity"
+                installed.mkdir(parents=True)
+                sentinel = installed / "SKILL.md"
+                sentinel.write_text("existing target\n", encoding="utf-8")
+
+                with self.assertRaisesRegex(ValueError, "project-specific content"):
+                    self.install(package, codex_home, enable=True)
+
+                self.assertEqual(sentinel.read_text(encoding="utf-8"), "existing target\n")
+                self.assertFalse((codex_home / "hooks.json").exists())
+                self.assert_no_transaction_artifacts(codex_home)
+
+    def test_generic_placeholders_and_authorization_guidance_are_allowed(self) -> None:
+        with workspace_temporary_directory() as temporary:
+            root = Path(temporary)
+            package = self.make_package(root)
+            skill = package / "skills" / "outcome-integrity"
+            (skill / "notes.md").write_text(
+                "Use C:\\Users\\<user> or /home/<user>.\n"
+                "Reference codex://threads/<thread-id> and sha256:<64-hex>.\n"
+                "Obtain explicit user authorization before the bounded effect.\n",
+                encoding="utf-8",
+            )
+
+            INSTALLER.validate_reusable_skill_tree(skill)
 
     def test_enable_renders_official_synchronous_shape_and_exact_commands(self) -> None:
         with workspace_temporary_directory() as temporary:
@@ -311,9 +378,10 @@ class HookInstallerTests(unittest.TestCase):
             codex_home.mkdir()
             self.install(package, codex_home, enable=True)
 
-            exact = INSTALLER.inspect_hook_health(codex_home)
+            exact = self.hook_health(package, codex_home)
             self.assertEqual(exact["state"], "configured-exact-trust-unverified")
             self.assertTrue(exact["configured_exact"])
+            self.assertTrue(exact["source_exact"])
             self.assertFalse(exact["active_verified"])
 
             installed_core = (
@@ -323,10 +391,83 @@ class HookInstallerTests(unittest.TestCase):
                 / INSTALLER.HOOK_CORE_RELATIVE_PATH
             )
             installed_core.write_bytes(b"changed outside the transactional installer\n")
-            stale = INSTALLER.inspect_hook_health(codex_home)
+            stale = self.hook_health(package, codex_home)
             self.assertEqual(stale["state"], "configured-stale")
             self.assertFalse(stale["configured_exact"])
+            self.assertFalse(stale["source_exact"])
             self.assertFalse(stale["active_verified"])
+
+    def test_hook_health_rejects_self_consistent_noncanonical_live_core(self) -> None:
+        with workspace_temporary_directory() as temporary:
+            root = Path(temporary)
+            package = self.make_package(root)
+            codex_home = root / ".codex"
+            codex_home.mkdir()
+            self.install(package, codex_home, enable=True)
+            installed_core = (
+                codex_home
+                / "skills"
+                / "outcome-integrity"
+                / INSTALLER.HOOK_CORE_RELATIVE_PATH
+            )
+            old_digest = hashlib.sha256(installed_core.read_bytes()).hexdigest()
+            installed_core.write_bytes(b"project-specific compatibility core\n")
+            new_digest = hashlib.sha256(installed_core.read_bytes()).hexdigest()
+            for path in (
+                codex_home / "hooks.json",
+                codex_home / INSTALLER.HOOK_SIDECAR_NAME,
+            ):
+                text = path.read_text(encoding="utf-8")
+                self.assertIn(old_digest, text)
+                path.write_text(text.replace(old_digest, new_digest), encoding="utf-8")
+
+            health = self.hook_health(package, codex_home)
+
+            self.assertEqual(health["state"], "configured-stale")
+            self.assertFalse(health["configured_exact"])
+            self.assertFalse(health["source_exact"])
+            self.assertTrue(
+                any("differs from this installer package" in error for error in health["errors"])
+            )
+
+    def test_state_only_hook_metadata_is_preserved_and_reports_disabled_owned_hooks(self) -> None:
+        with workspace_temporary_directory() as temporary:
+            root = Path(temporary)
+            package = self.make_package(root)
+            codex_home = root / ".codex"
+            codex_home.mkdir()
+            self.install(package, codex_home, enable=True)
+
+            hooks_path = (codex_home / "hooks.json").absolute()
+            config = codex_home / "config.toml"
+            config.write_text(
+                "[hooks.state]\n\n"
+                f"[hooks.state.'{hooks_path}:pre_tool_use:0:0']\n"
+                'trusted_hash = "sha256:pre-tool-use-definition"\n'
+                "enabled = false\n\n"
+                f"[hooks.state.'{hooks_path}:post_tool_use:0:0']\n"
+                'trusted_hash = "sha256:post-tool-use-definition"\n'
+                "enabled = false\n",
+                encoding="utf-8",
+            )
+            config_before = config.read_bytes()
+            warnings: list[str] = []
+
+            self.install(package, codex_home, enable=True, warnings=warnings)
+
+            self.assertEqual(config.read_bytes(), config_before)
+            self.assertTrue(any("disabled" in warning.lower() for warning in warnings))
+            health = self.hook_health(package, codex_home)
+            self.assertEqual(health["state"], "configured-disabled")
+            self.assertTrue(health["configured_exact"])
+            self.assertFalse(health["active_verified"])
+            self.assertEqual(health["errors"], [])
+            self.assertIsNotNone(health["definition_fingerprint"])
+            self.assertTrue(
+                any("disabled" in warning.lower() for warning in health["warnings"])
+            )
+            self.assertEqual(config.read_bytes(), config_before)
+            self.assert_no_transaction_artifacts(codex_home)
 
     def test_malformed_inline_and_reparse_preflight_refuse_before_installation(self) -> None:
         for case in ("malformed", "inline", "reparse"):
@@ -339,7 +480,14 @@ class HookInstallerTests(unittest.TestCase):
                 if case == "malformed":
                     hooks.write_text("{ not json", encoding="utf-8")
                 elif case == "inline":
-                    (codex_home / "config.toml").write_text("[hooks]\n", encoding="utf-8")
+                    (codex_home / "config.toml").write_text(
+                        "[[hooks.PreToolUse]]\n"
+                        'matcher = "*"\n\n'
+                        "[[hooks.PreToolUse.hooks]]\n"
+                        'type = "command"\n'
+                        'command = "inline-pre-tool-use"\n',
+                        encoding="utf-8",
+                    )
                 else:
                     hooks.write_text('{"hooks": {}}\n', encoding="utf-8")
 
@@ -448,6 +596,62 @@ class HookInstallerTests(unittest.TestCase):
             self.assertEqual(self.hook_document(codex_home), unrelated)
             self.assertFalse((codex_home / INSTALLER.HOOK_SIDECAR_NAME).exists())
             self.assertEqual(INSTALLER.canonical_tree_manifest(installed), skill_before)
+            self.assert_no_transaction_artifacts(codex_home)
+
+    def test_advisory_install_updates_package_and_removes_only_owned_hooks(self) -> None:
+        with workspace_temporary_directory() as temporary:
+            root = Path(temporary)
+            package = self.make_package(root)
+            codex_home = root / ".codex"
+            codex_home.mkdir()
+            self.install(package, codex_home, enable=True)
+            hooks = self.hook_document(codex_home)
+            hooks["hooks"].setdefault("PreToolUse", []).insert(
+                0,
+                {
+                    "matcher": "unrelated",
+                    "hooks": [{"type": "command", "command": "keep-me"}],
+                },
+            )
+            (codex_home / "hooks.json").write_text(
+                json.dumps(hooks, indent=2) + "\n", encoding="utf-8"
+            )
+            source_skill = package / "skills" / "outcome-integrity" / "SKILL.md"
+            source_skill.write_text(
+                "---\nname: outcome-integrity\n---\nrepaired advisory skill\n",
+                encoding="utf-8",
+            )
+            source_rules = package / "global" / "AGENTS.snippet.md"
+            source_rules.write_text(
+                "<!-- outcome-integrity:start -->\nrepaired advisory rule\n"
+                "<!-- outcome-integrity:end -->\n",
+                encoding="utf-8",
+            )
+
+            self.install(package, codex_home, advisory_only=True)
+
+            document = self.hook_document(codex_home)
+            self.assertEqual(
+                document["hooks"]["PreToolUse"],
+                [
+                    {
+                        "matcher": "unrelated",
+                        "hooks": [{"type": "command", "command": "keep-me"}],
+                    }
+                ],
+            )
+            self.assertNotIn("PostToolUse", document["hooks"])
+            self.assertFalse((codex_home / INSTALLER.HOOK_SIDECAR_NAME).exists())
+            self.assertEqual(
+                (
+                    codex_home / "skills" / "outcome-integrity" / "SKILL.md"
+                ).read_text(encoding="utf-8"),
+                source_skill.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "repaired advisory rule",
+                (codex_home / "AGENTS.md").read_text(encoding="utf-8"),
+            )
             self.assert_no_transaction_artifacts(codex_home)
 
     def test_disable_deletes_only_package_created_empty_hooks_file(self) -> None:

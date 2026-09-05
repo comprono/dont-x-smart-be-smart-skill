@@ -1,4 +1,4 @@
 interface:
   display_name: "Outcome Integrity"
-  short_description: "Preserve outcomes through causal proof"
-  default_prompt: "Use $outcome-integrity to preserve the parented outcome stack and permanent floors, lock the earliest divergent transition, require hook-enforced bounded material-call admission when active, stop disproven method families, and advance the next efficient authorized slice."
+  short_description: "Durable control without blocking delivery"
+  default_prompt: "Use $outcome-integrity only if this work intrinsically needs durable tracking, recurring or unattended execution, or exact-once external-effect control. Keep ordinary local work on the direct lane, keep the control plane off the critical path, and advance the user's actual deliverable."

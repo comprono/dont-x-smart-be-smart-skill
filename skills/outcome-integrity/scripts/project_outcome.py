@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import stat
 import sys
@@ -150,6 +151,66 @@ CONTROL_STATE_PATHS = {
 }
 CONTROL_STATE_PREFIXES = (
     ".codex/.outcome-integrity-control-snapshots/",
+)
+PROVIDER_IDENTITY_TOKENS = {
+    "provider",
+    "llm",
+    "model",
+    "inference",
+    "generation",
+    "openai",
+    "anthropic",
+    "claude",
+    "gemini",
+    "cohere",
+    "mistral",
+    "groq",
+}
+PROVIDER_EXECUTION_TOKENS = {
+    "call",
+    "caller",
+    "complete",
+    "completion",
+    "completions",
+    "execute",
+    "executor",
+    "generate",
+    "generation",
+    "inference",
+    "invoke",
+    "invoker",
+    "request",
+    "run",
+    "runner",
+    "submit",
+}
+EXPLICIT_COST_TOOL_TOKENS = {"billable", "costly", "imagegen", "metered", "paid"}
+PROVIDER_RUNNER_EXCLUSION_TOKENS = {
+    "dry",
+    "dryrun",
+    "fake",
+    "fixture",
+    "mock",
+    "spec",
+    "stub",
+    "test",
+    "tests",
+}
+PROVIDER_CLI_NAMES = {
+    "anthropic",
+    "claude",
+    "cohere",
+    "gemini",
+    "groq",
+    "mistral",
+    "openai",
+}
+PROVIDER_API_HOST_PATTERN = re.compile(
+    r"(?i)\b(?:api\.anthropic\.com|api\.cohere\.com|api\.groq\.com|"
+    r"api\.mistral\.ai|api\.openai\.com|generativelanguage\.googleapis\.com)\b"
+)
+SHELL_NETWORK_CLIENT_PATTERN = re.compile(
+    r"(?i)\b(?:curl|wget|httpie?|Invoke-(?:RestMethod|WebRequest))\b"
 )
 EXECUTION_LIMIT_FIELDS = (
     "total_attempts",
@@ -413,6 +474,20 @@ PROJECT_STATE_PATTERN = re.compile(r"^State: (active|blocked|complete)$", re.MUL
 PROJECT_UPDATED_PATTERN = re.compile(r"^Updated: (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)$", re.MULTILINE)
 CURRENT_SLICE_PATTERN = re.compile(r"^- Acceptance ID: ([A-Z][A-Z0-9_-]{2,63}|none)$", re.MULTILINE)
 CURRENT_STAGE_PATTERN = re.compile(r"^- Delivery Stage ID: ([A-Z][A-Z0-9_-]{2,63}|none)$", re.MULTILINE)
+CURRENT_REQUIREMENT_STATUS_PATTERN = re.compile(r"\b(failing|blocked|passing)\b", re.IGNORECASE)
+NEXT_BLOCKER_NONE_PATTERN = re.compile(
+    r"^\s*-\s*Blocker and recovery:\s*(?:none\.?|n/?a\.?)\s*$",
+    re.IGNORECASE,
+)
+CURRENT_STATE_SUBJECT_PATTERN = re.compile(r"`([A-Z][A-Z0-9_-]{1,63})`|\b([A-Z]{1,8}\d+[A-Z0-9_-]*)\b")
+NEGATIVE_CURRENT_STATE_PATTERN = re.compile(
+    r"(?i)(?:\b(?:must|need(?:s)?|require(?:s)?)\s+(?:be\s+)?(?:re-?proved|fresh proof)\b|"
+    r"\bno longer\s+(?:valid|current|intact|verified)\b)"
+)
+POSITIVE_CURRENT_STATE_PATTERN = re.compile(
+    r"(?i)(?:\bremain(?:s)?\s+(?:valid|current|intact|verified)\b|"
+    r"\b(?:is|are)\s+(?:still\s+)?(?:valid|current|intact|verified)\b)"
+)
 ACCEPTANCE_AUTHORITY_LINE = "- Authority: .codex/ACCEPTANCE.json"
 PRODUCT_OUTCOME_PREFIX = "- Product outcome:"
 ACTIVE_PROOF_SLICE_PREFIX = "- Active proof slice:"
@@ -523,6 +598,101 @@ def initialize(
     }
 
 
+def numbered_section_lines(
+    lines: list[str], start: str, end: str | None
+) -> list[tuple[int, str]]:
+    try:
+        start_index = lines.index(start) + 1
+    except ValueError:
+        return []
+    if end is None:
+        end_index = len(lines)
+    else:
+        try:
+            end_index = lines.index(end, start_index)
+        except ValueError:
+            end_index = len(lines)
+    return [
+        (index + 1, lines[index])
+        for index in range(start_index, end_index)
+        if lines[index].strip()
+    ]
+
+
+def find_current_state_contradictions(lines: list[str]) -> list[str]:
+    claims: dict[str, dict[str, list[int]]] = {}
+    sections = (
+        ("## Verified State", "## Context Pointers"),
+        ("## Current Slice", "## Next"),
+        ("## Next", None),
+    )
+    for start, end in sections:
+        for line_number, line in numbered_section_lines(lines, start, end):
+            polarity = None
+            if NEGATIVE_CURRENT_STATE_PATTERN.search(line):
+                polarity = "negative"
+            elif POSITIVE_CURRENT_STATE_PATTERN.search(line):
+                polarity = "positive"
+            if polarity is None:
+                continue
+            subjects = {
+                first or second
+                for first, second in CURRENT_STATE_SUBJECT_PATTERN.findall(line)
+            }
+            for subject in subjects:
+                claims.setdefault(subject, {"negative": [], "positive": []})[
+                    polarity
+                ].append(line_number)
+    return [
+        f"{subject} has opposing current-state claims at lines "
+        f"{','.join(map(str, values['negative']))} and "
+        f"{','.join(map(str, values['positive']))}"
+        for subject, values in sorted(claims.items())
+        if values["negative"] and values["positive"]
+    ]
+
+
+def append_project_acceptance_semantic_findings(
+    project: dict[str, Any],
+    acceptance: dict[str, Any],
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    """Cross-check explicit current-state prose against the authoritative ledger."""
+    current_id = acceptance.get("current_slice_requirement_id")
+    current_requirement = acceptance.get("requirements_by_id", {}).get(current_id, {})
+    authoritative_status = (
+        current_requirement.get("status")
+        if isinstance(current_requirement, dict)
+        else None
+    )
+    prose_status = project.get("current_requirement_status")
+    if prose_status is None and current_id is not None:
+        warnings.append(
+            "Current Slice Status should explicitly include failing, blocked, or passing "
+            "so it can be reconciled with ACCEPTANCE.json"
+        )
+    elif (
+        prose_status is not None
+        and authoritative_status in {"failing", "blocked", "passing"}
+        and prose_status != authoritative_status
+    ):
+        errors.append(
+            "current requirement status mismatch: PROJECT_OUTCOME.md="
+            f"{prose_status} ACCEPTANCE.json={authoritative_status}"
+        )
+
+    control = acceptance.get("execution_control")
+    control_status_value = control.get("status") if isinstance(control, dict) else None
+    if project.get("next_blocker_is_none") and (
+        authoritative_status == "blocked" or control_status_value == "stopped"
+    ):
+        warnings.append(
+            "Next says 'Blocker and recovery: None' while the current requirement "
+            "is blocked or execution control is stopped; reconcile the human summary"
+        )
+
+
 def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
     project_path, acceptance_path = project_paths(root)
     errors: list[str] = []
@@ -546,6 +716,10 @@ def validate(root: str | Path, mode: str = "validate") -> dict[str, object]:
                 "current slice mismatch: PROJECT_OUTCOME.md="
                 f"{project['current_slice_id']} ACCEPTANCE.json={current_id or 'none'}"
             )
+
+        append_project_acceptance_semantic_findings(
+            project, acceptance, errors, warnings
+        )
 
         if schema_version >= 3 and acceptance["outcome_hierarchy"]:
             current_stage_id = acceptance["outcome_hierarchy"]["current_stage_id"]
@@ -748,6 +922,33 @@ def validate_project_file(
     if len(failures) > 5:
         warnings.append("more than five failure invariants; consolidate duplicates")
 
+    current_section = numbered_section_lines(lines, "## Current Slice", "## Next")
+    status_lines = [
+        (line_number, line)
+        for line_number, line in current_section
+        if line.strip().lower().startswith("- status:")
+    ]
+    if len(status_lines) != 1:
+        errors.append(
+            "Current Slice must contain exactly one '- Status:' line; "
+            f"found {len(status_lines)}"
+        )
+    current_requirement_status = None
+    if len(status_lines) == 1:
+        match = CURRENT_REQUIREMENT_STATUS_PATTERN.search(status_lines[0][1])
+        if match:
+            current_requirement_status = match.group(1).lower()
+
+    next_section = numbered_section_lines(lines, "## Next", None)
+    next_blocker_is_none = any(
+        NEXT_BLOCKER_NONE_PATTERN.match(line) for _, line in next_section
+    )
+    current_state_contradictions = find_current_state_contradictions(lines)
+    warnings.extend(
+        "possible contradictory current-state prose: " + finding
+        for finding in current_state_contradictions
+    )
+
     if not state_match or not updated_match or not current_match:
         return None
     return {
@@ -755,6 +956,9 @@ def validate_project_file(
         "updated": parse_utc(updated_match.group(1)),
         "current_slice_id": current_match.group(1),
         "current_stage_id": current_stage_match.group(1) if current_stage_match else "none",
+        "current_requirement_status": current_requirement_status,
+        "next_blocker_is_none": next_blocker_is_none,
+        "current_state_contradictions": current_state_contradictions,
         "has_product_outcome": has_nonempty_prefixed_line(
             lines, PRODUCT_OUTCOME_PREFIX
         ),
@@ -4635,6 +4839,142 @@ def _tool_name_tokens(tool_name: str) -> set[str]:
     }
 
 
+def _shell_command_strings(tool_input: object | None) -> list[str]:
+    if isinstance(tool_input, dict):
+        values = [
+            value
+            for key, value in tool_input.items()
+            if str(key).casefold() in {"cmd", "command", "script"}
+        ]
+        strings: list[str] = []
+        for value in values:
+            strings.extend(_tool_input_strings(value))
+        return strings
+    return _tool_input_strings(tool_input)
+
+
+def _clean_shell_word(value: str) -> str:
+    return value.strip().strip("\"'")
+
+
+def _shell_word_name(value: str) -> str:
+    cleaned = _clean_shell_word(value)
+    return PureWindowsPath(cleaned).name.casefold()
+
+
+def _is_direct_command_word(words: list[str], index: int) -> bool:
+    if index == 0:
+        return True
+    previous = _clean_shell_word(words[index - 1])
+    if previous in {"&", "&&", "|", "||", ";"} or previous.endswith(("&", "|", ";")):
+        return True
+    if index >= 2:
+        wrapper = _shell_word_name(words[index - 2])
+        if wrapper in {"pipenv", "poetry", "uv"} and previous.casefold() == "run":
+            return True
+    return False
+
+
+def _shell_words(command: str) -> list[str]:
+    try:
+        return shlex.split(command, posix=False)
+    except ValueError:
+        return command.split()
+
+
+def _provider_marked_runner(command: str) -> bool:
+    words = _shell_words(command)
+    for index, word in enumerate(words):
+        executable = _shell_word_name(word)
+        if executable.endswith(".exe"):
+            executable = executable[:-4]
+        if not (
+            executable in {"node", "py"}
+            or re.fullmatch(r"python(?:\d+(?:\.\d+)*)?", executable)
+        ):
+            continue
+        if not _is_direct_command_word(words, index):
+            continue
+
+        candidate: str | None = None
+        argument_index = index + 1
+        while argument_index < len(words):
+            argument = _clean_shell_word(words[argument_index])
+            if argument in {"&", "&&", "|", "||", ";"}:
+                break
+            if argument == "-c":
+                break
+            if argument == "-m":
+                argument_index += 1
+                if argument_index < len(words):
+                    candidate = _clean_shell_word(words[argument_index])
+                break
+            if argument.startswith("-"):
+                argument_index += 1
+                continue
+            candidate = argument
+            break
+
+        if not candidate:
+            continue
+        stem = PureWindowsPath(candidate).stem
+        tokens = _tool_name_tokens(stem)
+        if tokens & PROVIDER_RUNNER_EXCLUSION_TOKENS:
+            continue
+        if tokens & PROVIDER_IDENTITY_TOKENS and tokens & PROVIDER_EXECUTION_TOKENS:
+            return True
+    return False
+
+
+def _direct_provider_shell_call(command: str) -> bool:
+    words = _shell_words(command)
+    for index, word in enumerate(words):
+        command_name = _shell_word_name(word)
+        command_stem = command_name.rsplit(".", 1)[0]
+        if command_stem in PROVIDER_CLI_NAMES and _is_direct_command_word(words, index):
+            return True
+        if (
+            command_name in {"codex", "codex.exe"}
+            and _is_direct_command_word(words, index)
+            and index + 1 < len(words)
+            and _clean_shell_word(words[index + 1]) == "exec"
+        ):
+            # Only this observed provider-execution subcommand is protected.
+            # Bare Codex, diagnostics, and help/version inspection stay local.
+            inspection = False
+            for argument in words[index + 2 :]:
+                if argument in {"&", "&&", "|", "||", ";"}:
+                    break
+                option = _clean_shell_word(argument)
+                if option == "--":
+                    break
+                if option in {"-h", "--help", "-V", "--version"}:
+                    inspection = True
+                    break
+            if not inspection:
+                return True
+        if command_stem == "npx" and _is_direct_command_word(words, index):
+            if index + 1 < len(words):
+                package_name = _shell_word_name(words[index + 1]).split("@", 1)[0]
+                if package_name in PROVIDER_CLI_NAMES:
+                    return True
+    return bool(
+        PROVIDER_API_HOST_PATTERN.search(command)
+        and SHELL_NETWORK_CLIENT_PATTERN.search(command)
+    )
+
+
+def _provider_or_cost_tool(tool_name: str) -> bool:
+    tokens = _tool_name_tokens(tool_name)
+    return bool(
+        tokens & EXPLICIT_COST_TOOL_TOKENS
+        or (
+            tokens & PROVIDER_IDENTITY_TOKENS
+            and tokens & PROVIDER_EXECUTION_TOKENS
+        )
+    )
+
+
 def host_derived_action_classes(
     tool_name: str, tool_input: object | None = None
 ) -> set[str]:
@@ -4645,15 +4985,21 @@ def host_derived_action_classes(
         return {"support"}
     if tool_name in SHELL_TOOL_NAMES:
         classes = {"local"}
-        shell_text = "\n".join(_tool_input_strings(tool_input))
+        commands = _shell_command_strings(tool_input)
+        shell_text = "\n".join(commands)
         if any(pattern.search(shell_text) for pattern in SHELL_EXTERNAL_WRITE_PATTERNS):
+            classes.add("external-write")
+        if any(
+            _provider_marked_runner(command) or _direct_provider_shell_call(command)
+            for command in commands
+        ):
             classes.add("external-write")
         return classes
     if tool_name in READ_ONLY_TOOL_NAMES:
         return {"local"}
 
     tokens = _tool_name_tokens(tool_name)
-    if tokens & EXTERNAL_WRITE_VERBS:
+    if tokens & EXTERNAL_WRITE_VERBS or _provider_or_cost_tool(tool_name):
         classes = {"external-write"}
         if tokens & IRREVERSIBLE_TOOL_VERBS:
             classes.add("irreversible")
@@ -4681,9 +5027,80 @@ def derive_action_classes(
 
 
 def hook_requires_claim(payload: dict[str, Any]) -> bool:
-    """Return whether a host call is material enough to require atomic admission."""
+    """Return whether host-observable risk requires admission without a reservation.
+
+    Ordinary local edits, tests, inspections, and support calls stay on the direct
+    lane.  A durable ledger is not allowed to manufacture an approval boundary
+    merely because it exists in the current repository.
+    """
     tool_name = payload.get("tool_name")
-    return not (isinstance(tool_name, str) and tool_name in READ_ONLY_TOOL_NAMES)
+    if not isinstance(tool_name, str) or not tool_name.strip():
+        return False
+    action_classes = host_derived_action_classes(tool_name, payload.get("tool_input"))
+    return bool(action_classes & {"external-write", "irreversible", "unattended"})
+
+
+def hook_requires_claim_for_root(
+    root: str | Path, payload: dict[str, Any], *, post: bool = False
+) -> bool:
+    """Gate clear external risk or the one exact call already reserved in a root.
+
+    State read failures intentionally do not turn local reversible work into a
+    global stop.  Clearly external effects still flow through the validating,
+    fail-closed admission path below.
+    """
+    if hook_requires_claim(payload):
+        return True
+    resolved_root = Path(root).expanduser().resolve()
+    control: object = None
+    if post:
+        snapshot, _, snapshot_errors = load_preclaim_control_snapshot(resolved_root)
+        if not snapshot_errors and isinstance(snapshot, dict):
+            control = snapshot.get("control")
+    if not isinstance(control, dict):
+        _, acceptance_path = project_paths(resolved_root)
+        data, errors = load_json_object(acceptance_path, "ACCEPTANCE.json")
+        if errors or data is None:
+            return False
+        control = data.get("execution_control")
+    if not isinstance(control, dict) or control.get("status") != "running":
+        return False
+    attempt = control.get("active_attempt")
+    if not isinstance(attempt, dict):
+        return False
+    claim = attempt.get("tool_claim")
+    if (
+        isinstance(claim, dict)
+        and claim.get("status") in {"claimed", "observed"}
+        and nonempty(claim.get("tool_use_id"))
+        and claim.get("tool_use_id") == payload.get("tool_use_id")
+    ):
+        # Once claimed, this host call remains protected even if a replay or
+        # PostToolUse changes its input, name, or cwd.  Reconciliation below
+        # rejects those mismatches without charging or settling another call.
+        return True
+    binding = attempt.get("tool_binding")
+    if not isinstance(binding, dict) or binding.get("tool_name") != payload.get("tool_name"):
+        return False
+    # A tool name alone is not a reservation: exec_command, for example, also
+    # performs unrelated inspections and tests while a durable call is pending.
+    # Null fingerprints cannot identify an exact reserved local/support call.
+    if (
+        binding.get("tool_input_fingerprint") is None
+        or "tool_input" not in payload
+        or binding.get("tool_input_fingerprint")
+        != canonical_tool_input_fingerprint(payload["tool_input"])
+        or binding.get("cwd_relative")
+        != cwd_relative_to_root(resolved_root, payload.get("cwd"))
+    ):
+        return False
+    if not post:
+        return True
+    return bool(
+        isinstance(claim, dict)
+        and claim.get("status") in {"claimed", "observed"}
+        and claim.get("actual_tool_name") == payload.get("tool_name")
+    )
 
 
 def calculate_progress_state(
@@ -5539,7 +5956,7 @@ def validate_attempt_request(
 
 def hook_pre_claim(root: str | Path, payload: dict[str, Any]) -> dict[str, object]:
     """Atomically bind one real host tool call to the active attempt."""
-    if not hook_requires_claim(payload):
+    if not hook_requires_claim_for_root(root, payload):
         return {
             "ok": True,
             "command": "hook-pre-claim",
@@ -5885,7 +6302,7 @@ def hook_pre_claim(root: str | Path, payload: dict[str, Any]) -> dict[str, objec
 
 def hook_post_observe(root: str | Path, payload: dict[str, Any]) -> dict[str, object]:
     """Settle the exact claimed call without persisting its response body."""
-    if not hook_requires_claim(payload):
+    if not hook_requires_claim_for_root(root, payload, post=True):
         return {
             "ok": True,
             "command": "hook-post-observe",
@@ -6140,6 +6557,9 @@ def validate_reconciliation_pair(
     current_id = acceptance["current_slice_requirement_id"]
     if project["current_slice_id"] != (current_id or "none"):
         errors.append("reconciled current slices do not match")
+    append_project_acceptance_semantic_findings(
+        project, acceptance, errors, warnings
+    )
     hierarchy = acceptance.get("outcome_hierarchy")
     current_stage_id = hierarchy.get("current_stage_id") if hierarchy else None
     if project["current_stage_id"] != (current_stage_id or "none"):
@@ -7299,7 +7719,7 @@ def limit_extend(
                 pass
 
 
-def control_status(root: str | Path) -> dict[str, object]:
+def control_status(root: str | Path, *, verbose: bool = False) -> dict[str, object]:
     _, acceptance_path = project_paths(root)
     data, errors = load_json_object(acceptance_path, "ACCEPTANCE.json")
     if errors or data is None:
@@ -7312,13 +7732,95 @@ def control_status(root: str | Path) -> dict[str, object]:
             "errors": ["execution_control is missing"],
         }
     attempt = control.get("active_attempt")
+    hierarchy = data.get("outcome_hierarchy")
+    north_star = hierarchy.get("north_star") if isinstance(hierarchy, dict) else None
+    current_requirement_id = data.get("current_slice_requirement_id")
+    current_requirement = next(
+        (
+            requirement
+            for requirement in data.get("requirements", [])
+            if isinstance(requirement, dict)
+            and requirement.get("id") == current_requirement_id
+        ),
+        None,
+    )
+    lineage = control.get("lineage")
+    candidate = control.get("candidate")
+    usage = control.get("usage")
+    method_families = (
+        usage.get("method_families", []) if isinstance(usage, dict) else []
+    )
+    authorizations = control.get("authorizations", [])
     return {
         "ok": True,
         "command": "control-status",
         "revision": control.get("revision"),
         "status": control.get("status"),
         "support_stop_reason": control.get("support_stop_reason"),
-        "usage": control.get("usage"),
+        "usage": usage if verbose else compact_usage_anchor(usage),
+        "method_families": {
+            "active_ids": [
+                entry.get("id")
+                for entry in method_families
+                if isinstance(entry, dict) and entry.get("status") == "active"
+            ],
+            "stopped_count": sum(
+                1
+                for entry in method_families
+                if isinstance(entry, dict) and entry.get("status") == "stopped"
+            ),
+        },
+        "authorizations": {
+            "active_ids": [
+                entry.get("id")
+                for entry in authorizations
+                if isinstance(entry, dict) and entry.get("status") == "active"
+            ],
+            "consumed_count": sum(
+                1
+                for entry in authorizations
+                if isinstance(entry, dict) and entry.get("status") == "consumed"
+            ),
+        },
+        "gate_receipt_count": len(control.get("gate_receipts", []))
+        if isinstance(control.get("gate_receipts"), list)
+        else 0,
+        "outcome_id": north_star.get("id") if isinstance(north_star, dict) else None,
+        "current_stage_id": (
+            hierarchy.get("current_stage_id") if isinstance(hierarchy, dict) else None
+        ),
+        "current_slice": (
+            {
+                "requirement_id": current_requirement.get("id"),
+                "status": current_requirement.get("status"),
+                "stage_id": current_requirement.get("stage_id"),
+                "gate_tiers": current_requirement.get("gate_tiers"),
+                "predecessor_requirement_ids": current_requirement.get(
+                    "predecessor_requirement_ids"
+                ),
+                "identity_ids": current_requirement.get("identity_ids"),
+                "acceptance_step_ids": [
+                    step.get("id")
+                    for step in current_requirement.get("acceptance_steps", [])
+                    if isinstance(step, dict)
+                ],
+            }
+            if isinstance(current_requirement, dict)
+            else None
+        ),
+        "lineage": (
+            {
+                "id": lineage.get("id"),
+                "stage_id": lineage.get("stage_id"),
+                "acceptance_ids": lineage.get("acceptance_ids"),
+                "scope_fingerprint": lineage.get("scope_fingerprint"),
+            }
+            if isinstance(lineage, dict)
+            else None
+        ),
+        "candidate_fingerprint": (
+            candidate.get("fingerprint") if isinstance(candidate, dict) else None
+        ),
         "active_attempt": (
             {
                 "id": attempt.get("id"),
@@ -7808,6 +8310,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--root", default=".", help="Project root; defaults to the current directory")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="For control-status, include the full execution-usage history",
+    )
     parser.add_argument("--request", help="JSON attempt-request file for attempt-begin")
     parser.add_argument("--result", help="JSON attempt-result file for attempt-finish")
     parser.add_argument("--payload", help="JSON host-hook payload file")
@@ -7930,7 +8437,7 @@ def main() -> int:
             else:
                 result = hook_post_observe(args.root, payload)
     elif args.command == "control-status":
-        result = control_status(args.root)
+        result = control_status(args.root, verbose=args.verbose)
     else:
         result = validate(args.root, mode=args.command)
 

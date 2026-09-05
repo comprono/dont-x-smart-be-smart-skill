@@ -9,6 +9,7 @@ import ctypes
 import hashlib
 import json
 import os
+import re
 import shlex
 import shutil
 import socket
@@ -36,6 +37,25 @@ HOOK_RUNTIME_RELATIVE_PATH = Path("hooks") / "outcome_integrity_hook.py"
 HOOK_CORE_RELATIVE_PATH = Path("scripts") / "project_outcome.py"
 HOOK_EVENTS = ("PreToolUse", "PostToolUse")
 HOOK_TIMEOUT_SECONDS = 10
+TEXT_SKILL_SUFFIXES = {".json", ".md", ".py", ".toml", ".txt", ".yaml", ".yml"}
+ABSOLUTE_USER_PATH_PATTERN = re.compile(
+    r"(?i)(?:\b[a-z]:[\\/]users[\\/](?![<{])[^\\/\s\"']+|"
+    r"/home/(?![<{])[^/\s\"']+)"
+)
+CODEX_THREAD_PATTERN = re.compile(r"(?i)codex://threads/[0-9a-f-]{16,}")
+EXACT_SHA256_PATTERN = re.compile(
+    r"(?i)(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])"
+)
+FIRST_PERSON_AUTHORIZATION_PATTERN = re.compile(
+    r"(?i)\bI\s+(?:explicitly\s+)?authori[sz]e\b"
+)
+INSTANCE_IDENTIFIER_PATTERN = re.compile(
+    r"\b(?:ACTIVATION|ATTEMPT|AUTH|LINEAGE|METHOD|MIGRATION|RECEIPT|RECOVERY)-"
+    r"[A-Z0-9][A-Z0-9_-]{3,}\b"
+)
+PINNED_PROJECT_CONSTANT_PATTERN = re.compile(
+    r"(?m)^[A-Z][A-Z0-9_]*(?:PROJECT_ID|PROJECT_ROOT|USER_AUTHORIZATION)\s*="
+)
 
 
 class FileMutation(NamedTuple):
@@ -165,6 +185,43 @@ def canonical_tree_manifest(root: Path) -> dict[str, tuple[object, ...]]:
     return manifest
 
 
+def validate_reusable_skill_tree(root: Path) -> None:
+    """Refuse project-owned identities or evidence in a user-wide skill bundle."""
+    manifest = canonical_tree_manifest(root)
+    violations: list[str] = []
+    for relative_text, entry in sorted(manifest.items()):
+        if entry[0] != "file":
+            continue
+        relative = Path(relative_text)
+        if relative.suffix.casefold() not in TEXT_SKILL_SUFFIXES:
+            continue
+        path = root / relative
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        for label, pattern in (
+            ("absolute user-home path", ABSOLUTE_USER_PATH_PATTERN),
+            ("Codex task identity", CODEX_THREAD_PATTERN),
+            ("exact SHA-256 evidence binding", EXACT_SHA256_PATTERN),
+            ("embedded user authorization prose", FIRST_PERSON_AUTHORIZATION_PATTERN),
+        ):
+            if pattern.search(text):
+                violations.append(f"{relative.as_posix()}: {label}")
+        if relative.parts and relative.parts[0] in {"hooks", "scripts"}:
+            for label, pattern in (
+                ("exact project/effect identifier", INSTANCE_IDENTIFIER_PATTERN),
+                ("pinned project or authorization constant", PINNED_PROJECT_CONSTANT_PATTERN),
+            ):
+                if pattern.search(text):
+                    violations.append(f"{relative.as_posix()}: {label}")
+    if violations:
+        raise ValueError(
+            "Refusing project-specific content in the user-wide Outcome Integrity skill: "
+            + "; ".join(violations)
+        )
+
+
 def _managed_spans(text: str) -> list[tuple[int, int]]:
     spans: list[tuple[int, int]] = []
     cursor = 0
@@ -266,13 +323,35 @@ def _load_toml_file(path: Path, label: str) -> dict[str, Any]:
 
 def _hook_config_preflight(codex_home: Path) -> list[str]:
     config = _load_toml_file(codex_home / "config.toml", "Codex config.toml")
-    if "hooks" in config:
-        raise ValueError(
-            "Refusing user-hook installation because config.toml already contains inline "
-            "[hooks]; use one representation per user config layer"
-        )
-
     warnings: list[str] = []
+    hooks = config.get("hooks")
+    if hooks is not None:
+        if not isinstance(hooks, dict) or set(hooks) - {"state"}:
+            raise ValueError(
+                "Refusing user-hook installation because config.toml contains inline "
+                "hook definitions; use hooks.json for lifecycle definitions"
+            )
+        hook_state = hooks.get("state", {})
+        if not isinstance(hook_state, dict):
+            raise ValueError("Refusing config.toml because [hooks.state] is not a table")
+        disabled_owned_events = {
+            event
+            for key, value in hook_state.items()
+            if isinstance(key, str)
+            and isinstance(value, dict)
+            and value.get("enabled") is False
+            for event in HOOK_EVENTS
+            if f":{event.replace('ToolUse', '_tool_use').casefold()}:"
+            in key.casefold()
+            and str((codex_home / "hooks.json").resolve()).casefold()
+            in key.casefold()
+        }
+        if disabled_owned_events == set(HOOK_EVENTS):
+            warnings.append(
+                "Outcome Integrity handlers are disabled in host /hooks state; "
+                "the installed hook remains inactive."
+            )
+
     features = config.get("features")
     if isinstance(features, dict) and (
         features.get("hooks") is False
@@ -729,6 +808,7 @@ def _transactional_install(
     failed_skill = target_parent / f".{skill_target.name}.failed.{token}"
 
     source_manifest = canonical_tree_manifest(skill_source)
+    validate_reusable_skill_tree(skill_source)
     if source_manifest.get("SKILL.md", (None,))[0] != "file":
         raise FileNotFoundError(f"Skill source is incomplete: {skill_source}")
 
@@ -784,6 +864,7 @@ def _transactional_install(
         stable_source_manifest = canonical_tree_manifest(skill_source)
         if staged_manifest != source_manifest or stable_source_manifest != source_manifest:
             raise OSError("Skill source changed during staging or the staged manifest is not exact")
+        validate_reusable_skill_tree(skill_stage)
         for relative_path, expected_hash in expected_skill_hashes:
             staged_path = skill_stage / relative_path
             _require_plain_file(staged_path, f"staged bound skill file {relative_path}")
@@ -982,8 +1063,11 @@ def install(
     skip_global_rules: bool = False,
     *,
     enable_user_hooks: bool = False,
+    advisory_only: bool = False,
     warnings: list[str] | None = None,
 ) -> tuple[Path, Path | None]:
+    if enable_user_hooks and advisory_only:
+        raise ValueError("hook enforcement and advisory-only mode are mutually exclusive")
     repository_root = _repository_root()
     skill_source = repository_root / "skills" / "outcome-integrity"
     snippet_path = repository_root / "global" / "AGENTS.snippet.md"
@@ -992,7 +1076,7 @@ def install(
     agents_path = codex_home / "AGENTS.md"
 
     _require_plain_directory(skill_source, "skill source")
-    canonical_tree_manifest(skill_source)
+    validate_reusable_skill_tree(skill_source)
     _require_disjoint_trees(skill_source, skill_target)
     snippet: str | None = None
     if not skip_global_rules:
@@ -1006,12 +1090,21 @@ def install(
     try:
         with install_lock(codex_home):
             sidecar_path = codex_home / HOOK_SIDECAR_NAME
-            persisted_hook_opt_in = not enable_user_hooks and _path_lexists(sidecar_path)
-            hook_plan = (
-                _prepare_hook_enable(codex_home, skill_source, skill_target)
-                if enable_user_hooks or persisted_hook_opt_in
-                else HookPlan((), codex_home / "hooks.json", sidecar_path, ())
+            persisted_hook_opt_in = (
+                not enable_user_hooks
+                and not advisory_only
+                and _path_lexists(sidecar_path)
             )
+            if advisory_only:
+                hook_plan = _prepare_hook_disable(codex_home)
+            elif enable_user_hooks or persisted_hook_opt_in:
+                hook_plan = _prepare_hook_enable(
+                    codex_home, skill_source, skill_target
+                )
+            else:
+                hook_plan = HookPlan(
+                    (), codex_home / "hooks.json", sidecar_path, ()
+                )
             skills_directory = skill_target.parent
             skills_directory_existed = _path_lexists(skills_directory)
             _require_plain_directory(
@@ -1081,6 +1174,7 @@ def inspect_hook_health(codex_home: Path) -> dict[str, Any]:
     result: dict[str, Any] = {
         "state": "absent",
         "configured_exact": False,
+        "source_exact": False,
         "active_verified": False,
         "trust": "unverified",
         "hooks_path": str(hooks_path),
@@ -1125,10 +1219,23 @@ def inspect_hook_health(codex_home: Path) -> dict[str, Any]:
             raise ValueError("Hook sidecar runtime and core paths must be absolute")
         _require_plain_file(runtime_path, "installed Outcome Integrity hook runtime")
         _require_plain_file(core_path, "installed Outcome Integrity hook core")
-        if _hash_file(runtime_path) != sidecar.get("runtime_sha256"):
+        installed_runtime_sha256 = _hash_file(runtime_path)
+        installed_core_sha256 = _hash_file(core_path)
+        if installed_runtime_sha256 != sidecar.get("runtime_sha256"):
             raise ValueError("Installed hook runtime hash differs from its configured hash")
-        if _hash_file(core_path) != sidecar.get("core_sha256"):
+        if installed_core_sha256 != sidecar.get("core_sha256"):
             raise ValueError("Installed hook core hash differs from its configured hash")
+        source_skill = _repository_root() / "skills" / "outcome-integrity"
+        source_runtime = source_skill / HOOK_RUNTIME_RELATIVE_PATH
+        source_core = source_skill / HOOK_CORE_RELATIVE_PATH
+        _require_plain_file(source_runtime, "source Outcome Integrity hook runtime")
+        _require_plain_file(source_core, "source Outcome Integrity hook core")
+        if installed_runtime_sha256 != _hash_file(source_runtime):
+            raise ValueError(
+                "Installed hook runtime differs from this installer package"
+            )
+        if installed_core_sha256 != _hash_file(source_core):
+            raise ValueError("Installed hook core differs from this installer package")
         warnings = _hook_config_preflight(codex_home)
         result["warnings"] = warnings
         result["definition_fingerprint"] = "sha256:" + hashlib.sha256(
@@ -1142,11 +1249,12 @@ def inspect_hook_health(codex_home: Path) -> dict[str, Any]:
                 separators=(",", ":"),
             ).encode("utf-8")
         ).hexdigest()
+        result["configured_exact"] = True
+        result["source_exact"] = True
         if warnings:
             result["state"] = "configured-disabled"
             return result
         result["state"] = "configured-exact-trust-unverified"
-        result["configured_exact"] = True
         return result
     except (OSError, ValueError, UnicodeError) as exc:
         result["state"] = "configured-stale"
@@ -1182,6 +1290,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Remove only hook entries owned by Outcome Integrity",
     )
     hook_group.add_argument(
+        "--advisory-only",
+        action="store_true",
+        help=(
+            "Atomically install the current skill and global rules while removing "
+            "only Outcome Integrity-owned user hooks"
+        ),
+    )
+    hook_group.add_argument(
         "--hook-health",
         action="store_true",
         help=(
@@ -1212,6 +1328,7 @@ def main() -> int:
                 args.codex_home,
                 args.skip_global_rules,
                 enable_user_hooks=args.enable_user_hooks,
+                advisory_only=args.advisory_only,
                 warnings=warnings,
             )
     except (OSError, ValueError, UnicodeError) as exc:
@@ -1239,6 +1356,8 @@ def main() -> int:
             "User hooks are not trusted automatically. Open /hooks, review the exact "
             "commands, and trust them before relying on enforcement."
         )
+    elif args.advisory_only:
+        print("Advisory-only mode: Outcome Integrity user hooks removed.")
     print("Start a new Codex task to load the updated skill and rules.")
     return 0
 

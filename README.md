@@ -9,7 +9,7 @@ Long agent sessions can drift after context compaction, promote an add-on into t
 
 1. A concise global Codex rule block that keeps bounded work direct and activates durable controls only when the outcome requires them.
 2. The `outcome-integrity` skill, which maintains bounded intent and machine-verifiable acceptance for admitted durable projects.
-3. An optional synchronous Codex hook that denies covered material tool calls unless the real tool proposal consumes an exact, bounded schema-v6 reservation.
+3. An optional synchronous Codex hook that protects direct ledger mutation, clearly external or irreversible effects, and the one exact call already reserved by an active attempt. Ordinary local work bypasses it.
 
 `PROJECT_OUTCOME.md` preserves the north star, current stage, active slice, user intent, causal boundary, stop constraints, facts, failures, and next action. Schema-v6 `ACCEPTANCE.json` owns the parent chain plus permanent capability floors, balanced fitness dimensions, proof ladders, exact identities, evidence, and a candidate-bound atomic attempt ledger. Git owns history; neither state file is an activity transcript.
 
@@ -48,7 +48,7 @@ Requires Python 3.11 or newer.
 ```powershell
 git clone https://github.com/comprono/dont-x-smart-be-smart-skill.git
 cd dont-x-smart-be-smart-skill
-python scripts/install.py --enable-user-hooks
+python scripts/install.py
 ```
 
 The installer:
@@ -56,15 +56,18 @@ The installer:
 - copies the skill to `~/.codex/skills/outcome-integrity`;
 - adds or updates one managed block in `~/.codex/AGENTS.md`;
 - preserves unrelated existing global instructions;
+- rejects concrete user paths, task IDs, evidence hashes, authorization prose, and runtime project IDs before changing the user-wide skill;
 - is safe to run again when updating the skill.
 
-The recommended command opts into mechanical interception for initialized Outcome Integrity projects. If you deliberately want the skill and global rules without a tool-dispatch hook, run `python scripts/install.py`; that mode remains advisory at the execution boundary.
+The recommended command installs the skill and global rules without a tool-dispatch hook. This keeps ordinary work advisory and direct. Enable the optional hook only when you deliberately need mechanical protection for durable external-effect work.
+
+Existing project ledgers and a later provider step do not gate local diagnosis, preparation, or tests. Finish reversible preparation before reserving the actual external call. A confirmed preparation failure before dispatch does not consume provider authority; an unknown dispatch outcome requires an authoritative state check. Explicit restrictions on restarting an entire sealed package still apply.
 
 ```powershell
 python scripts/install.py --enable-user-hooks
 ```
 
-This transaction installs the same skill/rules plus owned synchronous `PreToolUse` and `PostToolUse` handlers in `~/.codex/hooks.json`, preserving unrelated hook configuration. Codex does not run a new or changed non-managed hook until you review and trust its exact definition. Start a new task, open `/hooks`, inspect the Outcome Integrity handlers, and trust them. Until that is done—or when hooks are disabled—the installer reports the protection as inactive.
+This transaction installs the same skill/rules plus owned synchronous `PreToolUse` and `PostToolUse` handlers in `~/.codex/hooks.json`, preserving unrelated hook configuration. The handlers bypass reads, local reversible edits, tests, local shell commands, and support tools. Codex does not run a new or changed non-managed hook until you review and trust its exact definition. Start a new task, open `/hooks`, inspect the Outcome Integrity handlers, and trust them. Until that is done—or when hooks are disabled—the installer reports the protection as inactive.
 
 Check the installed definition at any time:
 
@@ -74,10 +77,24 @@ python scripts/install.py --hook-health
 
 The health result distinguishes absent, disabled, stale, and exact configuration. `configured-exact-trust-unverified` means the runtime, core, sidecar, and hashes match on disk; it is deliberately not reported as active enforcement. Only a trusted hook plus a fresh task canary that observes an actual allow or denial proves live dispatch.
 
+### Root authority and hook recovery
+
+The hook can identify an initialized project root from positive host evidence, but identification alone does not activate control or create a binding. Only an exact control-plane activation binds the session. Ordinary cwd, target, workdir, chat paths, nearby descendants, and inert canaries remain unbound and cannot make local reversible work require admission.
+
+When root evidence conflicts or a binding is stale, the hook still bypasses ordinary local reversible work. It fails closed only for a protected external effect, an exact control-plane call, or direct authoritative-ledger mutation. An exact activation binding remains immutable for protected effects in that session.
+
+Hook recovery is host-controlled through `/hooks`; the agent and hook do not self-disable. Reinstalling changed hook definitions changes their trusted identity, so review, enable, and trust the new `PreToolUse` and `PostToolUse` definitions again in `/hooks`, then start a fresh task and run an exact-root canary.
+
 To remove only the owned handlers while preserving the skill, global rules, and unrelated hooks:
 
 ```powershell
 python scripts/install.py --disable-user-hooks
+```
+
+To atomically install the current generic skill/rules and remove only the owned hooks in one transaction:
+
+```powershell
+python scripts/install.py --advisory-only
 ```
 
 Start a new Codex task after installation. Restarting the Codex application is the safest way to refresh skill discovery.
@@ -92,11 +109,13 @@ python scripts/install.py --skip-global-rules
 
 ### Direct delivery first
 
-One bounded, reversible deliverable stays state-free when it has one acceptance observation, one repository or surface, at most one production boundary, resolved identity and authority, and no recurring or unattended lifecycle. Its default operating bounds are 8 tool calls, 3 support calls before delivery, 6 files, 0 workers, 2 planned interim updates, one focused verification, and one retry only after a causal boundary change. These are behavioral bounds, not ledger enforcement before durable state exists.
+Ordinary implementation, diagnosis, review, local reversible editing and testing, and one bounded deliverable stay state-free. This remains true when a repository already contains Outcome Integrity files. Operating bounds are advisory and must never become ledger enforcement for local work.
 
 That lane uses only `deliverable -> acceptance check`. It does not create `.codex` state, a nested project root, a plan artifact, workers, a custom framework, a publisher, or control-plane architecture. Difficulty, a failed preferred method, or an attractive architecture cannot promote a simple outcome. An ambiguous external write is resolved by querying authoritative state or an idempotency key before retrying.
 
-Durable control is admitted only when the outcome intrinsically needs dependent deliverables, multiple repositories or external systems, persistence across turns or restarts, recurring or unattended operation, irreversible or high-impact effects, or the user explicitly requests durable tracking. Under an existing valid parent, the bounded feature is one direct slice governed by that parent's reservations and budgets; a child project is never initialized for it.
+Durable control is admitted only for recurring or unattended operation, effects needing exact-once state across retries or restarts, irreversible or high-impact multi-system work, or explicit user-requested tracking. Complexity, failure, resumption, and multi-agent work do not admit it by themselves.
+
+If two consecutive control-plane actions produce no user-visible delivery evidence, stop control repairs, revisions, migrations, resealing, rebinding, and canaries in the product task. Continue authorized local work directly and keep only the unresolved real external effect blocked.
 
 ### Durable project control
 
@@ -143,7 +162,7 @@ python ~/.codex/skills/outcome-integrity/scripts/project_outcome.py resume --roo
 python ~/.codex/skills/outcome-integrity/scripts/project_outcome.py completion --root .
 ```
 
-Material calls are executable gates. A JSON request binds the current slice, candidate, lineage, live north-star outcome, structured boundary, allowed paths, one exact tool claim, prerequisites, evaluation exposure, cumulative budgets, and any target/effect authorization. Recovery fields are null for an initial method. One requirement can have only one active family; it cannot be abandoned, and a stopped family permits at most one evidence-backed replacement naming that predecessor with fresh method-change evidence and a distinct lower-complexity comparison. When the optional hook is trusted, it checks the host-observed tool, cwd, and arguments at `PreToolUse`, consumes the claim once, and charges before execution. `PostToolUse` verifies the same call against an external full-ledger preclaim snapshot before a passing finish; unexpected state drift restores the preclaim ledger and stops for recovery:
+Protected external-effect calls can be executable gates. A JSON request binds the current slice, candidate, lineage, live north-star outcome, structured boundary, allowed paths, one exact tool claim, prerequisites, evaluation exposure, cumulative budgets, and any target/effect authorization. Local edits, tests, inspection commands, and support calls do not need requests. When the optional hook is trusted, it consumes and settles the exact reserved call; unexpected state drift restores the preclaim ledger and stops that protected effect for recovery:
 
 ```powershell
 python ~/.codex/skills/outcome-integrity/scripts/project_outcome.py attempt-begin --root . --request attempt.json --expected-revision 0
@@ -153,6 +172,8 @@ python ~/.codex/skills/outcome-integrity/scripts/project_outcome.py attempt-fini
 Copy `assets/ATTEMPT_REQUEST.template.json` and `assets/ATTEMPT_RESULT.template.json` rather than inventing either contract. The begin response supplies the exact `attempt_id`; actual tool/input fingerprints and structured failure identities are derived, not caller-chosen.
 
 New runs, workers, candidates, stages, compactions, recreated files, changed wording, or renamed boundaries do not reset cumulative tool/support/method-family counters. Candidate changes clear proof receipts while preserving usage, and evaluations used to shape a candidate become diagnostic. Local candidate-changing work cannot mint proof. State reconciliation cannot rename away active or stopped family history, and stopped control reopens only through the separately authorized state-transition path. Admission-limit recovery also requires the producer-origin record minted by `attempt-begin`; a copied stop string and exhausted counter are insufficient. Recovery authorization content is single-use across limit extensions, migrations, and state transitions even when copied to a new path or ID. New recovery history uses compact hash-bound usage anchors so enforcement state grows with events rather than repeatedly embedding the entire ledger.
+
+`control-status` returns a compact constant-size usage summary by default. Add `--verbose` only when full failure, method-family, and path history is needed.
 
 You can also invoke the skill explicitly:
 
@@ -186,7 +207,7 @@ The design incorporates published patterns from [Anthropic's long-running agent 
 
 No prompt, skill, or user hook can guarantee every response or intercept every platform path. [Codex hook documentation](https://learn.chatgpt.com/docs/hooks#tool-coverage) covers shell/unified exec, `apply_patch`, MCP, agent spawning, and most local function tools; hosted tools and specialized opt-outs may bypass hooks. Non-managed hooks are also disableable and inactive until trusted. A hook cannot preempt a Bash process already running, so bounded work must use a native deadline and avoid open-ended interactive sessions.
 
-Within those limits, the synchronous hook makes covered admission mechanical rather than voluntary. It resolves an exact initialized ancestor or explicit target and binds the host session to that root. An unbound session uses a bounded, link-safe descendant search only when exactly one initialized project exists; multiple roots, conflicts, unsafe links, or search-cap exhaustion fail closed. Directories with no initialized project remain unaffected.
+Within those limits, the synchronous hook makes protected-effect admission mechanical rather than voluntary. Root discovery does not establish binding; only exact activation does. Ordinary local reversible work bypasses the hook even when an initialized root, stale binding, or multi-root ambiguity is present. Direct ledger mutation and protected external effects still fail closed when identity cannot be resolved.
 
 The session registry, preclaim snapshots, and producer-origin admission-stop receipts are fail-closed same-user guardrails protected on covered hook paths, not cryptographic custody against another process already controlling that operating-system account.
 

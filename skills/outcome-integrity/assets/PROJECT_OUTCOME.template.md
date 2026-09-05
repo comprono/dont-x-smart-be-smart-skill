@@ -91,7 +91,7 @@ State: active
 - Objective: REPLACE_ME
 - Acceptance evidence: REPLACE_ME
 - Protect: REPLACE_ME
-- Status: active
+- Status: failing
 
 ## Next
 

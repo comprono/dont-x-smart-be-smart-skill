@@ -15,6 +15,7 @@ from typing import Any, TextIO
 OWNER = "outcome-integrity-v1"
 PRE_TOOL_USE = "PreToolUse"
 POST_TOOL_USE = "PostToolUse"
+SHELL_TOOL_NAMES = {"Bash", "bash", "exec_command", "functions.exec_command"}
 STATE_SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "project_outcome.py"
 PROJECT_FILES = (
     Path(".codex") / "PROJECT_OUTCOME.md",
@@ -67,9 +68,9 @@ _SHA256_PATTERN = re.compile(r"(?:sha256:)?([0-9a-fA-F]{64})\Z")
 _codex_home = os.environ.get("CODEX_HOME")
 REGISTRY_DIRECTORY = (
     Path(_codex_home).expanduser() if _codex_home else Path.home() / ".codex"
-) / "outcome-integrity" / "session-roots-v1"
-DESCENDANT_SCAN_MAX_DIRECTORIES = 512
-DESCENDANT_SCAN_MAX_ENTRIES = 4096
+) / "outcome-integrity" / "session-roots-v2"
+SESSION_REGISTRY_VERSION = 2
+SESSION_BINDING_KIND = "explicit-activation"
 SESSION_ID_MAX_LENGTH = 512
 
 
@@ -153,65 +154,6 @@ def _is_link_directory(path: Path) -> bool:
         return True
 
 
-def _immediate_initialized_children(cwd: Path) -> list[Path]:
-    try:
-        children = list(cwd.iterdir())
-    except OSError:
-        return []
-    roots: list[Path] = []
-    for child in children:
-        try:
-            is_candidate = child.is_dir() and not _is_link_directory(child)
-        except OSError:
-            is_candidate = False
-        if is_candidate and all((child / marker).is_file() for marker in PROJECT_FILES):
-            roots.append(child.resolve(strict=False))
-    return _deduplicate_paths(roots)
-
-
-def _bounded_initialized_descendants(cwd: Path) -> tuple[list[Path], str | None]:
-    """Search descendants without links and stop safely at a fixed directory budget."""
-    pending = [cwd]
-    roots: list[Path] = []
-    inspected = 0
-    entries_seen = 0
-    while pending:
-        parent = pending.pop(0)
-        try:
-            iterator = os.scandir(parent)
-        except OSError:
-            continue
-        with iterator:
-            for entry in iterator:
-                entries_seen += 1
-                if entries_seen > DESCENDANT_SCAN_MAX_ENTRIES:
-                    return (
-                        _deduplicate_paths(roots),
-                        "Outcome Integrity descendant discovery reached its entry limit; activate the exact project root explicitly.",
-                    )
-                try:
-                    if not entry.is_dir(follow_symlinks=False):
-                        continue
-                except OSError:
-                    continue
-                child = Path(entry.path)
-                if _is_link_directory(child):
-                    continue
-                inspected += 1
-                if inspected > DESCENDANT_SCAN_MAX_DIRECTORIES:
-                    return (
-                        _deduplicate_paths(roots),
-                        "Outcome Integrity descendant discovery reached its directory limit; activate the exact project root explicitly.",
-                    )
-                if all((child / marker).is_file() for marker in PROJECT_FILES):
-                    roots.append(child.resolve(strict=False))
-                    if len(_deduplicate_paths(roots)) > 1:
-                        return _deduplicate_paths(roots), None
-                if child.name.casefold() not in {".codex", ".git"}:
-                    pending.append(child)
-    return _deduplicate_paths(roots), None
-
-
 def _valid_session_id(payload: object) -> str | None:
     value = payload.get("session_id") if isinstance(payload, dict) else None
     if not isinstance(value, str):
@@ -267,7 +209,11 @@ def _read_session_root(
     except (OSError, ValueError, json.JSONDecodeError):
         return None, "Outcome Integrity session registry entry is invalid.", True
     expected_hash = _session_hash(session_id)
-    if not isinstance(value, dict) or value.get("version") != 1:
+    if (
+        not isinstance(value, dict)
+        or value.get("version") != SESSION_REGISTRY_VERSION
+        or value.get("binding_kind") != SESSION_BINDING_KIND
+    ):
         return None, "Outcome Integrity session registry entry is invalid.", True
     if value.get("owner") != OWNER or value.get("session_hash") != expected_hash:
         return None, "Outcome Integrity session registry identity does not match.", True
@@ -299,12 +245,17 @@ def _bind_session_root(session_id: str | None, root: Path) -> str | None:
         if error is not None:
             return error
         if existing is None or not _same_path(existing, root):
-            return "Outcome Integrity session is already bound to another project root."
+            return (
+                "Outcome Integrity session is already bound to another project root; "
+                "chat text and tool arguments cannot rebind it, so start a fresh task "
+                "at the intended root."
+            )
         return None
     path = _registry_path(session_id)
     payload = _json_line(
         {
-            "version": 1,
+            "version": SESSION_REGISTRY_VERSION,
+            "binding_kind": SESSION_BINDING_KIND,
             "owner": OWNER,
             "session_hash": _session_hash(session_id),
             "root": str(root),
@@ -320,7 +271,11 @@ def _bind_session_root(session_id: str | None, root: Path) -> str | None:
         if error is not None:
             return error
         if not present or existing is None or not _same_path(existing, root):
-            return "Outcome Integrity session is already bound to another project root."
+            return (
+                "Outcome Integrity session is already bound to another project root; "
+                "chat text and tool arguments cannot rebind it, so start a fresh task "
+                "at the intended root."
+            )
         return None
     except OSError:
         return "Outcome Integrity could not reserve its session registry entry."
@@ -416,7 +371,7 @@ def resolve_project_context(
         explicit_roots = _deduplicate_paths([*explicit_roots, activation_root])
     host_root = find_project_root(host_cwd)
     session_id = _valid_session_id(payload)
-    bound_root, registry_error, registry_present = _read_session_root(session_id)
+    bound_root, registry_error, _ = _read_session_root(session_id)
     if registry_error is not None:
         return None, effective_cwd, direct_targets, registry_error, None
     initialized_context = bool(explicit_roots or host_root or bound_root)
@@ -444,7 +399,7 @@ def resolve_project_context(
             None,
             effective_cwd,
             direct_targets,
-            "Outcome Integrity session target conflicts with its bound project root.",
+            "Outcome Integrity session target conflicts with its bound project root; chat text and tool arguments cannot rebind it, so start a fresh task at the intended root.",
             None,
         )
     if bound_root is not None and host_root is not None and not _same_path(
@@ -459,7 +414,7 @@ def resolve_project_context(
                 None,
                 effective_cwd,
                 direct_targets,
-                "Outcome Integrity session cwd conflicts with its bound project root.",
+                "Outcome Integrity session cwd conflicts with its bound project root; start a fresh task at the intended root.",
                 None,
             )
     if bound_root is not None:
@@ -475,38 +430,6 @@ def resolve_project_context(
         return explicit_root, effective_cwd, direct_targets, None, bind_root
     if host_root is not None:
         return host_root, effective_cwd, direct_targets, None, None
-    if session_id is not None and not registry_present:
-        descendant_roots, discovery_error = _bounded_initialized_descendants(host_cwd)
-        if discovery_error is not None:
-            return None, effective_cwd, direct_targets, discovery_error, None
-        if len(descendant_roots) > 1:
-            return (
-                None,
-                effective_cwd,
-                direct_targets,
-                "Outcome Integrity found multiple initialized descendant projects.",
-                None,
-            )
-        if descendant_roots:
-            return (
-                descendant_roots[0],
-                effective_cwd,
-                direct_targets,
-                None,
-                descendant_roots[0],
-            )
-        return None, effective_cwd, direct_targets, None, None
-    child_roots = _immediate_initialized_children(host_cwd)
-    if len(child_roots) > 1:
-        return (
-            None,
-            effective_cwd,
-            direct_targets,
-            "Outcome Integrity found multiple initialized immediate child projects.",
-            None,
-        )
-    if child_roots:
-        return child_roots[0], effective_cwd, direct_targets, None, None
     return None, effective_cwd, direct_targets, None, None
 
 
@@ -582,12 +505,12 @@ def _same_path(left: Path, right: Path) -> bool:
 def _control_plane_invocation(
     payload: dict[str, Any], effective_cwd: Path
 ) -> tuple[str, Path, Path, list[str]] | None:
-    if payload.get("tool_name") != "Bash":
+    if payload.get("tool_name") not in SHELL_TOOL_NAMES:
         return None
     tool_input = payload.get("tool_input")
     if not isinstance(tool_input, dict):
         return None
-    command = tool_input.get("command")
+    command = tool_input.get("command", tool_input.get("cmd"))
     if not isinstance(command, str) or not command.strip():
         return None
     if any(character in command for character in "\r\n;&|><"):
@@ -744,6 +667,34 @@ def _directly_targets_authoritative_state(
     return False
 
 
+def _targets_any_authoritative_state(
+    payload: dict[str, Any], direct_targets: list[Path]
+) -> bool:
+    """Detect protected ledger targets even when root resolution is ambiguous."""
+    protected_suffixes = {
+        tuple(part.casefold() for part in relative.parts)
+        for relative in AUTHORITATIVE_STATE_FILES
+    }
+    for target in direct_targets:
+        folded_parts = tuple(part.casefold() for part in target.parts)
+        if any(
+            len(folded_parts) >= len(suffix)
+            and folded_parts[-len(suffix) :] == suffix
+            for suffix in protected_suffixes
+        ):
+            return True
+    tool_input = payload.get("tool_input")
+    command_values = _field_path_strings(tool_input, {"command", "cmd", "chars"})
+    fragments = {
+        relative.as_posix().casefold() for relative in AUTHORITATIVE_STATE_FILES
+    }
+    return any(
+        fragment in command.replace("\\", "/").casefold()
+        for command in command_values
+        for fragment in fragments
+    )
+
+
 def _core_payload(payload: dict[str, Any], cwd: Path) -> dict[str, Any]:
     return {
         "tool_use_id": payload.get("tool_use_id"),
@@ -819,10 +770,14 @@ def _handle_pre(
         )
         return 0
     core_payload = _core_payload(payload, effective_cwd)
-    if state.hook_requires_claim(core_payload) is False:
+    if state.hook_requires_claim_for_root(root, core_payload) is False:
         return 0
     result = state.hook_pre_claim(root, core_payload)
-    if isinstance(result, dict) and result.get("decision") == "allow" and result.get("ok") is True:
+    if (
+        isinstance(result, dict)
+        and result.get("decision") in {"allow", "bypass"}
+        and result.get("ok") is True
+    ):
         return 0
     reason = _safe_reason(result, "Outcome Integrity denied this tool call.")
     _write_json(stdout, _pre_denial(reason))
@@ -848,12 +803,12 @@ def _handle_post(
         _write_json(stdout, _post_block(reason))
         return 0
     core_payload = _post_payload(payload, effective_cwd)
-    if state.hook_requires_claim(core_payload) is False:
+    if state.hook_requires_claim_for_root(root, core_payload, post=True) is False:
         return 0
     result = state.hook_post_observe(root, core_payload)
     if (
         isinstance(result, dict)
-        and result.get("decision") == "observed"
+        and result.get("decision") in {"observed", "bypass"}
         and result.get("ok") is True
     ):
         return 0
@@ -898,9 +853,6 @@ def main(
             failure_output("Outcome Integrity hook integrity verification failed."),
         )
         return 0
-    if resolution_error is not None:
-        _write_json(output_stream, failure_output(resolution_error))
-        return 0
     if not isinstance(payload, dict) or event not in {PRE_TOOL_USE, POST_TOOL_USE}:
         _write_json(
             output_stream,
@@ -915,6 +867,20 @@ def main(
 
     try:
         state = _load_state_module()
+        if resolution_error is not None:
+            core_payload = (
+                _post_payload(payload, effective_cwd)
+                if event == POST_TOOL_USE
+                else _core_payload(payload, effective_cwd)
+            )
+            protected_call = bool(
+                _control_plane_invocation(payload, effective_cwd)
+                or _targets_any_authoritative_state(payload, direct_targets)
+                or state.hook_requires_claim(core_payload)
+            )
+            if protected_call:
+                _write_json(output_stream, failure_output(resolution_error))
+            return 0
         if event == PRE_TOOL_USE:
             return _handle_pre(
                 root,

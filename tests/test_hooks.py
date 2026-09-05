@@ -56,6 +56,11 @@ class FakeState:
     def hook_requires_claim(self, payload: dict) -> bool:
         return True
 
+    def hook_requires_claim_for_root(
+        self, root: Path, payload: dict, *, post: bool = False
+    ) -> bool:
+        return self.hook_requires_claim(payload)
+
     def hook_pre_claim(self, root: Path, payload: dict):
         self.pre_calls.append((Path(root), payload))
         return self.pre_result
@@ -265,7 +270,7 @@ class OutcomeIntegrityHookTests(unittest.TestCase):
             )
             self.assertEqual(patch_state.pre_calls[0][0], child.resolve())
 
-    def test_parent_cwd_canonical_bash_enforces_unique_immediate_child(self) -> None:
+    def test_parent_cwd_does_not_auto_select_unique_immediate_child(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             parent = Path(temporary)
             child = parent / "only-project"
@@ -273,18 +278,74 @@ class OutcomeIntegrityHookTests(unittest.TestCase):
             self.support.write_state(child, self.support.project_text(), acceptance)
             acceptance_path = child / ".codex" / "ACCEPTANCE.json"
             before = acceptance_path.read_bytes()
+            state = FakeState(
+                pre={"ok": False, "decision": "deny", "errors": ["must not run"]}
+            )
             payload = self.payload(
                 parent,
                 tool_name="Bash",
                 tool_input={"command": "python -c \"print('bounded check')\""},
             )
-            status, output = self.run_hook(payload, self.state_module)
+            status, output = self.run_hook(payload, state)
             self.assertEqual(status, 0)
-            self.assertEqual(
-                json.loads(output)["hookSpecificOutput"]["permissionDecision"],
-                "deny",
+            self.assertEqual(output, "")
+            self.assertEqual(state.pre_calls, [])
+            self.assertEqual(acceptance_path.read_bytes(), before)
+
+    def test_explicit_uninitialized_sibling_and_unactivated_initialized_target_stay_direct(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary)
+            initialized = parent / "initialized-project"
+            initialized_source = initialized / "src"
+            direct = parent / "direct-delivery"
+            initialized_source.mkdir(parents=True)
+            direct.mkdir()
+            acceptance = self.support.acceptance_data()
+            self.support.write_state(
+                initialized, self.support.project_text(), acceptance
             )
-            self.assertIn("no active atomic attempt", output)
+            acceptance_path = initialized / ".codex" / "ACCEPTANCE.json"
+            before = acceptance_path.read_bytes()
+            registry = parent / "registry"
+            session_id = "session-explicit-state-free-sibling"
+            state = FakeState(
+                pre={"ok": False, "decision": "deny", "errors": ["must not run"]}
+            )
+
+            direct_payload = self.payload(
+                parent,
+                tool_use_id="direct-uninitialized-sibling",
+                tool_name="exec_command",
+                tool_input={
+                    "cmd": "run bounded direct delivery",
+                    "workdir": str(direct),
+                },
+                session_id=session_id,
+            )
+            with patch.object(self.hook, "REGISTRY_DIRECTORY", registry):
+                status, output = self.run_hook(direct_payload, state)
+                self.assertEqual(status, 0)
+                self.assertEqual(output, "")
+                self.assertEqual(state.pre_calls, [])
+                self.assertFalse(registry.exists())
+
+                initialized_payload = self.payload(
+                    parent,
+                    tool_use_id="explicit-initialized-target",
+                    tool_name="exec_command",
+                    tool_input={
+                        "cmd": "inspect initialized target",
+                        "workdir": str(initialized_source),
+                    },
+                    session_id=session_id,
+                )
+                initialized_output = self.run_hook(
+                    initialized_payload, self.state_module
+                )[1]
+                self.assertEqual(initialized_output, "")
+                self.assertFalse(registry.exists())
             self.assertEqual(acceptance_path.read_bytes(), before)
 
     def test_exact_activation_binds_deep_root_for_later_canonical_bash(self) -> None:
@@ -329,36 +390,28 @@ class OutcomeIntegrityHookTests(unittest.TestCase):
                 )
                 status, output = self.run_hook(later, self.state_module)
                 self.assertEqual(status, 0)
-                self.assertEqual(
-                    json.loads(output)["hookSpecificOutput"]["permissionDecision"],
-                    "deny",
-                )
-                self.assertIn("no active atomic attempt", output)
+                self.assertEqual(output, "")
             self.assertEqual(acceptance_path.read_bytes(), before)
 
-    def test_two_deep_projects_without_binding_fail_closed(self) -> None:
+    def test_parent_cwd_does_not_auto_select_or_bind_unique_deep_project(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             parent = Path(temporary)
-            first = parent / "area-a" / "nested" / "first-project"
-            second = parent / "area-b" / "nested" / "second-project"
-            self.initialize_project(first)
-            self.initialize_project(second)
+            root = parent / "area-a" / "nested" / "only-project"
+            self.initialize_project(root)
             registry = parent / "registry"
-            state = FakeState()
+            state = FakeState(
+                pre={"ok": False, "decision": "deny", "errors": ["must not run"]}
+            )
             payload = self.payload(
                 parent,
                 tool_name="Bash",
-                tool_input={"command": "python -c \"print('ambiguous')\""},
-                session_id="session-deep-ambiguous",
+                tool_input={"command": "python -c \"print('state free')\""},
+                session_id="session-deep-state-free",
             )
             with patch.object(self.hook, "REGISTRY_DIRECTORY", registry):
                 status, output = self.run_hook(payload, state)
             self.assertEqual(status, 0)
-            self.assertEqual(
-                json.loads(output)["hookSpecificOutput"]["permissionDecision"],
-                "deny",
-            )
-            self.assertIn("multiple initialized descendant projects", output)
+            self.assertEqual(output, "")
             self.assertEqual(state.pre_calls, [])
             self.assertFalse(registry.exists())
 
@@ -420,16 +473,11 @@ class OutcomeIntegrityHookTests(unittest.TestCase):
                     session_id=session_id,
                 )
                 forged_output = self.run_hook(forged_text, self.state_module)[1]
-                self.assertEqual(
-                    json.loads(forged_output)["hookSpecificOutput"][
-                        "permissionDecision"
-                    ],
-                    "deny",
-                )
+                self.assertEqual(forged_output, "")
                 entry = json.loads(next(registry.glob("*.json")).read_text(encoding="utf-8"))
                 self.assertEqual(Path(entry["root"]), first.resolve())
 
-    def test_stale_session_binding_fails_closed(self) -> None:
+    def test_stale_session_binding_does_not_block_local_reversible_work(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             parent = Path(temporary)
             root = parent / "nested" / "project"
@@ -458,31 +506,29 @@ class OutcomeIntegrityHookTests(unittest.TestCase):
                     session_id=session_id,
                 )
                 output = self.run_hook(later, self.state_module)[1]
-            self.assertEqual(
-                json.loads(output)["hookSpecificOutput"]["permissionDecision"],
-                "deny",
-            )
-            self.assertIn("stale or no longer initialized", output)
+            self.assertEqual(output, "")
 
-    def test_parent_cwd_bash_with_two_immediate_projects_is_ambiguous(self) -> None:
+    def test_parent_cwd_does_not_auto_select_multiple_immediate_projects(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             parent = Path(temporary)
             self.initialize_project(parent / "first")
             self.initialize_project(parent / "second")
-            state = FakeState()
+            registry = parent / "registry"
+            state = FakeState(
+                pre={"ok": False, "decision": "deny", "errors": ["must not run"]}
+            )
             payload = self.payload(
                 parent,
                 tool_name="Bash",
                 tool_input={"command": "python -c \"print('which project?')\""},
+                session_id="session-multiple-children-state-free",
             )
-            status, output = self.run_hook(payload, state)
+            with patch.object(self.hook, "REGISTRY_DIRECTORY", registry):
+                status, output = self.run_hook(payload, state)
             self.assertEqual(status, 0)
-            self.assertEqual(
-                json.loads(output)["hookSpecificOutput"]["permissionDecision"],
-                "deny",
-            )
-            self.assertIn("multiple initialized immediate child projects", output)
+            self.assertEqual(output, "")
             self.assertEqual(state.pre_calls, [])
+            self.assertFalse(registry.exists())
 
     def test_parent_cwd_bash_with_no_initialized_child_stays_silent(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -911,13 +957,24 @@ class OutcomeIntegrityHookTests(unittest.TestCase):
             changed_tool_output = self.run_hook(
                 changed_tool, self.state_module
             )[1]
+            self.assertEqual(changed_tool_output, "")
+
+            changed_external = self.payload(
+                root,
+                tool_use_id="changed-external-tool",
+                tool_name="mcp__mail__send_message",
+                tool_input={"target": "recipient", "body": "must remain protected"},
+            )
+            changed_external_output = self.run_hook(
+                changed_external, self.state_module
+            )[1]
             self.assertEqual(
-                json.loads(changed_tool_output)["hookSpecificOutput"][
+                json.loads(changed_external_output)["hookSpecificOutput"][
                     "permissionDecision"
                 ],
                 "deny",
             )
-            self.assertIn("tool_name", changed_tool_output)
+            self.assertIn("tool_name", changed_external_output)
 
             changed_input = self.payload(
                 root,
@@ -928,7 +985,24 @@ class OutcomeIntegrityHookTests(unittest.TestCase):
             changed_input_output = self.run_hook(
                 changed_input, self.state_module
             )[1]
-            self.assertIn("tool_input", changed_input_output)
+            self.assertEqual(changed_input_output, "")
+
+            changed_protected_input = self.payload(
+                root,
+                tool_use_id="changed-protected-input",
+                tool_name="exec_command",
+                tool_input={"cmd": "git push origin main"},
+            )
+            protected_output = self.run_hook(
+                changed_protected_input, self.state_module
+            )[1]
+            self.assertEqual(
+                json.loads(protected_output)["hookSpecificOutput"][
+                    "permissionDecision"
+                ],
+                "deny",
+            )
+            self.assertIn("tool_input", protected_output)
 
             exact = self.payload(
                 root,
@@ -948,6 +1022,28 @@ class OutcomeIntegrityHookTests(unittest.TestCase):
                 "already been claimed",
                 self.run_hook(second_pre, self.state_module)[1],
             )
+
+            before_changed_post = (root / ".codex" / "ACCEPTANCE.json").read_bytes()
+            for changed_fields in (
+                {"tool_input": {"cmd": "rg --files"}},
+                {"tool_name": "Bash"},
+            ):
+                changed_post = self.payload(
+                    root,
+                    event="PostToolUse",
+                    tool_use_id="exact-tool-use",
+                    tool_name="exec_command",
+                    tool_input=tool_input,
+                    tool_response={"status": "completed"},
+                )
+                changed_post.update(changed_fields)
+                changed_output = self.run_hook(changed_post, self.state_module)[1]
+                self.assertEqual(json.loads(changed_output)["decision"], "block")
+                self.assertIn("does not match the claimed call", changed_output)
+                self.assertEqual(
+                    (root / ".codex" / "ACCEPTANCE.json").read_bytes(),
+                    before_changed_post,
+                )
 
             secret = "SECRET-HOST-TOOL-RESPONSE"
             post = self.payload(
@@ -976,6 +1072,109 @@ class OutcomeIntegrityHookTests(unittest.TestCase):
                 control["active_attempt"]["tool_claim"]["status"], "observed"
             )
 
+    def test_pending_same_name_reservation_leaves_unrelated_local_calls_state_free(self) -> None:
+        for activated in (False, True):
+            with self.subTest(activated=activated), tempfile.TemporaryDirectory(
+                dir=REPOSITORY_ROOT
+            ) as temporary:
+                root = Path(temporary)
+                nested = root / "src"
+                nested.mkdir()
+                tool_input = {"cmd": "run bounded production-shaped check"}
+                self.begin_real_attempt(
+                    root,
+                    tool_name="exec_command",
+                    tool_input=tool_input,
+                    action_classes=["local", "proof"],
+                )
+                registry = root / "registry"
+                session_id = "same-name-local-calls"
+
+                def state_bytes() -> dict[str, bytes]:
+                    return {
+                        str(path.relative_to(root)): path.read_bytes()
+                        for directory in (root / ".codex", registry)
+                        for path in directory.rglob("*")
+                        if path.is_file()
+                    }
+
+                exact = self.payload(
+                    root,
+                    tool_use_id="reserved-call",
+                    tool_name="exec_command",
+                    tool_input=tool_input,
+                    session_id=session_id,
+                )
+                with patch.object(self.hook, "REGISTRY_DIRECTORY", registry):
+                    if activated:
+                        activation = self.payload(
+                            root,
+                            tool_use_id="activate-same-name-session",
+                            tool_name="exec_command",
+                            tool_input={
+                                "cmd": (
+                                    f'"{sys.executable}" "{self.hook.STATE_SCRIPT}" '
+                                    f'resume --root "{root}"'
+                                )
+                            },
+                            session_id=session_id,
+                        )
+                        self.assertEqual(self.run_hook(activation, self.state_module)[1], "")
+                        self.assertEqual(len(list(registry.glob("*.json"))), 1)
+
+                    for phase in ("unclaimed", "claimed", "observed"):
+                        with self.subTest(phase=phase):
+                            before = state_bytes()
+                            for index, (cwd, local_input) in enumerate(
+                                (
+                                    (root, {"cmd": "rg --files"}),
+                                    (root, {"cmd": "python -m unittest discover -s tests"}),
+                                    (root, {"cmd": "Set-Content local.txt repaired"}),
+                                    (nested, tool_input),
+                                )
+                            ):
+                                local = self.payload(
+                                    cwd,
+                                    tool_use_id=f"unrelated-{phase}-{index}",
+                                    tool_name="exec_command",
+                                    tool_input=local_input,
+                                    session_id=session_id,
+                                )
+                                self.assertEqual(self.run_hook(local, self.state_module)[1], "")
+                                local["hook_event_name"] = "PostToolUse"
+                                local["tool_response"] = {"status": "completed"}
+                                self.assertEqual(self.run_hook(local, self.state_module)[1], "")
+                                self.assertEqual(state_bytes(), before)
+                            ledger_write = self.payload(
+                                root,
+                                tool_use_id=f"ledger-write-{phase}",
+                                tool_name="exec_command",
+                                tool_input={"cmd": "Set-Content .codex/ACCEPTANCE.json forbidden"},
+                                session_id=session_id,
+                            )
+                            denied = self.run_hook(ledger_write, self.state_module)[1]
+                            self.assertEqual(
+                                json.loads(denied)["hookSpecificOutput"]["permissionDecision"],
+                                "deny",
+                            )
+                            self.assertIn("authoritative state", denied)
+                            self.assertEqual(state_bytes(), before)
+                            if phase == "unclaimed":
+                                self.assertEqual(self.run_hook(exact, self.state_module)[1], "")
+                            elif phase == "claimed":
+                                exact["hook_event_name"] = "PostToolUse"
+                                exact["tool_response"] = {"status": "completed"}
+                                self.assertEqual(self.run_hook(exact, self.state_module)[1], "")
+
+                    if not activated:
+                        self.assertFalse(registry.exists())
+                stored = json.loads((root / ".codex" / "ACCEPTANCE.json").read_bytes())
+                self.assertEqual(stored["execution_control"]["usage"]["total_tool_calls"], 1)
+                self.assertEqual(
+                    stored["execution_control"]["active_attempt"]["tool_claim"]["status"],
+                    "observed",
+                )
+
     def test_real_core_read_only_pre_and_post_leave_ledger_bytes_unchanged(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPOSITORY_ROOT) as temporary:
             root = Path(temporary)
@@ -1003,19 +1202,260 @@ class OutcomeIntegrityHookTests(unittest.TestCase):
                 revision,
             )
 
-            for index, tool_name in enumerate(("unknown_host_tool", "Bash")):
-                material = self.payload(
-                    root,
-                    tool_use_id=f"material-{index}",
-                    tool_name=tool_name,
-                    tool_input={"command": "inspect but with material capability"},
-                )
-                output = self.run_hook(material, self.state_module)[1]
-                self.assertEqual(
-                    json.loads(output)["hookSpecificOutput"]["permissionDecision"],
-                    "deny",
-                )
+    def test_initialized_unactivated_local_sequence_bypasses_byte_stably(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPOSITORY_ROOT) as temporary:
+            root = Path(temporary)
+            acceptance = self.support.acceptance_data()
+            self.support.write_state(root, self.support.project_text(), acceptance)
+            acceptance_path = root / ".codex" / "ACCEPTANCE.json"
+            before = acceptance_path.read_bytes()
+            registry = root / "registry"
+
+            calls = (
+                (
+                    "local-inspection",
+                    "exec_command",
+                    {"cmd": "rg --files", "workdir": str(root)},
+                ),
+                (
+                    "local-patch",
+                    "apply_patch",
+                    {
+                        "patch": (
+                            "*** Begin Patch\n"
+                            "*** Add File: local.txt\n"
+                            "+direct delivery\n"
+                            "*** End Patch"
+                        )
+                    },
+                ),
+                (
+                    "local-python-test",
+                    "exec_command",
+                    {"cmd": "python -m unittest tests.test_hooks", "workdir": str(root)},
+                ),
+                (
+                    "local-node-provider-regression",
+                    "exec_command",
+                    {"cmd": "node tests/provider-regression.js", "workdir": str(root)},
+                ),
+                (
+                    "generic-generate-support-tool",
+                    "mcp__diagram__generate",
+                    {"description": "local diagram fixture"},
+                ),
+                (
+                    "provider-diagnostics-support-tool",
+                    "mcp__provider__diagnostics",
+                    {"scope": "local configuration"},
+                ),
+            )
+            with patch.object(self.hook, "REGISTRY_DIRECTORY", registry):
+                for tool_use_id, tool_name, tool_input in calls:
+                    payload = self.payload(
+                        root,
+                        tool_use_id=tool_use_id,
+                        tool_name=tool_name,
+                        tool_input=tool_input,
+                        session_id="state-free-local-sequence",
+                    )
+                    self.assertEqual(self.run_hook(payload, self.state_module)[1], "")
+                    payload["hook_event_name"] = "PostToolUse"
+                    payload["tool_response"] = {"status": "completed"}
+                    self.assertEqual(self.run_hook(payload, self.state_module)[1], "")
+
             self.assertEqual(acceptance_path.read_bytes(), before)
+            self.assertFalse(registry.exists())
+
+    def test_provider_shell_execution_requires_an_active_attempt(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPOSITORY_ROOT) as temporary:
+            root = Path(temporary)
+            acceptance = self.support.acceptance_data()
+            self.support.write_state(root, self.support.project_text(), acceptance)
+            acceptance_path = root / ".codex" / "ACCEPTANCE.json"
+            before = acceptance_path.read_bytes()
+            commands = (
+                "python scripts/provider-runner.py",
+                "node scripts/llm-call.js",
+                "openai responses create --model example",
+                "curl https://api.openai.com/v1/responses",
+                'codex exec "bounded provider task"',
+                'codex.exe exec "bounded provider task"',
+                '& "C:\\Program Files\\Codex\\codex.exe" exec "bounded provider task"',
+                'codex exec "help me inspect code"',
+                'codex exec -- --help',
+            )
+
+            for index, command in enumerate(commands):
+                with self.subTest(command=command):
+                    payload = self.payload(
+                        root,
+                        tool_use_id=f"provider-shell-{index}",
+                        tool_name="exec_command",
+                        tool_input={"cmd": command, "workdir": str(root)},
+                    )
+                    output = self.run_hook(payload, self.state_module)[1]
+                    self.assertEqual(
+                        json.loads(output)["hookSpecificOutput"]["permissionDecision"],
+                        "deny",
+                    )
+                    self.assertIn("no active atomic attempt", output)
+
+            self.assertEqual(acceptance_path.read_bytes(), before)
+
+    def test_codex_inspections_and_prompt_mentions_stay_state_free(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPOSITORY_ROOT) as temporary:
+            root = Path(temporary)
+            acceptance = self.support.acceptance_data()
+            self.support.write_state(root, self.support.project_text(), acceptance)
+            acceptance_path = root / ".codex" / "ACCEPTANCE.json"
+            before = acceptance_path.read_bytes()
+            commands = (
+                "codex",
+                "codex --help",
+                "codex.exe --version",
+                "codex help exec",
+                "codex diagnostics",
+                "codex exec --help",
+                "codex.exe exec -h",
+                "codex exec --version",
+                'Write-Output "codex exec should be protected"',
+                'rg "codex exec" README.md',
+                'python scripts/check.py "codex exec"',
+                "python scripts/codex.py exec",
+                "node tests/codex-regression.js",
+                "codex.py exec",
+            )
+            for index, command in enumerate(commands):
+                with self.subTest(command=command):
+                    payload = self.payload(
+                        root,
+                        tool_use_id=f"codex-inspection-{index}",
+                        tool_name="exec_command",
+                        tool_input={"cmd": command, "workdir": str(root)},
+                    )
+                    self.assertEqual(self.run_hook(payload, self.state_module)[1], "")
+                    payload["hook_event_name"] = "PostToolUse"
+                    payload["tool_response"] = {"status": "completed"}
+                    self.assertEqual(self.run_hook(payload, self.state_module)[1], "")
+                    self.assertEqual(acceptance_path.read_bytes(), before)
+
+    def test_provider_and_cost_mcp_tools_require_an_active_attempt(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPOSITORY_ROOT) as temporary:
+            root = Path(temporary)
+            acceptance = self.support.acceptance_data()
+            self.support.write_state(root, self.support.project_text(), acceptance)
+            acceptance_path = root / ".codex" / "ACCEPTANCE.json"
+            before = acceptance_path.read_bytes()
+            tool_names = (
+                "mcp__provider__generate",
+                "mcp__llm__run_model",
+                "image_gen__imagegen",
+            )
+
+            for index, tool_name in enumerate(tool_names):
+                with self.subTest(tool_name=tool_name):
+                    payload = self.payload(
+                        root,
+                        tool_use_id=f"provider-tool-{index}",
+                        tool_name=tool_name,
+                        tool_input={"prompt": "bounded provider request"},
+                    )
+                    output = self.run_hook(payload, self.state_module)[1]
+                    self.assertEqual(
+                        json.loads(output)["hookSpecificOutput"]["permissionDecision"],
+                        "deny",
+                    )
+                    self.assertIn("no active atomic attempt", output)
+
+            self.assertEqual(acceptance_path.read_bytes(), before)
+
+    def test_real_classifier_ambiguous_roots_bypasses_local_work(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPOSITORY_ROOT) as temporary:
+            parent = Path(temporary)
+            first = parent / "first"
+            second = parent / "second"
+            self.initialize_project(first)
+            self.initialize_project(second)
+            first_ledger = first / ".codex" / "ACCEPTANCE.json"
+            second_ledger = second / ".codex" / "ACCEPTANCE.json"
+            before = (first_ledger.read_bytes(), second_ledger.read_bytes())
+            registry = parent / "registry"
+            payload = self.payload(
+                parent,
+                tool_use_id="ambiguous-local-test",
+                tool_name="exec_command",
+                tool_input={
+                    "cmd": "python -m unittest",
+                    "source": {"path": str(first / "input.txt")},
+                    "destination": {"path": str(second / "output.txt")},
+                },
+                session_id="ambiguous-real-classifier",
+            )
+
+            with patch.object(self.hook, "REGISTRY_DIRECTORY", registry):
+                status, output = self.run_hook(payload, self.state_module)
+
+            self.assertEqual(status, 0)
+            self.assertEqual(output, "")
+            self.assertEqual(
+                (first_ledger.read_bytes(), second_ledger.read_bytes()), before
+            )
+            self.assertFalse(registry.exists())
+
+    def test_clear_external_effect_still_requires_an_active_attempt(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPOSITORY_ROOT) as temporary:
+            root = Path(temporary)
+            acceptance = self.support.acceptance_data()
+            self.support.write_state(root, self.support.project_text(), acceptance)
+            acceptance_path = root / ".codex" / "ACCEPTANCE.json"
+            before = acceptance_path.read_bytes()
+            payload = self.payload(
+                root,
+                tool_use_id="external-send",
+                tool_name="mcp__mail__send_message",
+                tool_input={"target": "exact-recipient", "body": "bounded effect"},
+            )
+
+            output = self.run_hook(payload, self.state_module)[1]
+            self.assertEqual(
+                json.loads(output)["hookSpecificOutput"]["permissionDecision"],
+                "deny",
+            )
+            self.assertIn("no active atomic attempt", output)
+            self.assertEqual(acceptance_path.read_bytes(), before)
+
+    def test_exact_exec_command_activation_creates_the_only_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary)
+            root = parent / "project"
+            self.initialize_project(root)
+            registry = parent / "registry"
+            payload = self.payload(
+                parent,
+                tool_use_id="exec-activation",
+                tool_name="exec_command",
+                tool_input={
+                    "cmd": (
+                        f'"{sys.executable}" "{self.hook.STATE_SCRIPT}" resume '
+                        f'--root "{root}"'
+                    ),
+                    "workdir": str(parent),
+                },
+                session_id="exec-command-activation",
+            )
+
+            with patch.object(self.hook, "REGISTRY_DIRECTORY", registry):
+                status, output = self.run_hook(payload, self.state_module)
+
+            self.assertEqual(status, 0)
+            self.assertEqual(output, "")
+            entries = list(registry.glob("*.json"))
+            self.assertEqual(len(entries), 1)
+            self.assertEqual(
+                Path(json.loads(entries[0].read_text(encoding="utf-8"))["root"]),
+                root.resolve(),
+            )
 
     def test_incident_replay_keeps_full_script_replacement_denied(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPOSITORY_ROOT) as temporary:

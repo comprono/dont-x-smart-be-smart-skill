@@ -154,6 +154,55 @@ class ExecutionControlTests(unittest.TestCase):
             self.assertFalse(result["ok"])
             self.assertTrue(any("evidence_ref" in error for error in result["errors"]), result)
 
+    def test_control_status_exposes_minimum_attempt_bootstrap_context(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = self.write_active(root)
+
+            status = self.state.control_status(root)
+
+            self.assertTrue(status["ok"], status)
+            self.assertEqual(
+                status["outcome_id"], state["outcome_hierarchy"]["north_star"]["id"]
+            )
+            self.assertEqual(
+                status["current_stage_id"],
+                state["outcome_hierarchy"]["current_stage_id"],
+            )
+            requirement = next(
+                entry
+                for entry in state["requirements"]
+                if entry["id"] == state["current_slice_requirement_id"]
+            )
+            self.assertEqual(
+                status["current_slice"]["requirement_id"], requirement["id"]
+            )
+            self.assertEqual(
+                status["current_slice"]["predecessor_requirement_ids"],
+                requirement["predecessor_requirement_ids"],
+            )
+            self.assertEqual(
+                status["lineage"]["scope_fingerprint"],
+                state["execution_control"]["lineage"]["scope_fingerprint"],
+            )
+            self.assertEqual(
+                status["candidate_fingerprint"],
+                state["execution_control"]["candidate"]["fingerprint"],
+            )
+            self.assertEqual(
+                status["usage"],
+                self.state.compact_usage_anchor(state["execution_control"]["usage"]),
+            )
+            self.assertNotIn("failure_classes", status["usage"])
+            self.assertNotIn("method_families", status["usage"])
+            self.assertEqual(status["gate_receipt_count"], 0)
+
+            verbose = self.state.control_status(root, verbose=True)
+            self.assertEqual(
+                verbose["usage"], state["execution_control"]["usage"]
+            )
+            self.assertNotIn("manifest_paths", json.dumps(status))
+
     def test_finish_rejects_a_correction_after_reservation(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -448,7 +497,18 @@ class ExecutionControlTests(unittest.TestCase):
                 "cwd": str(root),
                 "tool_input": {"cmd": "echo proof"},
             }
-            self.assertFalse(self.state.hook_pre_claim(root, payload)["ok"])
+            unreserved_local = self.state.hook_pre_claim(root, payload)
+            self.assertTrue(unreserved_local["ok"], unreserved_local)
+            self.assertEqual(unreserved_local["decision"], "bypass")
+            unreserved_external = self.state.hook_pre_claim(
+                root,
+                {
+                    **payload,
+                    "tool_name": "mcp__mail__send_message",
+                    "tool_input": {"target": "recipient", "body": "protected"},
+                },
+            )
+            self.assertFalse(unreserved_external["ok"], unreserved_external)
 
             begun = self.begin(root, state)
             request, tool_input = self.attempt_inputs[begun["attempt"]["id"]]
@@ -458,8 +518,20 @@ class ExecutionControlTests(unittest.TestCase):
                 "cwd": str(root),
                 "tool_input": tool_input,
             }
-            forged = self.state.hook_pre_claim(root, {**exact, "tool_input": {"cmd": "other"}})
+            ledger_path = root / ".codex" / "ACCEPTANCE.json"
+            before = ledger_path.read_bytes()
+            unrelated = self.state.hook_pre_claim(
+                root, {**exact, "tool_input": {"cmd": "other"}}
+            )
+            self.assertTrue(unrelated["ok"], unrelated)
+            self.assertEqual(unrelated["decision"], "bypass")
+            self.assertEqual(ledger_path.read_bytes(), before)
+            forged = self.state.hook_pre_claim(
+                root,
+                {**exact, "tool_input": {"cmd": 'codex exec "different protected action"'}},
+            )
             self.assertFalse(forged["ok"])
+            self.assertEqual(ledger_path.read_bytes(), before)
             claimed = self.state.hook_pre_claim(root, exact)
             self.assertTrue(claimed["ok"], claimed)
             self.assertFalse(self.state.hook_pre_claim(root, exact)["ok"])
